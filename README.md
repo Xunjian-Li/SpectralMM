@@ -221,7 +221,7 @@ a structure-preserving curvature majorizer is
 
 ```math
 B=D+\rho I=I_N\otimes M,
-\qquad
+\quad
 \rho=\frac{2}{h^2}\cos\left(\frac{\pi}{N+1}\right),
 ```
 
@@ -229,7 +229,7 @@ with
 
 ```math
 M=\frac{1}{h^2}\operatorname{tridiag}(-1,\alpha,-1),
-\qquad
+\quad
 \alpha=4+2\cos\left(\frac{\pi}{N+1}\right).
 ```
 
