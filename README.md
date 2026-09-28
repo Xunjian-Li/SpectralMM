@@ -188,67 +188,6 @@ model = SpectralMM.glm(
 
 The spectral basis itself is stored as a low-rank dense factor, while multiplication by the original design matrix retains its sparse structure.
 
-## Structured quadratic problems: Poisson equation
-
-The repository also contains `Poisson equation.ipynb`, illustrating how the same curvature-majorization principle can be used in a structured quadratic problem.
-
-Consider the two-dimensional Poisson equation
-
-```math
--\Delta u(x)=f(x), \quad x\in(0,1)^2,
-```
-
-with homogeneous Dirichlet boundary conditions. With `N` interior grid points per coordinate, the standard five-point discretization gives
-
-```math
-A u=b, \quad
-A=\frac{1}{h^2}\left(I_N\otimes T_N+T_N\otimes I_N\right),
-```
-
-where
-
-```math
-T_N=\operatorname{tridiag}(-1,2,-1).
-```
-
-Writing
-
-```math
-A=D-R,
-```
-
-a structure-preserving curvature majorizer is
-
-```math
-B=D+\rho I=I_N\otimes M,
-\quad
-\rho=\frac{2}{h^2}\cos\left(\frac{\pi}{N+1}\right),
-```
-
-with
-
-```math
-M=\frac{1}{h^2}\operatorname{tridiag}(-1,\alpha,-1),
-\quad
-\alpha=4+2\cos\left(\frac{\pi}{N+1}\right).
-```
-
-Since `B - A` is positive semidefinite, the corresponding MM iteration is
-
-```math
-u^{(k+1)}=u^{(k)}+B^{-1}(b-Au^{(k)}).
-```
-
-The matrix `A` is applied by the five-point stencil without forming the `N^2 × N^2` Kronecker matrix. Moreover,
-
-```math
-M=\frac{1}{h^2}LL^\top
-```
-
-has a lower-bidiagonal Cholesky factor. The factorization is computed once and reused, so applying `B^{-1}` requires only forward and backward bidiagonal solves. The notebook compares the resulting MM iteration with CG and with PCG using the same majorizer as a preconditioner.
-
-This example is intentionally structure-aware: it illustrates the broader curvature-majorization principle rather than replacing the Poisson operator by a generic low-rank approximation.
-
 ## Benchmarks
 
 Dense and sparse scaling experiments are provided in
