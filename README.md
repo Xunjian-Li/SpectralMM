@@ -195,13 +195,13 @@ The repository also contains `Poisson equation.ipynb`, illustrating how the same
 Consider the two-dimensional Poisson equation
 
 ```math
--\Delta u(x)=f(x), \qquad x\in(0,1)^2,
+-\Delta u(x)=f(x), \quad x\in(0,1)^2,
 ```
 
 with homogeneous Dirichlet boundary conditions. With `N` interior grid points per coordinate, the standard five-point discretization gives
 
 ```math
-A u=b, \qquad
+A u=b, \quad
 A=\frac{1}{h^2}\left(I_N\otimes T_N+T_N\otimes I_N\right),
 ```
 
