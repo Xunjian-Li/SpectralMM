@@ -15,6 +15,8 @@
 # where D = diag(X'WX + ridge*I).
 # No Gram matrix or weighted design matrix is materialized.
 
+using SparseArrays
+
 mutable struct IRLSKrylovResult{T}
     beta::Vector{T}
     losses::Vector{T}
@@ -152,6 +154,25 @@ function build_wls_diag!(d::AbstractVector{T}, X::AbstractMatrix{T}, w::Abstract
         @inbounds for j in j0:length(d); d[j] += ridge; end
     end
     @inbounds @simd for j in eachindex(d); d[j] = max(d[j], eps(T)); end
+    return d
+end
+
+function build_wls_diag!(d::AbstractVector{T}, X::SparseMatrixCSC{T}, w::AbstractVector{T};
+                         ridge::T=zero(T), penalize_intercept::Bool=true) where {T}
+    fill!(d, zero(T))
+    rows, vals = rowvals(X), nonzeros(X)
+
+    @inbounds for j in axes(X, 2)
+        for k in nzrange(X, j)
+            d[j] += w[rows[k]] * abs2(vals[k])
+        end
+    end
+
+    if ridge > zero(T)
+        @views d[penalize_intercept ? 1 : 2:end] .+= ridge
+    end
+
+    @. d = max(d, eps(T))
     return d
 end
 

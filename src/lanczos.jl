@@ -191,6 +191,7 @@ function top_eigs!(
     seed::Int = 1,
     reorthogonalize::Bool = true
 ) where {T <: Real}
+
     p = size(X, 2)
     @assert 1 <= r <= p
     @assert r <= krylovdim <= min(p, size(ws.Q, 2))
@@ -204,8 +205,10 @@ function top_eigs!(
 
     rng = MersenneTwister(seed)
     randn!(rng, q)
+
     nq = norm(q)
     invnq = inv(nq)
+
     @inbounds @simd for i in eachindex(q)
         q[i] *= invnq
         qprev[i] = zero(T)
@@ -213,89 +216,91 @@ function top_eigs!(
 
     actual_dim = krylovdim
 
-    @timeit SMM_TIMER "restart/Lanczos iterations" begin
-        for j in 1:krylovdim
-            copyto!(@view(Q[:, j]), q)
+    for j in 1:krylovdim
+        copyto!(@view(Q[:, j]), q)
 
-            @timeit SMM_TIMER "restart/matvec" begin
-                hess_mv!(z, ws, X, Xt, w, q; ridge=ridge)
-            end
+        hess_mv!(
+            z,
+            ws,
+            X,
+            Xt,
+            w,
+            q;
+            ridge = ridge,
+        )
 
-            if j > 1
-                bj = beta[j - 1]
-                @inbounds @simd for i in eachindex(z)
-                    z[i] -= bj * qprev[i]
-                end
-            end
+        if j > 1
+            bj = beta[j - 1]
 
-            aj = dot(q, z)
-            alpha[j] = aj
             @inbounds @simd for i in eachindex(z)
-                z[i] -= aj * q[i]
+                z[i] -= bj * qprev[i]
+            end
+        end
+
+        aj = dot(q, z)
+        alpha[j] = aj
+
+        @inbounds @simd for i in eachindex(z)
+            z[i] -= aj * q[i]
+        end
+
+        if reorthogonalize
+            for s in 1:j
+                qs = @view Q[:, s]
+                c = dot(qs, z)
+
+                @inbounds @simd for i in eachindex(z)
+                    z[i] -= c * qs[i]
+                end
+            end
+        end
+
+        if j < krylovdim
+            bj = norm(z)
+            beta[j] = bj
+
+            if bj <= tol
+                actual_dim = j
+                break
             end
 
-            if reorthogonalize
-                @timeit SMM_TIMER "restart/reorthogonalization" begin
-                    for s in 1:j
-                        qs = @view Q[:, s]
-                        c = dot(qs, z)
-                        @inbounds @simd for i in eachindex(z)
-                            z[i] -= c * qs[i]
-                        end
-                    end
-                end
-            end
+            copyto!(qprev, q)
+            invbj = inv(bj)
 
-            if j < krylovdim
-                bj = norm(z)
-                beta[j] = bj
-                if bj <= tol
-                    actual_dim = j
-                    break
-                end
-                copyto!(qprev, q)
-                invbj = inv(bj)
-                @inbounds @simd for i in eachindex(q)
-                    q[i] = z[i] * invbj
-                end
+            @inbounds @simd for i in eachindex(q)
+                q[i] = z[i] * invbj
             end
         end
     end
 
-    # This small eigensolve is intentionally left to LAPACK/LinearAlgebra.
-    # Views avoid copies of alpha and beta; eigen itself still allocates O(kd^2).
-    eigT = @timeit SMM_TIMER "restart/tridiagonal eigen" begin
-        av = @view alpha[1:actual_dim]
-        bv = @view beta[1:max(actual_dim - 1, 0)]
-        eigen(SymTridiagonal(av, bv))
-    end
+    # Small tridiagonal eigensolve.
+    av = @view alpha[1:actual_dim]
+    bv = @view beta[1:max(actual_dim - 1, 0)]
+    eigT = eigen(SymTridiagonal(av, bv))
 
-    # eigen(SymTridiagonal) returns ascending eigenvalues. Copy the largest r
-    # in reverse order into persistent lambda/Z, avoiding sortperm and slicing.
-    @timeit SMM_TIMER "restart/Ritz select" begin
-        @inbounds for j in 1:r
-            src = actual_dim - j + 1
-            ws.lambda[j] = T(eigT.values[src])
-            @simd for i in 1:actual_dim
-                ws.Z[i, j] = T(eigT.vectors[i, src])
-            end
+    # eigen(SymTridiagonal) returns ascending eigenvalues.
+    # Copy the largest r in reverse order.
+    @inbounds for j in 1:r
+        src = actual_dim - j + 1
+        ws.lambda[j] = T(eigT.values[src])
+
+        @simd for i in 1:actual_dim
+            ws.Z[i, j] = T(eigT.vectors[i, src])
         end
     end
 
-    @timeit SMM_TIMER "restart/Ritz vectors" begin
-        Qv = @view Q[:, 1:actual_dim]
-        Zv = @view ws.Z[1:actual_dim, 1:r]
-        mul!(ws.V, Qv, Zv)
-    end
+    Qv = @view Q[:, 1:actual_dim]
+    Zv = @view ws.Z[1:actual_dim, 1:r]
 
-    @timeit SMM_TIMER "restart/Ritz normalize" begin
-        @inbounds for j in 1:r
-            vj = @view ws.V[:, j]
-            nv = norm(vj)
-            invnv = inv(nv)
-            @simd for i in eachindex(vj)
-                vj[i] *= invnv
-            end
+    mul!(ws.V, Qv, Zv)
+
+    @inbounds for j in 1:r
+        vj = @view ws.V[:, j]
+        nv = norm(vj)
+        invnv = inv(nv)
+
+        @simd for i in eachindex(vj)
+            vj[i] *= invnv
         end
     end
 
@@ -318,56 +323,82 @@ function checked_lz!(
     max_retries::Int = 3,
     verbose::Bool = false
 ) where {T <: Real}
+
     p = size(X, 2)
     kd = min(krylovdim, p, size(ws.Q, 2))
     max_kd = min(max_krylovdim, p, size(ws.Q, 2))
+
     best_res = T(Inf)
     best_kd = kd
 
     for attempt in 1:max_retries
-        V, lambda, _ = @timeit SMM_TIMER "restart/lz eig total" begin
-            top_eigs!(ws, X, Xt, w, r;
-                ridge=ridge,
-                krylovdim=kd,
-                tol=tol,
-                seed=seed + 7919 * attempt,
-                reorthogonalize=true)
-        end
 
-        @timeit SMM_TIMER "restart/XV" begin
-            mul!(ws.XV, X, V)
-        end
+        V, lambda, _ = top_eigs!(
+            ws,
+            X,
+            Xt,
+            w,
+            r;
+            ridge = ridge,
+            krylovdim = kd,
+            tol = tol,
+            seed = seed + 7919 * attempt,
+            reorthogonalize = true,
+        )
 
-        res = @timeit SMM_TIMER "restart/eigen residual" begin
-            eig_resid_xv!(ws.HV, ws.WXV, X, Xt, w, V, ws.XV, lambda; ridge=ridge)
-        end
+        mul!(ws.XV, X, V)
+
+        res = eig_resid_xv!(
+            ws.HV,
+            ws.WXV,
+            X,
+            Xt,
+            w,
+            V,
+            ws.XV,
+            lambda;
+            ridge = ridge,
+        )
 
         if res < best_res
-            @timeit SMM_TIMER "restart/best copy" begin
-                best_res = res
-                copyto!(ws.best_V, V)
-                copyto!(ws.best_XV, ws.XV)
-                copyto!(ws.best_lambda, lambda)
-                best_kd = kd
-            end
+            best_res = res
+            copyto!(ws.best_V, V)
+            copyto!(ws.best_XV, ws.XV)
+            copyto!(ws.best_lambda, lambda)
+            best_kd = kd
         end
 
         if verbose
-            @printf("          Lanczos attempt=%d  kd=%d  eigres=%.3e\n", attempt, kd, res)
+            @printf(
+                "          Lanczos attempt=%d  kd=%d  eigres=%.3e\n",
+                attempt,
+                kd,
+                res,
+            )
         end
 
         if res <= resid_tol
-            # Current V/XV/lambda live in persistent workspace.
             return V, ws.XV, lambda, res, kd, true
         end
 
         if kd >= max_kd
             break
         end
-        kd = min(max_kd, max(kd + 20, Int(ceil(1.5 * kd))))
+
+        kd = min(
+            max_kd,
+            max(kd + 20, Int(ceil(1.5 * kd))),
+        )
     end
 
-    return ws.best_V, ws.best_XV, ws.best_lambda, best_res, best_kd, false
+    return (
+        ws.best_V,
+        ws.best_XV,
+        ws.best_lambda,
+        best_res,
+        best_kd,
+        false,
+    )
 end
 
 # Compatibility wrapper. Correct but allocates a workspace on every call.

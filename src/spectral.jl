@@ -22,18 +22,14 @@ end
 # fitted values are cached to avoid redundant X*v products where possible.
 # Options
 
-
-
 Base.@kwdef struct SpectralOptions{T<:Real}
-    k::Int = 10
+    k::Int = 5
     rho::T = T(1e-3)
-    ridge::T = T(1e-6)
+    ridge::T = zero(T)
     resid_tol::T = T(5e-1)
-
     restart_every::Int = 0
-    correction_tol::T = T(5e-2)  # trigger correction when relative projected Hessian change exceeds this
-
-    krylovdim::Union{Nothing,Int} = nothing
+    correction_tol::T = T(5e-2)
+    krylovdim::Union{Nothing,Int} = 12
     max_krylovdim::Union{Nothing,Int} = nothing
     lanczos_tol::T = T(1e-8)
     lanczos_retries::Int = 3
@@ -41,7 +37,7 @@ Base.@kwdef struct SpectralOptions{T<:Real}
 end
 
 Base.@kwdef struct InnerOptions{T<:Real}
-    solver::Symbol = :psd
+    solver::Symbol = :mm
     maxiter::Int = 100
     # Inner forcing: eta_m = min(eta_max, forcing_c * grad_ratio^forcing_alpha)
     eta_max::T = T(0.9)
@@ -79,7 +75,7 @@ struct InnerWorkspace{T}
     g::Vector{T}
     factor_tmp::Vector{T}
 
-    # PSD
+    # MM
     beta_old::Vector{T}
     beta_y::Vector{T}
     beta_trial::Vector{T}
@@ -245,8 +241,8 @@ function wls_grad_from_resid!(
     return g
 end
 
-# PSD inner solver
-function solve_wls_spectral_psd!(
+# Spectral-MM inner solver
+function solve_wls_spectral_mm!(
     beta_out::AbstractVector{T},
     Xbeta_out::AbstractVector{T},
     beta_start::AbstractVector{T},
@@ -293,14 +289,14 @@ function solve_wls_spectral_psd!(
         end
 
         # d = -(M + rho I)^(-1) g
-        @timeit SMM_TIMER "inner/inv apply" begin
+        begin
             inv_apply!(ws.d, ws.factor_tmp, ws.g, Vk, factor_base, factor_coeff)
         end
         @. ws.d = -ws.d
         !finite_all(ws.d) && return iter - 1, eta, true
 
         # Xd is reused for the exact quadratic line search and updates.
-        @timeit SMM_TIMER "inner/X*d" begin
+        begin
             mul!(ws.Xd, X, ws.d)
         end
         !finite_all(ws.Xd) && return iter - 1, eta, true
@@ -325,7 +321,7 @@ function solve_wls_spectral_psd!(
             @. ws.Xbeta_y = Xbeta_out + theta * (Xbeta_out - ws.Xbeta_old)
             (!finite_all(ws.beta_y) || !finite_all(ws.Xbeta_y)) && return iter, eta, true
             @. ws.residual = ws.Xbeta_y - z
-            @timeit SMM_TIMER "inner/gradient refresh" begin
+            begin
                 wls_grad_from_resid!(ws.g, ws.Wr, X, w, ws.residual, ws.beta_y; ridge=ridge)
             end
             t = tnew
@@ -334,7 +330,7 @@ function solve_wls_spectral_psd!(
             @. beta_out += alpha * ws.d
             @. Xbeta_out += alpha * ws.Xd
             (!finite_all(beta_out) || !finite_all(Xbeta_out)) && return iter - 1, eta, true
-            @timeit SMM_TIMER "inner/H*d" begin
+            begin
                 wls_hess_from_Xv!(ws.Hp, ws.WXp, X, w, ws.d, ws.Xd; ridge=ridge)
             end
             @. ws.g += alpha * ws.Hp
@@ -423,8 +419,8 @@ function solve_inner!(
     ridge::T,
     forcing::T
 ) where {T}
-    if opts.solver === :psd
-        return solve_wls_spectral_psd!(
+    if opts.solver === :mm
+        return solve_wls_spectral_mm!(
             beta_out, Xbeta_out, beta, Xbeta, X, z, w, Vk, factor_base, factor_coeff, ws;
             ridge=ridge, maxiter=opts.maxiter, forcing=forcing, abstol=opts.abstol,
             alpha_min=opts.alpha_min, alpha_max=opts.alpha_max, nesterov=opts.nesterov
@@ -435,7 +431,7 @@ function solve_inner!(
             ridge=ridge, maxiter=opts.maxiter, forcing=forcing, abstol=opts.abstol
         )
     else
-        throw(ArgumentError("inner solver must be :psd or :pcg"))
+        throw(ArgumentError("inner solver must be :mm or :pcg"))
     end
 end
 
@@ -551,37 +547,56 @@ end
 
 # Diagnostics
 
-function print_iteration(
-    iter,
-    solver,
-    loss,
-    relgrad,
-    inner_iter,
-    inner_stat,
-    eigres,
-    step,
-    restart
-)
-    tag = restart ? "  restart" : ""
-    if solver === :pcg
-        @printf("outer=%4d  PCG  loss=%.6e  rel|g|=%.3e  inner=%3d  eta=%.3e  eigres=%.3e  step=%.3g%s\n",
-                iter, loss, relgrad, inner_iter, inner_stat, eigres, step, tag)
-    else
-        @printf("outer=%4d  PSD  loss=%.6e  rel|g|=%.3e  inner=%3d  eta=%.3e  eigres=%.3e  step=%.3g%s\n",
-                iter, loss, relgrad, inner_iter, inner_stat, eigres, step, tag)
-    end
+function print_trace_header(solver, rank)
+    println()
+    @printf("SpectralMM  Solver: %s   Rank: %d\n\n", uppercase(String(solver)), rank)
+    @printf("%4s  %12s  %10s  %5s  %10s  %10s  %6s  %s\n",
+            "Iter", "Loss", "RelGrad", "Inner", "InnerRes", "EigRes", "Step", "Spectral")
 end
+
+function print_iteration(iter, loss, relgrad, inner_iter, inner_stat, eigres, step, status::Symbol)
+    eigstr = isfinite(eigres) ? @sprintf("%.2e", eigres) : "-"
+    statusstr =
+        status === :init            ? "init" :
+        status === :init_correct    ? "init+correct" :
+        status === :init_fail       ? "init+fail" :
+        status === :restart         ? "restart" :
+        status === :correct         ? "correct" :
+        status === :correct_fail    ? "correct-fail" :
+        status === :restart_correct ? "restart+correct" :
+        status === :restart_fail    ? "restart+fail" :
+                                      "reuse"
+
+    @printf("%4d  %12.4e  %10.2e  %5d  %10.2e  %10s  %6.2f  %s\n",
+            iter, loss, relgrad, inner_iter, inner_stat, eigstr, step, statusstr)
+end
+
+function print_failure_iteration(iter, inner_iter, status)
+    @printf("%4d  %12s  %10s  %5d  %10s  %10s  %6s  %s\n",
+            iter, "-", "-", inner_iter, "-", "-", "-", status)
+end
+
+function print_convergence(iters, loss, relgrad)
+    println()
+    @printf("Converged after %d iterations\n", iters)
+    @printf("Final loss:      %.6e\n", loss)
+    @printf("Relative grad.:  %.3e\n", relgrad)
+end
+
+function print_termination(reason, iters, loss, relgrad)
+    println()
+    @printf("Terminated after %d iterations (%s)\n", iters, reason)
+    @printf("Final loss:      %.6e\n", loss)
+    @printf("Relative grad.:  %.3e\n", relgrad)
+end
+
 
 # ================================================================
 # Persistent Lanczos restart support
 # Requires LanczosRestartWorkspace and checked_lz! to be defined.
 # ================================================================
 
-@inline function lanczos_workspace_capacity(
-    krylovdim::Int,
-    max_krylovdim::Int,
-    max_retries::Int
-)
+@inline function lanczos_workspace_capacity(krylovdim::Int, max_krylovdim::Int, max_retries::Int)
     kd = min(krylovdim, max_krylovdim)
     cap = kd
     for _ in 2:max_retries
@@ -605,29 +620,28 @@ function restart_spectrum!(
 
     p = size(X, 2)
     r = k + 1
-
-    kd = something(
-        opts.krylovdim,
-        min(p, max(3r + 20, r + 10))
-    )
+    kd = something(opts.krylovdim, min(p, max(3r + 20, r + 10)))
     requested_maxkd = something(opts.max_krylovdim, p)
 
     # Never ask checked_lz! for more storage than the persistent workspace owns.
     maxkd = min(requested_maxkd, size(lzws.Q, 2))
 
-    V, XV, lambda, res, _, ok = checked_lz!(lzws, X, Xt, w, r; ridge=opts.ridge, krylovdim=kd, max_krylovdim=maxkd,
-        tol=opts.lanczos_tol, resid_tol=opts.resid_tol, seed=iter + 100, max_retries=opts.lanczos_retries, verbose=false
+    V, XV, lambda, res, _, ok = checked_lz!(
+        lzws, X, Xt, w, r;
+        ridge=opts.ridge, krylovdim=kd, max_krylovdim=maxkd,
+        tol=opts.lanczos_tol, resid_tol=opts.resid_tol,
+        seed=iter + 100, max_retries=opts.lanczos_retries, verbose=false
     )
 
     copyto!(sp.V, V)
     copyto!(sp.XV, XV)
     copyto!(sp.lambda, lambda)
-
     return res, ok
 end
 
 
 # Main solver
+
 function spectral_mm(
     X::AbstractMatrix{T},
     y::AbstractVector{T};
@@ -637,7 +651,7 @@ function spectral_mm(
     inner::InnerOptions{T}=InnerOptions{T}(),
     outer::OuterOptions{T}=OuterOptions{T}()
 ) where {T<:Real}
-    
+
     spectral.correction_tol >= zero(T) || throw(ArgumentError("correction_tol must be nonnegative"))
     spectral.restart_every >= 0 || throw(ArgumentError("restart_every must be >= 0"))
 
@@ -645,7 +659,7 @@ function spectral_mm(
     k = spectral.k
     length(y) == m || throw(DimensionMismatch("length(y) must equal size(X,1)"))
     1 <= k < p || throw(ArgumentError("k must satisfy 1 <= k < p"))
-    inner.solver in (:psd, :pcg) || throw(ArgumentError("solver must be :psd or :pcg"))
+    inner.solver in (:mm, :pcg) || throw(ArgumentError("solver must be :mm or :pcg"))
     zero(T) < inner.shrink < one(T) || throw(ArgumentError("shrink must lie in (0,1)"))
     zero(T) < inner.eta_max < one(T) || throw(ArgumentError("eta_max must lie in (0,1)"))
     inner.forcing_c > zero(T) || throw(ArgumentError("forcing_c must be positive"))
@@ -656,27 +670,26 @@ function spectral_mm(
     # ------------------------------------------------------------
     # State
     # ------------------------------------------------------------
-    local beta, beta_prev, ws, iw, sp, lzws, Xt, fbase
-    @timeit SMM_TIMER "initialization" begin
-        beta = beta0 === nothing ? zeros(T, p) : Vector{T}(beta0)
-        beta_prev = copy(beta)
-        ws = OuterWorkspace(T, m, p)
-        iw = InnerWorkspace(T, m, p, k)
-        sp = SpectralWorkspace(T, m, p, k)
+    beta = beta0 === nothing ? zeros(T, p) : Vector{T}(beta0)
+    beta_prev = copy(beta)
+    ws = OuterWorkspace(T, m, p)
+    iw = InnerWorkspace(T, m, p, k)
+    sp = SpectralWorkspace(T, m, p, k)
 
-        # Cache the lazy transpose once. This does not copy X.
-        Xt = transpose(X)
+    # Cache the lazy transpose once. This does not copy X.
+    Xt = transpose(X)
 
-        # Persistent Lanczos workspace: allocate only the largest Krylov
-        # dimension that can actually be reached within lanczos_retries.
-        r_lz = k + 1
-        kd0_lz = something(spectral.krylovdim, min(p, max(3r_lz + 20, r_lz + 10)))
-        maxkd_requested = something(spectral.max_krylovdim, p)
-        maxkd_lz = lanczos_workspace_capacity(kd0_lz, min(maxkd_requested, p), spectral.lanczos_retries)
-        lzws = LanczosRestartWorkspace(X, r_lz, maxkd_lz)
-        mul!(ws.Xbeta_base, X, beta)
-        fbase = logloss_xb(family, ws.Xbeta_base, y, beta; ridge=spectral.ridge)
-    end
+    # Persistent Lanczos workspace.
+    r_lz = k + 1
+    kd0_lz = something(spectral.krylovdim, min(p, max(3r_lz + 20, r_lz + 10)))
+    maxkd_requested = something(spectral.max_krylovdim, p)
+    maxkd_lz = lanczos_workspace_capacity(
+        kd0_lz, min(maxkd_requested, p), spectral.lanczos_retries
+    )
+    lzws = LanczosRestartWorkspace(X, r_lz, maxkd_lz)
+
+    mul!(ws.Xbeta_base, X, beta)
+    fbase = logloss_xb(family, ws.Xbeta_base, y, beta; ridge=spectral.ridge)
 
     # ------------------------------------------------------------
     # History
@@ -704,93 +717,121 @@ function spectral_mm(
     # ============================================================
     # Outer loop
     # ============================================================
+    outer.verbose && print_trace_header(inner.solver, k)
+
     for iter in 1:outer.maxiter
-        
         # --------------------------------------------------------
-        # Evaluation point
+        # Convergence at the accepted iterate
         # --------------------------------------------------------
-        if outer.nesterov && iter > 1
-            extrapolate!(ws.beta_eval, beta, beta_prev, t_outer)
-        else
-            copyto!(ws.beta_eval, beta)
-        end
-        mul!(ws.Xbeta, X, ws.beta_eval)
-        f0 = logloss_xb(family, ws.Xbeta, y, ws.beta_eval; ridge=spectral.ridge)
-        
-        # Monotone Nesterov restart.
-        if outer.nesterov && iter > 1 && (!isfinite(f0) || f0 > fbase)
-            copyto!(ws.beta_eval, beta)
-            copyto!(ws.Xbeta, ws.Xbeta_base)
-            f0 = fbase
-            t_outer = one(T)
+        copyto!(ws.beta_eval, beta)
+        copyto!(ws.Xbeta, ws.Xbeta_base)
+
+        grad_weights_xb!(
+            family, ws.g, ws.mu, ws.w, ws.grad_resid,
+            X, ws.Xbeta, y, ws.beta_eval;
+            ridge=spectral.ridge,
+            w_floor=outer.w_floor,
+        )
+
+        gnorm = norm(ws.g)
+
+        if iter == 1
+            grad_ref = gnorm
+            grad_scale = one(T) + gnorm
         end
 
-        # --------------------------------------------------------
-        # Gradient and IRLS weights
-        # --------------------------------------------------------
-        local gnorm, relgrad
-        @timeit SMM_TIMER "gradient + weights" begin
-            grad_weights_xb!(family, ws.g, ws.mu, ws.w, ws.grad_resid, X, ws.Xbeta, y, ws.beta_eval;
-                            ridge=spectral.ridge, w_floor=outer.w_floor)
-            gnorm = norm(ws.g)
-            if iter == 1
-                grad_ref = gnorm
-                grad_scale = one(T) + gnorm
-            end
-            relgrad = gnorm / grad_scale
-        end
+        relgrad = gnorm / grad_scale
+
         push!(losses, fbase)
         push!(gradnorms, gnorm)
         push!(relgradnorms, relgrad)
 
-        # --------------------------------------------------------
-        # Convergence
-        # --------------------------------------------------------
         if gnorm <= outer.gtol || relgrad <= outer.relgtol
-            outer.verbose && @printf("outer=%4d  solver=%s  loss=%.6e  |g|=%.3e  rel|g|=%.3e  converged=true\n",
-                                iter, uppercase(String(inner.solver)), fbase, gnorm, relgrad)
-            return MMResult(beta, losses, gradnorms, relgradnorms, eigresiduals, inner_iters, inner_stats,
-                outer_steps, restart_flags, correction_flags, restarts, iter - 1, true)
+            outer.verbose && print_convergence(iter - 1, fbase, relgrad)
+
+            return MMResult(
+                beta, losses, gradnorms, relgradnorms, eigresiduals,
+                inner_iters, inner_stats, outer_steps, restart_flags,
+                correction_flags, restarts, iter - 1, true
+            )
+        end
+
+        # --------------------------------------------------------
+        # Nesterov evaluation point
+        # --------------------------------------------------------
+        if outer.nesterov && iter > 1
+            extrapolate!(ws.beta_eval, beta, beta_prev, t_outer)
+            mul!(ws.Xbeta, X, ws.beta_eval)
+
+            f0 = logloss_xb(
+                family, ws.Xbeta, y, ws.beta_eval;
+                ridge=spectral.ridge,
+            )
+
+            # Monotone restart.
+            if !isfinite(f0) || f0 > fbase
+                copyto!(ws.beta_eval, beta)
+                copyto!(ws.Xbeta, ws.Xbeta_base)
+                f0 = fbase
+                t_outer = one(T)
+            else
+                # Recompute gradient and IRLS weights at the
+                # extrapolated point used to construct the WLS problem.
+                grad_weights_xb!(
+                    family, ws.g, ws.mu, ws.w, ws.grad_resid,
+                    X, ws.Xbeta, y, ws.beta_eval;
+                    ridge=spectral.ridge,
+                    w_floor=outer.w_floor,
+                )
+
+                gnorm = norm(ws.g)
+            end
+        else
+            f0 = fbase
         end
 
         # --------------------------------------------------------
         # Spectral state
         # --------------------------------------------------------
-        periodic_restart = spectral.restart_every > 0 && iter > 1 && (iter - 1) % spectral.restart_every == 0
+        periodic_restart =
+            spectral.restart_every > 0 &&
+            iter > 1 &&
+            (iter - 1) % spectral.restart_every == 0
+
         restarted = need_restart || periodic_restart
+        restart_eigres = T(NaN)
+
         if restarted
-            @timeit SMM_TIMER "spectral restart (Lanczos)" begin
-                last_eigres, _ = restart_spectrum!(sp, lzws, X, Xt, ws.w, k, iter, spectral)
-            end
-            # The stored spectral state now corresponds to the current IRLS weights.
+            last_eigres, _ = restart_spectrum!(
+                sp, lzws, X, Xt, ws.w, k, iter, spectral
+            )
             copyto!(ws.w_spectral, ws.w)
+            restart_eigres = last_eigres
             restarts += 1
             need_restart = false
         end
-        eigres = last_eigres
-        push!(eigresiduals, eigres)
+
+        push!(eigresiduals, last_eigres)
         push!(restart_flags, restarted)
 
         # --------------------------------------------------------
         # Spectral majorizer
-        #
         # M = gamma I + Vk(Dk - gamma I)Vk'
         # --------------------------------------------------------
-        local Vk, gamma, factor_base
-        @timeit SMM_TIMER "majorizer setup" begin
-            Vk, sp.d_eigs, gamma = eig_factor!(sp.d_eigs, sp.V, sp.lambda, k)
-            factor_base, sp.factor_coeff = inv_cache!(sp.factor_coeff, sp.d_eigs, gamma, spectral.rho)
-        end
+        Vk, sp.d_eigs, gamma = eig_factor!(sp.d_eigs, sp.V, sp.lambda, k)
+        factor_base, sp.factor_coeff =
+            inv_cache!(sp.factor_coeff, sp.d_eigs, gamma, spectral.rho)
 
         # --------------------------------------------------------
         # Working response
         # --------------------------------------------------------
-        @timeit SMM_TIMER "working response" begin
-            work_y!(family, ws.z, ws.Xbeta, y, ws.mu, ws.w; w_floor=outer.w_floor)
-        end
+        work_y!(
+            family, ws.z, ws.Xbeta, y, ws.mu, ws.w;
+            w_floor=outer.w_floor
+        )
 
         # --------------------------------------------------------
-        # Inner forcing: eta_m = min(eta_max, forcing_c * grad_ratio^forcing_alpha)
+        # Inner forcing
         # --------------------------------------------------------
         grad_ratio = gnorm / max(grad_ref, sqrt(eps(T)))
         eta_m = min(inner.eta_max, inner.forcing_c * grad_ratio^inner.forcing_alpha)
@@ -798,16 +839,15 @@ function spectral_mm(
         # --------------------------------------------------------
         # Fixed-WLS inner solve
         # --------------------------------------------------------
-        local nit, stat, failed
-        @timeit SMM_TIMER "inner solve" begin
-            nit, stat, failed = solve_inner!(
-                iw.beta_inner, iw.Xbeta_inner, ws.beta_eval, ws.Xbeta, X, ws.z, ws.w,
-                Vk, factor_base, sp.factor_coeff, iw, inner;
-                ridge=spectral.ridge, forcing=eta_m
-            )
-        end
+        nit, stat, failed = solve_inner!(
+            iw.beta_inner, iw.Xbeta_inner, ws.beta_eval, ws.Xbeta,
+            X, ws.z, ws.w, Vk, factor_base, sp.factor_coeff, iw, inner;
+            ridge=spectral.ridge, forcing=eta_m
+        )
+
         push!(inner_iters, nit)
         push!(inner_stats, stat)
+
         @. ws.direction = iw.beta_inner - ws.beta_eval
         @. ws.Xdirection = iw.Xbeta_inner - ws.Xbeta
         dnorm = norm(ws.direction)
@@ -820,7 +860,7 @@ function spectral_mm(
             t_outer = one(T)
             push!(outer_steps, zero(T))
             push!(correction_flags, true)
-            outer.verbose && @printf("outer=%4d  inner solver failed; restarting spectrum\n", iter)
+            outer.verbose && print_failure_iteration(iter, nit, "inner-fail")
             continue
         end
 
@@ -829,26 +869,36 @@ function spectral_mm(
         # --------------------------------------------------------
         negligible = dnorm <= T(1e-14) * (one(T) + norm(beta))
         if negligible
-            outer.verbose && @printf("outer=%4d  terminated: negligible step\n", iter)
-            return MMResult(beta, losses, gradnorms, relgradnorms, eigresiduals, inner_iters, inner_stats,
-                outer_steps, restart_flags, correction_flags, restarts, iter, true)
+            outer.verbose &&
+                print_termination("negligible step", iter, fbase, relgrad)
+
+            return MMResult(
+                beta, losses, gradnorms, relgradnorms, eigresiduals,
+                inner_iters, inner_stats, outer_steps, restart_flags,
+                correction_flags, restarts, iter, true
+            )
         end
 
         # --------------------------------------------------------
         # Globalization
         # --------------------------------------------------------
         local alpha, fnew
-        @timeit SMM_TIMER "line search / globalization" begin
-            if outer.safeguard
-                alpha, fnew =
-                    outer_linesearch!(ws.beta_new, ws.Xbeta_new, ws.beta_eval, ws.Xbeta, ws.direction, ws.Xdirection,
-                        y, family, fbase; ridge=spectral.ridge, alpha_min=inner.alpha_min, shrink=inner.shrink)
-            else
-                alpha = one(T)
-                @. ws.beta_new = ws.beta_eval + ws.direction
-                @. ws.Xbeta_new = ws.Xbeta + ws.Xdirection
-                fnew = logloss_xb(family, ws.Xbeta_new, y, ws.beta_new; ridge=spectral.ridge)
-            end
+        if outer.safeguard
+            alpha, fnew = outer_linesearch!(
+                ws.beta_new, ws.Xbeta_new, ws.beta_eval, ws.Xbeta,
+                ws.direction, ws.Xdirection, y, family, fbase;
+                ridge=spectral.ridge,
+                alpha_min=inner.alpha_min,
+                shrink=inner.shrink
+            )
+        else
+            alpha = one(T)
+            @. ws.beta_new = ws.beta_eval + ws.direction
+            @. ws.Xbeta_new = ws.Xbeta + ws.Xdirection
+            fnew = logloss_xb(
+                family, ws.Xbeta_new, y, ws.beta_new;
+                ridge=spectral.ridge
+            )
         end
         push!(outer_steps, alpha)
 
@@ -859,67 +909,89 @@ function spectral_mm(
             need_restart = true
             t_outer = one(T)
             push!(correction_flags, true)
-            outer.verbose && @printf("outer=%4d  safeguard failed; restarting spectrum\n", iter)
+            outer.verbose && print_failure_iteration(iter, nit, "safeguard-fail")
             continue
         end
+
         stepnorm = alpha * dnorm
 
         # --------------------------------------------------------
         # Stalled convergence
         # --------------------------------------------------------
-        if outer.accept_stalled && relgrad <= outer.stalled_relgtol && stepnorm <= outer.step_reltol * (one(T) + norm(beta))
+        if outer.accept_stalled &&
+           relgrad <= outer.stalled_relgtol &&
+           stepnorm <= outer.step_reltol * (one(T) + norm(beta))
+
             copyto!(beta, ws.beta_new)
             copyto!(ws.Xbeta_base, ws.Xbeta_new)
-            outer.verbose && @printf("outer=%4d  terminated: stalled near tolerance\n", iter)
-            return MMResult(beta, losses, gradnorms, relgradnorms, eigresiduals, inner_iters, inner_stats,
-                outer_steps, restart_flags, correction_flags, restarts, iter, true)
+            outer.verbose &&
+                print_termination("stalled near tolerance", iter, fnew, relgrad)
+
+            return MMResult(
+                beta, losses, gradnorms, relgradnorms, eigresiduals,
+                inner_iters, inner_stats, outer_steps, restart_flags,
+                correction_flags, restarts, iter, true
+            )
         end
 
         # --------------------------------------------------------
         # New IRLS weights
         # --------------------------------------------------------
-        @timeit SMM_TIMER "new weights" begin
-            copyto!(ws.w_old, ws.w)
-            weights_xb!(family, ws.mu_new, ws.w_new, ws.Xbeta_new, y; w_floor=outer.w_floor)
-        end
+        copyto!(ws.w_old, ws.w)
+        weights_xb!(
+            family, ws.mu_new, ws.w_new, ws.Xbeta_new, y;
+            w_floor=outer.w_floor
+        )
 
-        
         # --------------------------------------------------------
-        # Adaptive spectral correction based on projected Hessian change
-        #
-        # B = V' (H_new - H_spectral) V = (XV)' Diagonal(w_new - w_spectral) (XV).
-        #
-        # Correct only when ||B||_F / ||Lambda||_F exceeds correction_tol.
+        # Adaptive spectral correction
         # --------------------------------------------------------
-        local eigres_new, correction_failed, proj_change
+        proj_change = projected_hessian_change!(sp, ws.w_spectral, ws.w_new)
+        do_correction =
+            !isfinite(proj_change) ||
+            proj_change > spectral.correction_tol
 
-        @timeit SMM_TIMER "projected change" begin
-            proj_change = projected_hessian_change!(sp, ws.w_spectral, ws.w_new)
-        end
-
-        do_correction = !isfinite(proj_change) || proj_change > spectral.correction_tol
+        local eigres_new, correction_failed, spectral_status::Symbol, display_eigres
 
         if do_correction
-            @timeit SMM_TIMER "spectral correction" begin
-                eigres_new = correct_spectrum!(sp, X, ws.w_spectral, ws.w_new, spectral.ridge)
+            eigres_new = correct_spectrum!(
+                sp, X, ws.w_spectral, ws.w_new, spectral.ridge
+            )
 
-                correction_failed = !isfinite(eigres_new) || eigres_new > spectral.resid_tol ||
-                    !finite_all(sp.Vnew) || !finite_all(sp.XVnew) || !finite_all(sp.lambda_new)
+            correction_failed =
+                !isfinite(eigres_new) ||
+                eigres_new > spectral.resid_tol ||
+                !finite_all(sp.Vnew) ||
+                !finite_all(sp.XVnew) ||
+                !finite_all(sp.lambda_new)
 
-                if correction_failed
-                    # Keep the previous spectral state and restart Lanczos next iteration.
-                    need_restart = true
-                else
-                    accept_spectrum!(sp)
-                    copyto!(ws.w_spectral, ws.w_new)
-                    last_eigres = eigres_new
-                    need_restart = false
-                end
+            if correction_failed
+                need_restart = true
+                spectral_status = :correct_fail
+            else
+                accept_spectrum!(sp)
+                copyto!(ws.w_spectral, ws.w_new)
+                last_eigres = eigres_new
+                need_restart = false
+                spectral_status = :correct
             end
+
+            display_eigres = eigres_new
         else
-            # Reuse the current spectral state. It still corresponds to w_spectral.
-            eigres_new = last_eigres
+            eigres_new = T(NaN)
             correction_failed = false
+            spectral_status = restarted ? :restart : :reuse
+            display_eigres = restarted ? restart_eigres : T(NaN)
+        end
+        
+        if restarted && do_correction
+            if iter == 1
+                spectral_status = correction_failed ? :init_fail : :init_correct
+            else
+                spectral_status = correction_failed ? :restart_fail : :restart_correct
+            end
+        elseif restarted && iter == 1
+            spectral_status = :init
         end
 
         push!(correction_flags, correction_failed)
@@ -927,7 +999,10 @@ function spectral_mm(
         # --------------------------------------------------------
         # Diagnostics
         # --------------------------------------------------------
-        outer.verbose && print_iteration(iter, inner.solver, fnew, relgrad, nit, stat, eigres_new, alpha, correction_failed)
+        outer.verbose && print_iteration(
+            iter, fnew, relgrad, nit, stat,
+            display_eigres, alpha, spectral_status
+        )
 
         # --------------------------------------------------------
         # Accept iterate
@@ -949,38 +1024,20 @@ function spectral_mm(
         end
     end
 
+    # ------------------------------------------------------------
+    # Maximum iterations
+    # ------------------------------------------------------------
+    outer.verbose &&
+        print_termination(
+            "maximum iterations reached",
+            outer.maxiter,
+            fbase,
+            relgradnorms[end]
+        )
+
     return MMResult(
-        beta,
-        losses,
-        gradnorms,
-        relgradnorms,
-        eigresiduals,
-        inner_iters,
-        inner_stats,
-        outer_steps,
-        restart_flags,
-        correction_flags,
-        restarts,
-        outer.maxiter,
-        false
+        beta, losses, gradnorms, relgradnorms, eigresiduals,
+        inner_iters, inner_stats, outer_steps, restart_flags,
+        correction_flags, restarts, outer.maxiter, false
     )
 end
-
-
-# ------------------------------------------------------------------
-# Timing helpers
-# ------------------------------------------------------------------
-"""
-    reset_smm_timer!()
-
-Reset all accumulated Spectral-MM timing statistics.
-Call this after compilation/warm-up and before a measured run.
-"""
-reset_smm_timer!() = nothing
-
-"""
-    show_smm_timer()
-
-Print the accumulated timing breakdown.
-"""
-show_smm_timer() = show(SMM_TIMER)
