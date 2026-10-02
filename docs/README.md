@@ -1,5 +1,7 @@
 # User guides
 
+Current modeling interfaces are documented in [Statistical_API.md](Statistical_API.md).
+
 - [Submission.md](Submission.md): registry submission steps and outstanding release checks.
 
 - [Packaging.md](Packaging.md): assemble, build and validate independent R, Python and Julia packages.
@@ -36,8 +38,7 @@ Julia uses symbols (for example, `solver=:cho`).
 
 Julia `glm` and positional-family `fit` dispatch to Julia solvers. The unified
 `SpectralMM.fit` defaults to Julia; select `backend=:cpp` to use C++. Python and
-R use C++. Both backends support all 14 families. Formula support remains in
-original Julia.
+R use C++. Both backends support all 14 families. Formula input is supported in all three languages, and with both Julia backends.
 The low-level Julia `spectral_mm` function is specifically for `:pcg` and `:mm`.
 
 ```python

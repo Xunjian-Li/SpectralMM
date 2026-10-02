@@ -1,5 +1,7 @@
 # C++ core prototype
 
+Current modeling interfaces are documented in [Statistical_API.md](../docs/Statistical_API.md).
+
 This is an opt-in prototype alongside the original Julia implementation. It
 implements all 14 family types currently defined in Julia, with float64 dense and CSC
 matrices, a matrix-free WLS Hessian, reorthogonalized Lanczos, spectral reuse,
@@ -96,7 +98,7 @@ layout to the C ABI's zero-based int64 layout.
 
 - The family names and parameters below apply to Python, R and the Julia C++
   interface (Julia uses symbols and `family_options`). Bernoulli responses must
-  be exactly 0 or 1. There are no observation weights, offsets or formula API yet.
+  be exactly 0 or 1. There are no observation weights or offsets. Formula parsing is implemented in the language interfaces.
 - An intercept is added automatically: Python `fit_intercept=True`, R
   `intercept=TRUE`, Julia `intercept=true`. Pass features without a constant column.
   Disable the option for an existing complete design matrix. Prediction takes the
@@ -156,7 +158,7 @@ This is not a complete port of the Julia package:
 
 - Python/R expose all 14 family types and offer CG, CGLS, CRLS, LSQR
   LSMR, spectral MM and Cholesky through a shared native outer solver; see
-  [the benchmark guide](../benchmark/native/README.md). The Julia C++ interface supports the same fourteen families and standard accessors. Formula integration remains in original Julia.
+  [the benchmark guide](../benchmark/native/README.md). The Julia C++ interface supports the same fourteen families and standard accessors. Formula input is supported with both Julia backends.
 - Correction directly performs Rayleigh–Ritz in the retained subspace. Julia
   first applies a square QR rotation within that same subspace. The resulting
   Ritz subspace is mathematically equivalent, but floating-point paths differ.

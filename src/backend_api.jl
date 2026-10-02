@@ -53,7 +53,7 @@ parameters belong in `family_options`. Standard accessors are `coef`, `predict`,
 C++ is built and cached only when that backend is first requested.
 Legacy `glm` and positional-family `fit` calls remain pure Julia.
 """
-function fit(X::AbstractMatrix{<:Real}, y::AbstractVector{<:Real};
+function _fit_backend(X::AbstractMatrix{<:Real}, y::AbstractVector{<:Real};
              family=:gaussian, backend=:julia, family_options=NamedTuple(),
              intercept::Bool=true, rank=nothing, maxiter=200, inner_maxiter=100,
              gtol=1e-7, relgtol=1e-8, floor=1e-6, solver=:pcg, kwargs...)
@@ -71,8 +71,8 @@ function fit(X::AbstractMatrix{<:Real}, y::AbstractVector{<:Real};
     xx=X isa SparseMatrixCSC ? convert(SparseMatrixCSC{Float64,Int},X) :
         X isa Matrix{Float64} ? X : Matrix{Float64}(X)
     yy=y isa Vector{Float64} ? y : Vector{Float64}(y)
-    return link === nothing ? fit(xx,yy,f;common...,kwargs...) :
-        glm(xx,yy,f,link;common...,kwargs...)
+    return link === nothing ? _fit_julia(xx,yy,f;common...,kwargs...) :
+        _glm_julia(xx,yy,f,link;common...,kwargs...)
 end
 
 # Backend is a read-only property without changing legacy model constructors.

@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   pull_request:
   push:
-    branches: [main, master]
+    branches: [main, master, "codex/**"]
 permissions:
   contents: read
 jobs:
@@ -25,8 +25,15 @@ jobs:
       - run: python tools/build_packages.py --language Python --build
       - run: python -m twine check dist/Python/artifacts/*
       - run: python -m pip install --find-links dist/Python/artifacts SpectralMM==0.1.0 --no-index --no-deps
-      - run: python -m pip install numpy scipy
+      - run: python -m pip install numpy scipy patsy
       - run: python -m unittest discover -s dist/Python/SpectralMM/tests
+        env:
+          SPECTRALMM_API_EXPORT: ${{ runner.temp }}/api-python.csv
+      - uses: actions/upload-artifact@v4
+        if: runner.os == 'Linux'
+        with:
+          name: api-python
+          path: ${{ runner.temp }}/api-python.csv
       - uses: actions/upload-artifact@v4
         with:
           name: python-${{ matrix.os }}
@@ -42,6 +49,7 @@ jobs:
       OMP_NUM_THREADS: '2'
       OPENBLAS_NUM_THREADS: '2'
       VECLIB_MAXIMUM_THREADS: '2'
+      SPECTRALMM_API_EXPORT: ${{ runner.temp }}/api-r.csv
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -61,6 +69,11 @@ jobs:
           working-directory: dist/R/SpectralMM
           error-on: '"warning"'
           upload-results: 'true'
+      - uses: actions/upload-artifact@v4
+        if: runner.os == 'Linux'
+        with:
+          name: api-r
+          path: ${{ runner.temp }}/api-r.csv
   julia:
     strategy:
       fail-fast: false
@@ -82,3 +95,24 @@ jobs:
           version: '1.12'
       - uses: julia-actions/cache@v2
       - run: julia --project=dist/Julia/SpectralMM -e 'using Pkg; Pkg.instantiate(); Pkg.test()'
+        env:
+          SPECTRALMM_API_EXPORT: ${{ runner.temp }}/api-julia.csv
+      - uses: actions/upload-artifact@v4
+        if: runner.os == 'Linux'
+        with:
+          name: api-julia
+          path: ${{ runner.temp }}/api-julia.csv
+  cross-language:
+    needs: [python, r, julia]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: api-*
+          merge-multiple: true
+          path: api-results
+      - run: python tools/check_api_consistency.py --python api-results/api-python.csv --r api-results/api-r.csv --julia api-results/api-julia.csv

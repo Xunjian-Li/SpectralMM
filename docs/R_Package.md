@@ -1,5 +1,7 @@
 # R package installation and use
 
+Current modeling interfaces are documented in [Statistical_API.md](Statistical_API.md).
+
 After the updated repository is published to GitHub:
 
 ```r
@@ -35,7 +37,7 @@ this repository currently provides a source package.
 All fourteen families and eight solvers remain available. The matrix interface,
 intercept convention, inference cutoff of 50 parameters, and iteration output
 are unchanged. Use `?spectralmm_fit` and `?spectralmm_methods` for installed help.
-Formula input, weights and offsets have not been added by package installation.
+Formula input is supported by the statistical API. Observation weights and offsets remain unsupported.
 
 ## Build layout
 

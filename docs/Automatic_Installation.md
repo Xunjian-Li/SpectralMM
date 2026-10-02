@@ -1,5 +1,7 @@
 # Automatic installation for Python and Julia
 
+Current modeling interfaces are documented in [Statistical_API.md](Statistical_API.md).
+
 The public names are `spectralmm` in Python and `SpectralMM` in Julia. Building
 and locating the C++ library are handled internally. A C++17 toolchain is still
 required when compiling the C++ backend from source; a compatible Python wheel does not require
@@ -99,8 +101,7 @@ interfaces.
 
 Existing `SpectralMM.glm(X, y, distribution, link)` and positional-family Julia
 methods retain the original Julia solvers and formula support. Packaging does
-not silently change their numerical backend. The unified matrix interface does not
-accept formulas, case weights or offsets.
+not silently change their numerical backend. The unified statistical interface accepts formulas and matrices. Case weights and offsets remain unsupported.
 
 ## Development compatibility and rebuilding
 

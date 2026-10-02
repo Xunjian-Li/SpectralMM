@@ -308,14 +308,18 @@ function _solver_options(
     p,
     penalize_intercept=true,
     accept_stalled=true,
+    krylovdim=nothing,
 ) where {T<:Real}
 
+    if !isnothing(krylovdim)
+        rank+1 <= krylovdim <= p || throw(ArgumentError("krylovdim must lie in [rank+1,p]"))
+    end
     spectral = SpectralOptions{T}(
         k = rank,
         rho = T(floor),
         ridge = T(ridge),
         penalize_intercept = penalize_intercept,
-        krylovdim = min(p, max(12, rank+1)),
+        krylovdim = isnothing(krylovdim) ? min(p, max(12, rank+1)) : krylovdim,
         correction_tol = T(correction_tol),
         resid_tol = T(resid_tol),
     )
@@ -366,7 +370,7 @@ Fit a generalized linear model using the Spectral-MM framework.
 - `inner_maxiter`: maximum number of inner iterations.
 - `verbose`: print iteration information.
 """
-function glm(
+function _glm_julia(
     X::AbstractMatrix{T},
     y::AbstractVector{T},
     family::Distribution,
@@ -378,6 +382,7 @@ function glm(
     level = .95, use_t = nothing, dispersion = nothing,
     accept_stalled::Bool = true,
     rank::Union{Nothing,Int} = nothing,
+    krylovdim::Union{Nothing,Int} = nothing,
     floor::Real = 1e-6,
     ridge::Real = 0.0,
     solver::Symbol = :pcg,
@@ -424,6 +429,7 @@ function glm(
         maxiter, inner_maxiter, verbose, p,
         !(intercept || _formula_intercept) || penalize_intercept,
         accept_stalled,
+        krylovdim,
     )
 
     result = _fit_solver(
@@ -459,7 +465,7 @@ end
 Fit a generalized linear model from a StatsModels formula using
 the Spectral-MM framework.
 """
-function glm(
+function _glm_julia(
     formula::StatsModels.FormulaTerm,
     data,
     family::Distribution,
@@ -476,7 +482,7 @@ function glm(
 
     y, X = StatsModels.modelcols(f, data)
 
-    model = glm(
+    model = _glm_julia(
         X,
         y,
         family,
@@ -514,7 +520,7 @@ Fit an internal GLM or residual model using the pure Julia Spectral-MM framework
 Supported residual families include `Expectile`, `SmoothQuantile`,
 `PseudoHuber`, and `StudentT`.
 """
-function fit(
+function _fit_julia(
     X::AbstractMatrix{T},
     y::AbstractVector{T},
     family::IRLSFamily;
@@ -525,6 +531,7 @@ function fit(
     level = .95, use_t = nothing, dispersion = nothing,
     accept_stalled::Bool = true,
     rank::Union{Nothing,Int} = nothing,
+    krylovdim::Union{Nothing,Int} = nothing,
     floor::Real = 1e-6,
     ridge::Real = 0.0,
     solver::Symbol = :pcg,
@@ -568,6 +575,7 @@ function fit(
         maxiter, inner_maxiter, verbose, p,
         !intercept || penalize_intercept,
         accept_stalled,
+        krylovdim,
     )
 
     initial = family isa GLMFamily ? _init_beta(X,y,family,beta0) : beta0

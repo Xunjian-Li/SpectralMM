@@ -1,54 +1,55 @@
 \name{spectralmm_fit}
 \alias{spectralmm_fit}
-\title{Fit a Model Using the SpectralMM Native Core}
-\description{Fits generalized linear, asymmetric or robust regression models using a shared C++ core, with optional post-fit inference.}
+\alias{spectralmm_glm}
+\alias{spectralmm_control}
+\alias{spectralmm_diagnostics}
+\title{Fit Statistical Models with SpectralMM}
+\description{Matrix and formula interfaces sharing the same numerical core. Use the GLM interface for conventional family/link specifications and the generic interface for residual losses or legacy family identifiers.}
 \usage{
-spectralmm_fit(X, y, family = .spectralmm_families, beta0 = NULL,
-  solver = c("spectral", "cg", "cgls", "crls", "lsqr", "lsmr", "cho", "mm",
-             "pcg", "cholesky"),
-  preconditioner = c("jacobi", "none"), krylov_rtol = 1e-4,
-  krylov_atol = 1e-8, family_options = list(),
-  intercept = TRUE, penalize_intercept = FALSE,
-  inference = "auto", inference_max_p = 50L, cov_type = "auto",
-  level = .95, use_t = NULL, dispersion = NULL,
-  verbose = FALSE, trace = FALSE, ...)
+spectralmm_glm(X, y = NULL, data = NULL, family = stats::gaussian(),
+  link = NULL, start = NULL, rank = NULL, solver = "pcg",
+  control = spectralmm_control(), ...)
+spectralmm_fit(X, y = NULL, family = "gaussian", data = NULL,
+  start = NULL, beta0 = NULL, intercept = NULL, rank = NULL,
+  solver = "pcg", control = spectralmm_control(),
+  weights = NULL, offset = NULL, ...)
+spectralmm_control(...)
+spectralmm_diagnostics(object)
 }
 \arguments{
-\item{X}{A real numeric matrix or Matrix dgCMatrix, with feature columns and no added intercept column.}
-\item{y}{A real numeric response vector with one value per row.}
-\item{family}{Family name: gaussian, bernoulli, probit, poisson, gamma, negative_binomial, gaussian_log, gamma_inverse, tweedie, binomial, smooth_quantile, expectile, pseudo_huber, or student_t. The default is gaussian.}
-\item{beta0}{Optional initial coefficients, including the intercept first when fitted.}
-\item{solver}{Spectral PCG (spectral or pcg), spectral mm, a Krylov solver, or Cholesky (cho or cholesky). Cholesky forms a full curvature matrix.}
-\item{preconditioner}{Jacobi or no preconditioner for nonspectral Krylov solvers.}
-\item{krylov_rtol, krylov_atol}{Relative and absolute nonspectral inner tolerances.}
-\item{family_options}{Named list of fixed parameters: theta (negative binomial, default 1); power (Tweedie, 1.5); trials (binomial, 1, scalar or vector); tau (quantile/expectile, 0.5); smoothing (smooth quantile, 0.1); delta (pseudo-Huber, 1.345); nu and sigma (Student-t, 4 and 1).}
-\item{intercept}{Add an intercept automatically. Default TRUE.}
-\item{penalize_intercept}{Include the automatically added intercept in the ridge penalty. Default FALSE.}
-\item{inference}{"auto", TRUE or FALSE. Automatic inference is limited to inference_max_p parameters, including the intercept. TRUE bypasses only the size limit.}
-\item{inference_max_p}{Automatic inference size cutoff, default 50.}
-\item{cov_type}{"auto", "model", or "sandwich", where supported by the family.}
-\item{level}{Confidence level between zero and one.}
-\item{use_t}{Use a Student-t reference. NULL follows the model dispersion convention.}
-\item{dispersion}{Optional positive fixed dispersion; NULL uses the model convention.}
-\item{verbose}{Print the iteration table and termination summary.}
-\item{trace}{Retain the accepted-iterate table.}
-\item{...}{Native options: rank, maxiter, inner_maxiter, krylovdim, ridge, floor, gtol, relgtol, eta_max, correction_tol, resid_tol, nesterov, accept_negligible, accept_stalled, negligible_step_tol, step_reltol, stalled_relgtol. Unknown options are rejected.}
+\item{X}{A numeric feature matrix, a sparse dgCMatrix, or a formula.}
+\item{y}{Numeric response vector for matrix input.}
+\item{data}{A data frame for formula input. Missing values are rejected.}
+\item{family}{For GLMs, an R family object (gaussian, binomial, poisson or Gamma), or a supported family name. Negative binomial with fixed theta uses the name \code{"negative_binomial"}. For generic fitting, a legacy core family name or residual loss: smooth_quantile, expectile, pseudo_huber or student_t.}
+\item{link}{Link name for a named family; specify it within an R family object instead when using one. Supported pairs are Gaussian identity/log, binomial logit/probit, Poisson log, Gamma log/inverse and negative binomial log.}
+\item{start,beta0}{Initial coefficients including an intercept when present. beta0 is a compatibility alias; do not supply both.}
+\item{intercept}{NULL adds an intercept for matrix input. FALSE means a complete design matrix. Formula input controls its own intercept and rejects this argument.}
+\item{rank}{Retained spectral rank; NULL retains the existing numerical default.}
+\item{solver}{pcg, mm, cg, cho, cgls, crls, lsqr or lsmr. Legacy aliases spectral and cholesky remain accepted.}
+\item{control}{Advanced numerical settings from spectralmm_control. Omitted settings retain existing defaults. Duplicate direct and control options are rejected.}
+\item{weights,offset}{Not implemented by the numerical core. Non-NULL values are rejected, including formula offsets.}
+\item{object}{A fitted SpectralMM model.}
+\item{...}{Numerical settings (maxiter, inner_maxiter, krylovdim, ridge, floor, gtol, relgtol, eta_max, correction_tol, resid_tol, nesterov, preconditioner, krylov_rtol, krylov_atol, accept_negligible, accept_stalled, negligible_step_tol, step_reltol, stalled_relgtol); or fit arguments family_options, inference, inference_max_p, cov_type, level, use_t, dispersion, verbose, trace, penalize_intercept. Control accepts only numerical settings.}
 }
 \details{
-The native library is compiled during package installation. No CMake invocation, manual library loading, or Julia runtime is needed by R users. Dense operations use the BLAS configured for the R installation.
+The GLM binomial interface currently accepts binary zero/one responses, not proportions or two-column success/failure responses. Generic binomial fitting retains success counts with family_options=list(trials=...). Probit is a binomial link; the old probit core identifier remains a generic compatibility alias. Fixed negative binomial shape uses family_options=list(theta=...).
 
-The matrix interface does not accept formulas, case weights or offsets. Bernoulli responses are zero/one; grouped binomial responses are success counts with trials supplied separately. Gamma responses are positive. Family parameters are fixed, not jointly estimated.
+Formula fits preserve terms, factor levels, contrasts and coefficient names for new-data prediction. Both input routes call the same solver. Matrix input defaults to automatically adding one intercept. Starting vectors follow the resulting coefficient order.
 
-Inference requires gradient convergence, an unpenalized fit, more observations than coefficients, and identifiable information. It can be unavailable for separation, singularity or other numerical conditions. A step-based stop alone does not guarantee inference availability. Inspect \code{fit$info$gradient_converged} and \code{fit$inference$status}.
+Inference defaults to automatic only for at most 50 coefficients including the intercept. It also requires an unpenalized gradient-converged identifiable model with n greater than p. Setting inference=TRUE bypasses only the size cutoff. No covariance matrix is allocated merely for summary or diagnostics.
+
+Deviance is unscaled. Gaussian log likelihood uses the maximum-likelihood scale RSS/n unless dispersion is supplied. Gamma log likelihood is evaluated at the supplied dispersion or Pearson dispersion with n-p denominator; this is not a profiled Gamma likelihood. The covariance dispersion policy is unchanged. Shape parameters remain fixed. Normalized likelihood and deviance are not offered for residual losses or Tweedie in this interface.
 }
-\value{An object of class \code{spectralmm_native}, with coefficient vector \code{coef}, diagnostics \code{info}, \code{family}, \code{family_options}, \code{intercept}, \code{n_features}, \code{inference}, and optionally \code{trace}. Inference includes status, covariance, standard errors, reference statistics, p-values, confidence intervals and Wald chi-square results when available.}
+\value{A spectralmm object retaining the spectralmm_native compatibility class. It contains coefficients, family/link, formula metadata, cached linear predictors, fitted values, response residuals, inference and separate numerical diagnostics. The control constructor returns a validated options list; the diagnostics accessor returns a list.}
 \examples{
 set.seed(1)
-X <- matrix(rnorm(300), 100, 3)
-y <- rbinom(100, 1, plogis(0.2 + X \%*\% c(0.4, -0.3, 0.2)))
-fit <- spectralmm_fit(X, y, family = "bernoulli")
-coef(fit)
-summary(fit)
-head(predict(fit, X))
+dat <- data.frame(x1=rnorm(100), x2=rnorm(100), y=rbinom(100,1,.5))
+m <- spectralmm_glm(as.matrix(dat[c("x1","x2")]), dat$y,
+                    family=binomial("logit"))
+f <- spectralmm_glm(y ~ x1 + x2, data=dat, family=binomial("logit"))
+coef(f)
+summary(f)
+head(predict(f, dat, type="response"))
+spectralmm_diagnostics(f)$termination_reason
 }
 \seealso{\code{\link{spectralmm_methods}}}

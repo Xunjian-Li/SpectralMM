@@ -129,7 +129,7 @@ but are not copied into the independent package trees.
 
 ## Validation of this assembly
 
-On 2026-10-02, on macOS arm64:
+The initial assembly validation on 2026-10-02, before the statistical API refactor, on macOS arm64:
 
 - Julia 1.12.6: all 322 regression assertions passed using a separate client
   project and scratch cache. The staged package built its own C++ library.
@@ -161,3 +161,6 @@ repository revision containing the Julia package; the canonical repository root
 already has that layout. The generated Julia archive is for source delivery,
 not a registry submission. Separate language releases do not require three
 independently maintained copies of the numerical implementation.
+
+The current statistical API and its regression checks are described in
+[Statistical_API.md](Statistical_API.md). Registry publication remains paused.

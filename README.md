@@ -4,6 +4,47 @@
 
 The main computational goal is to avoid repeatedly forming and factorizing dense curvature matrices. Operations are expressed primarily through matrix-vector products and low-rank updates, so the same implementation can work with both dense and sparse design matrices.
 
+## Statistical interfaces (development version)
+
+Use the native statistical conventions of each language. These calls assume
+`X` contains three feature columns and `dat` contains `y`, `x1`, `x2`, `x3`.
+
+```julia
+using SpectralMM, GLM, Distributions, StatsModels
+m = SpectralMM.glm(X, y, Bernoulli(), LogitLink(); rank=3, solver=:pcg)
+f = SpectralMM.glm(@formula(y ~ x1 + x2 + x3), dat,
+                  Bernoulli(), LogitLink(); rank=3, solver=:pcg)
+coef(f); fitted(f); coeftable(f); diagnostics(f)
+# Both routes default to Julia; backend=:cpp explicitly selects C++.
+```
+
+```r
+library(SpectralMM)
+m <- spectralmm_glm(X, y, family=binomial("logit"), rank=3, solver="pcg")
+f <- spectralmm_glm(y ~ x1 + x2 + x3, data=dat,
+                    family=binomial("logit"), rank=3, solver="pcg")
+coef(f); fitted(f); summary(f); spectralmm_diagnostics(f)
+```
+
+```python
+import spectralmm
+m = spectralmm.glm(X, y, family="binomial", link="logit", rank=3, solver="pcg")
+f = spectralmm.glm("y ~ x1 + x2 + x3", data=dat,
+                   family="binomial", link="logit", rank=3, solver="pcg")
+f.params; f.fittedvalues; f.bse; f.diagnostics
+print(f.summary())
+```
+
+Formula parsing preserves coefficient names and categorical encoding for new
+predictions. Advanced numerical settings belong in `SpectralMMControl`,
+`spectralmm_control`, or `Control`; `rank` and `solver` remain direct arguments.
+Use `start` for initial coefficients. Generic `fit`/`spectralmm_fit` remains
+available for residual models and legacy aliases. Automatic inference retains
+the 50-coefficient cutoff. Observation weights and offsets are explicitly
+unsupported. See [the statistical API guide](docs/Statistical_API.md) for complete
+examples, family/link mapping, prediction defaults and likelihood definitions.
+Registry publication is paused while this interface is reviewed.
+
 ## Main features
 
 - **Spectral-MM** for iteratively reweighted statistical estimation.
@@ -37,7 +78,7 @@ model_cpp = SpectralMM.fit(X, y; family=:bernoulli, backend=:cpp)
 ```
 
 Python installation builds and bundles the C++ library. Julia builds it during
-installation or first use and reuses its cache. A C++17 toolchain is required for
+the first explicit C++ use and reuses its cache. A C++17 toolchain is required for
 source builds; users do not manually invoke CMake or locate Eigen/library files.
 See [automatic installation](docs/Automatic_Installation.md) for remote installs,
 platform scope and the distinction between original Julia and C++ methods.
@@ -380,8 +421,8 @@ advanced options are not interchangeable: for example, `trace=true` and
 `krylovdim` are C++ interface options. Unsupported options raise an error rather
 than switching the backend. Use an explicit `beta0` when comparing initialization.
 
-Legacy positional-family `fit` and `glm` methods remain pure Julia, including
-formula support through `glm`. The unified `fit` API accepts matrices.
+`glm` and generic `fit` support matrix and formula input and default to pure Julia.
+Use `backend=:cpp` explicitly to choose C++.
 The earlier two-argument keyword API used C++; callers wanting that implementation
 must now specify `backend=:cpp`. Legacy development loader shims have been removed; use the installed package
 and request C++ explicitly. R and Python keep their C++ backend.
