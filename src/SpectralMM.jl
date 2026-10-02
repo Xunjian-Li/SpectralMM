@@ -10,7 +10,7 @@ using Krylov
 
 import GLM
 import StatsAPI
-import StatsAPI: coef, predict, stderror, vcov, confint
+import StatsAPI: coef, predict, stderror, vcov, confint, fitted, residuals, nobs, deviance, loglikelihood, coeftable
 import StatsModels
 
 
@@ -32,6 +32,7 @@ include("statsapi.jl")
 include("cpp_backend.jl")
 
 include("backend_api.jl")
+include("model_api.jl")
 const FittedModel = _CppBackend.FittedModel
 StatsAPI.coef(m::FittedModel) = m.coef
 StatsAPI.predict(m::FittedModel, X::AbstractMatrix; kwargs...) = _CppBackend.predict(m, X; kwargs...)
@@ -45,7 +46,8 @@ StatsAPI.confint(m::FittedModel) = _CppBackend.confint(m)
 # Public API
 # ============================================================
 
-export glm, fit, coef, predict, stderror, vcov, confint
+export glm, fit, coef, predict, stderror, vcov, confint, fitted, residuals, nobs, deviance, loglikelihood, coeftable
+export SpectralMMControl, StatisticalResult, diagnostics
 export SpectralGLM, SpectralModel, FittedModel
 
 export Expectile

@@ -1,6 +1,6 @@
 .spectralmm_families <- c("gaussian", "bernoulli", "probit", "poisson", "gamma", "negative_binomial",
   "smooth_quantile", "expectile", "pseudo_huber", "student_t", "gaussian_log", "gamma_inverse", "tweedie", "binomial")
-spectralmm_fit <- function(X, y, family = .spectralmm_families, beta0 = NULL,
+.spectralmm_fit_core <- function(X, y, family = .spectralmm_families, beta0 = NULL,
                            solver = c("spectral", "cg", "cgls", "crls", "lsqr", "lsmr", "cho", "mm", "pcg", "cholesky"),
                            preconditioner = c("jacobi", "none"), krylov_rtol = 1e-4,
                            krylov_atol = 1e-8, family_options = list(),

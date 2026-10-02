@@ -149,3 +149,5 @@ end
         @test_throws ArgumentError stderror(deficient)
     end
 end
+
+include("model_api.jl")

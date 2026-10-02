@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = {file = "LICENSE"}
 authors = [{name = "Xun-Jian Li", email = "xunjianli@ucla.edu"}]
-dependencies = ["numpy>=1.22", "scipy>=1.8"]
+dependencies = ["numpy>=1.22", "scipy>=1.8", "patsy>=0.5.6"]
 
 [project.urls]
 Homepage = "https://github.com/Xunjian-Li/SpectralMM"

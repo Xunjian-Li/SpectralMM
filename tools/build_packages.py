@@ -52,7 +52,8 @@ require a C++17 compiler. R compiles the core during installation.
 install.packages(c("Rcpp", "RcppEigen"))
 # Install this source directory with R CMD INSTALL .
 library(SpectralMM)
-fit <- spectralmm_fit(X, y, family = "bernoulli")
+fit <- spectralmm_glm(X, y, family = binomial("logit"))
+formula_fit <- spectralmm_glm(y ~ x1 + x2, data = dat, family = binomial("logit"))
 summary(fit)
 ```
 
@@ -66,13 +67,14 @@ then:
 
 ```python
 import spectralmm
-model = spectralmm.fit(X, y, family="bernoulli")
+model = spectralmm.glm(X, y, family="binomial", link="logit")
+formula_model = spectralmm.glm("y ~ x1 + x2", data=dat, family="binomial", link="logit")
 print(model.summary())
 ```
 
 Source installation requires a C++17 compiler. The isolated build installs
 CMake and downloads pinned Eigen headers automatically. A compatible wheel
-avoids compilation on the user's computer. NumPy and SciPy are runtime
+avoids compilation on the user's computer. NumPy, SciPy and Patsy are runtime
 dependencies. Run `python -m unittest discover -s tests` after installation.
 This directory is generated; edit canonical sources and regenerate it.
 '''
@@ -80,9 +82,10 @@ This directory is generated; edit canonical sources and regenerate it.
 From another Julia project, run `using Pkg; Pkg.develop(path="/path/to/this/package")`.
 
 ```julia
-using SpectralMM
-model = SpectralMM.fit(X, y; family=:bernoulli) # Pure Julia by default
-cpp_model = SpectralMM.fit(X, y; family=:bernoulli, backend=:cpp)
+using SpectralMM, GLM, Distributions, StatsModels
+model = SpectralMM.glm(X, y, Bernoulli(), LogitLink()) # Pure Julia by default
+formula_model = SpectralMM.glm(@formula(y ~ x1 + x2), dat, Bernoulli(), LogitLink())
+cpp_model = SpectralMM.glm(X, y, Bernoulli(), LogitLink(); backend=:cpp)
 model.backend
 coef(model)
 ```
@@ -156,6 +159,12 @@ if __name__ == "__main__":
                 copy_tree(stage, 'deps', {'.jl'})
                 copy_tree(stage, 'test', {'.jl'})
                 copy_file(stage, 'examples/data.csv')
+        if language in ('R', 'Python'):
+            tests = ROOT / 'test' / ('R' if language == 'R' else 'python')
+            for source in sorted(tests.glob('*')):
+                if source.suffix in ('.R', '.py'):
+                    shutil.copy2(source, stage / 'tests' / source.name)
+            shutil.copy2(ROOT / 'examples/data.csv', stage / 'tests/data.csv')
         (stage / 'README.md').write_text(readme(language))
         hashes = {str(p.relative_to(stage)): hashlib.sha256(p.read_bytes()).hexdigest()
                   for p in sorted(stage.rglob('*')) if p.is_file()}

@@ -62,8 +62,8 @@ For a local checkout use \texttt{remotes::install\_local("/path/to/SpectralMM")}
 Installation compiles the shared C++ core automatically using R's build system,
 RcppEigen and R's configured BLAS. Subsequent sessions only need
 \texttt{library(SpectralMM)}. A C++17 toolchain is required for source installation;
-R users do not need the standalone CMake commands below. Formula support is not
-introduced by packaging. See \texttt{docs/R\_Package.md} for the complete workflow.
+R users do not need the standalone CMake commands below. Formula and matrix interfaces are now available in all three languages; see
+\texttt{docs/Statistical\_API.md} for the preferred statistical API. See \texttt{docs/R\_Package.md} for the complete workflow.
 
 \section{Overview}
 The Python and R interfaces call the same C++ library. Optimization iterations
@@ -260,7 +260,7 @@ Its formula interface controls the intercept through the formula:
 and \code{y ~ 1} fits only an intercept. Do not also pass the
 \code{intercept} keyword to formula fits. The standalone native Julia wrapper
 uses \code{SpectralMM.fit(X, y; backend=:cpp, intercept=true)}.
-Python, R, and native Julia still use matrix inputs, without formula parsing.
+Python, R, and both Julia backends now support formula input with stored categorical encoding.
 
 \subsection{Residual models}
 Model-specific parameters are supplied through \code{family\_options}, using a
@@ -713,10 +713,9 @@ including dense/sparse designs and all six solvers. Development test scripts and
 generated fixtures were removed during cleanup; recorded validation results and
 final benchmark data are retained.
 
-The native wrappers currently provide matrix-based fitting and prediction.
-They do not expose formula processing, offsets, observation weights,
-or a complete R/Julia model-object compatibility layer. Optional inference is
-described above.
+The statistical interfaces provide matrix and formula fitting, standard result accessors,
+and separate numerical diagnostics. Offsets and observation weights remain explicitly
+unsupported by the numerical core. Optional inference is described above.
 Native and Julia optimization trajectories need not be identical: Lanczos random
 starts and floating-point operation orders differ. Agreement should be assessed
 using the objective, gradient diagnostics, and fitted coefficients at a suitable
