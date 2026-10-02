@@ -1,0 +1,21 @@
+{
+  "platform": "macOS-26.5.2-arm64-arm-64bit",
+  "python": "3.9.21 (main, Dec 11 2024, 10:21:40) \n[Clang 14.0.6 ]",
+  "numpy": "2.0.2",
+  "scipy": "1.13.1",
+  "statsmodels": "0.14.6",
+  "threadpools": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libopenblas",
+      "filepath": "/Users/caleblee/miniconda3/lib/python3.9/site-packages/scipy/.dylibs/libopenblas.0.dylib",
+      "version": "0.3.27",
+      "threading_layer": "pthreads",
+      "architecture": "neoversen1"
+    }
+  ],
+  "native_sha256": "0cea013d1aafd588d1351fa4ecdc920f7318ca38f1fc8b1e6a11413ef9bd32f4",
+  "timing": "warm end-to-end fit; excludes data generation/imports/compilation/scoring; sparse GLM conversion included"
+}

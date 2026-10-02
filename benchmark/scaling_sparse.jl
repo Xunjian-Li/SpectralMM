@@ -59,7 +59,7 @@ for family in families
                 ", nnz = ", nnz(X))
 
         spectral = SpectralMM.SpectralOptions{T}(
-            k=5, krylovdim=12, ridge=0.0,
+            k=5, krylovdim=12, rho=1e-6, ridge=0.0,
             resid_tol=5e-1, correction_tol=5e-2,
         )
 

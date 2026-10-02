@@ -1,0 +1,230 @@
+{
+  "cases": [
+    {
+      "id": "gaussian_dense_p1000",
+      "family": "gaussian",
+      "storage": "dense",
+      "n": 2000,
+      "p": 1000,
+      "p_total": 1001,
+      "nnz": 2002000,
+      "seed": 3124
+    },
+    {
+      "id": "gaussian_sparse_p1000",
+      "family": "gaussian",
+      "storage": "sparse",
+      "n": 2000,
+      "p": 1000,
+      "p_total": 1001,
+      "nnz": 41584,
+      "seed": 3124
+    },
+    {
+      "id": "bernoulli_dense_p1000",
+      "family": "bernoulli",
+      "storage": "dense",
+      "n": 2000,
+      "p": 1000,
+      "p_total": 1001,
+      "nnz": 2002000,
+      "seed": 3124
+    },
+    {
+      "id": "bernoulli_sparse_p1000",
+      "family": "bernoulli",
+      "storage": "sparse",
+      "n": 2000,
+      "p": 1000,
+      "p_total": 1001,
+      "nnz": 41584,
+      "seed": 3124
+    },
+    {
+      "id": "probit_dense_p1000",
+      "family": "probit",
+      "storage": "dense",
+      "n": 2000,
+      "p": 1000,
+      "p_total": 1001,
+      "nnz": 2002000,
+      "seed": 3124
+    },
+    {
+      "id": "probit_sparse_p1000",
+      "family": "probit",
+      "storage": "sparse",
+      "n": 2000,
+      "p": 1000,
+      "p_total": 1001,
+      "nnz": 41584,
+      "seed": 3124
+    },
+    {
+      "id": "poisson_dense_p1000",
+      "family": "poisson",
+      "storage": "dense",
+      "n": 2000,
+      "p": 1000,
+      "p_total": 1001,
+      "nnz": 2002000,
+      "seed": 3124
+    },
+    {
+      "id": "poisson_sparse_p1000",
+      "family": "poisson",
+      "storage": "sparse",
+      "n": 2000,
+      "p": 1000,
+      "p_total": 1001,
+      "nnz": 41584,
+      "seed": 3124
+    },
+    {
+      "id": "gamma_dense_p1000",
+      "family": "gamma",
+      "storage": "dense",
+      "n": 2000,
+      "p": 1000,
+      "p_total": 1001,
+      "nnz": 2002000,
+      "seed": 3124
+    },
+    {
+      "id": "gamma_sparse_p1000",
+      "family": "gamma",
+      "storage": "sparse",
+      "n": 2000,
+      "p": 1000,
+      "p_total": 1001,
+      "nnz": 41584,
+      "seed": 3124
+    },
+    {
+      "id": "negative_binomial_dense_p1000",
+      "family": "negative_binomial",
+      "storage": "dense",
+      "n": 2000,
+      "p": 1000,
+      "p_total": 1001,
+      "nnz": 2002000,
+      "seed": 3124
+    },
+    {
+      "id": "negative_binomial_sparse_p1000",
+      "family": "negative_binomial",
+      "storage": "sparse",
+      "n": 2000,
+      "p": 1000,
+      "p_total": 1001,
+      "nnz": 41584,
+      "seed": 3124
+    },
+    {
+      "id": "smooth_quantile_dense_p1000",
+      "family": "smooth_quantile",
+      "storage": "dense",
+      "n": 2000,
+      "p": 1000,
+      "p_total": 1001,
+      "nnz": 2002000,
+      "seed": 3124
+    },
+    {
+      "id": "smooth_quantile_sparse_p1000",
+      "family": "smooth_quantile",
+      "storage": "sparse",
+      "n": 2000,
+      "p": 1000,
+      "p_total": 1001,
+      "nnz": 41584,
+      "seed": 3124
+    },
+    {
+      "id": "expectile_dense_p1000",
+      "family": "expectile",
+      "storage": "dense",
+      "n": 2000,
+      "p": 1000,
+      "p_total": 1001,
+      "nnz": 2002000,
+      "seed": 3124
+    },
+    {
+      "id": "expectile_sparse_p1000",
+      "family": "expectile",
+      "storage": "sparse",
+      "n": 2000,
+      "p": 1000,
+      "p_total": 1001,
+      "nnz": 41584,
+      "seed": 3124
+    },
+    {
+      "id": "pseudo_huber_dense_p1000",
+      "family": "pseudo_huber",
+      "storage": "dense",
+      "n": 2000,
+      "p": 1000,
+      "p_total": 1001,
+      "nnz": 2002000,
+      "seed": 3124
+    },
+    {
+      "id": "pseudo_huber_sparse_p1000",
+      "family": "pseudo_huber",
+      "storage": "sparse",
+      "n": 2000,
+      "p": 1000,
+      "p_total": 1001,
+      "nnz": 41584,
+      "seed": 3124
+    },
+    {
+      "id": "student_t_dense_p1000",
+      "family": "student_t",
+      "storage": "dense",
+      "n": 2000,
+      "p": 1000,
+      "p_total": 1001,
+      "nnz": 2002000,
+      "seed": 3124
+    },
+    {
+      "id": "student_t_sparse_p1000",
+      "family": "student_t",
+      "storage": "sparse",
+      "n": 2000,
+      "p": 1000,
+      "p_total": 1001,
+      "nnz": 41584,
+      "seed": 3124
+    }
+  ],
+  "samples": 3,
+  "min_sample_seconds": 0.05,
+  "max_batch": 1000,
+  "maxiter": 1000,
+  "inner_maxiter": 200,
+  "rank": 5,
+  "krylovdim": 12,
+  "floor": 1e-06,
+  "gtol": 1e-06,
+  "relgtol": 1e-08,
+  "eta_max": 0.6,
+  "correction_tol": 0.05,
+  "resid_tol": 0.5,
+  "krylov_rtol": 0.0001,
+  "krylov_atol": 1e-08,
+  "glm_tolerance": 1e-12,
+  "threads": 1,
+  "methods": [
+    "Spectral-MM",
+    "CG",
+    "CGLS",
+    "CRLS",
+    "LSQR",
+    "LSMR",
+    "GLM"
+  ]
+}

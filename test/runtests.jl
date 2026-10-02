@@ -1,406 +1,151 @@
-using Test
-using Random
-using LinearAlgebra
-using Statistics
-using Distributions
-using GLM
-using StatsAPI
-using StatsModels
-using DataFrames
-using SpectralMM
-
-
-# ============================================================
-# Helpers
-# ============================================================
-
-function make_regression_data(; n=400, p=20, seed=1234)
-    rng = MersenneTwister(seed)
-    X = randn(rng, n, p)
-    β = randn(rng, p) / sqrt(p)
-    y = X * β + randn(rng, n)
-    return X, y, β
-end
-
-function expectile_reference(X, y, τ; tol=1e-11, maxiter=1000)
-    β = X \ y
-    for _ in 1:maxiter
-        r = y - X * β
-        w = ifelse.(r .>= 0, τ, 1 - τ)
-        sw = sqrt.(w)
-        βnew = (X .* sw) \ (y .* sw)
-        norm(βnew - β) <= tol * (1 + norm(β)) && return βnew
-        β = βnew
+using Test, SpectralMM, Random, SparseArrays, Distributions, GLM, CSV, LinearAlgebra
+rng=MersenneTwister(71)
+X=randn(rng,100,3); y=Float64.(rand(rng,100).<0.5)
+@testset "Public backend contract" begin
+    # Pure Julia fitting must not locate/build a native library.
+    withenv("SPECTRALMM_LIBRARY"=>"/nonexistent/spectralmm-library") do
+        default=SpectralMM.fit(X,y;family=:bernoulli)
+        explicit=SpectralMM.fit(X,y;family=:bernoulli,backend=:julia)
+        @test default.backend===:julia
+        @test coef(default)==coef(explicit)
+        @test SpectralMM.glm(X,y,Bernoulli(),LogitLink()).backend===:julia
     end
-    return β
-end
-
-function pseudohuber_reference(X, y, δ; tol=1e-11, maxiter=200)
-    β = X \ y
-    for _ in 1:maxiter
-        r = y - X * β
-        u = r ./ δ
-        ψ = r ./ sqrt.(1 .+ u.^2)
-        w = (1 .+ u.^2).^(-1.5)
-        g = -(X' * ψ)
-        H = X' * (X .* w)
-        norm(g) <= tol * (1 + norm(X' * y)) && return β
-
-        d = -(H \ g)
-        f0 = sum(δ^2 .* (sqrt.(1 .+ u.^2) .- 1))
-        α = 1.0
-
-        while α > 1e-12
-            βnew = β + α * d
-            rnew = y - X * βnew
-            fnew = sum(δ^2 .* (sqrt.(1 .+ (rnew ./ δ).^2) .- 1))
-            if fnew <= f0 + 1e-4 * α * dot(g, d)
-                β = βnew
-                break
+    for family in (:bernoulli,:pseudo_huber,:negative_binomial,:tweedie,:binomial)
+        response=family in (:negative_binomial,:tweedie) ? y.+1 : y
+        for A in (X,sparse(X))
+            j=SpectralMM.fit(A,response;family,backend=:julia)
+            c=SpectralMM.fit(A,response;family,backend=:cpp)
+            @test j.backend===:julia && c.backend===:cpp
+            @test isapprox(coef(j),coef(c);atol=1e-5,rtol=1e-5)
+            @test isapprox(predict(j,A),predict(c,A);atol=1e-5,rtol=1e-5)
+            # Existing numerical backends can stop at different gradient residuals.
+            # Unavailable inference must remain explicit and accessors must reject it.
+            for m in (j,c)
+                @test m.inference.status in ("ok","unavailable")
+                if m.inference.status=="unavailable"
+                    @test !isempty(m.inference.reason)
+                    @test_throws ArgumentError stderror(m)
+                end
             end
-            α *= 0.5
+            if j.inference.status=="ok" && c.inference.status=="ok"
+                @test isapprox(stderror(j),stderror(c);atol=1e-5,rtol=1e-5)
+            end
+            @test occursin("Julia",sprint(show,MIME"text/plain"(),j))
+            @test occursin("C++",sprint(show,MIME"text/plain"(),c))
         end
     end
-    return β
+    @test SpectralMM.fit(Float32.(X),Float32.(y);family=:bernoulli).backend===:julia
+    @test_throws ArgumentError SpectralMM.fit(X,y;backend=:unknown)
+    for backend in (:julia,:cpp)
+        @test_throws ArgumentError SpectralMM.fit(X,y;backend,family=:poisson,family_options=(tau=.5,))
+        @test_throws DimensionMismatch SpectralMM.fit(X,y;backend,family=:binomial,family_options=(trials=[1.,2.],))
+        m=SpectralMM.fit(X,y;backend,family=:binomial,family_options=(trials=fill(2.,100),))
+        @test length(predict(m,X[1:4,:];trials=2.))==4
+        @test_throws DimensionMismatch predict(m,X[1:4,:])
+    end
 end
 
-function smoothquantile_reference(X, y, τ, ε; tol=1e-11, maxiter=200)
-    β = X \ y
-    for _ in 1:maxiter
-        r = y - X * β
-        s = sqrt.(r.^2 .+ ε^2)
-        q = .-(τ - 0.5 .+ r ./ (2 .* s))
-        w = ε^2 ./ (2 .* s.^3)
-        g = X' * q
-        H = X' * (X .* w)
-        norm(g) <= tol * (1 + norm(X' * y)) && return β
+@testset "Probit objective, gradient and tails" begin
+    f=SpectralMM.BernoulliProbit()
+    A=hcat(ones(100),X); beta=[.2,.1,-.1,.05]
+    g=zeros(4); mu=zeros(100); w=zeros(100); score=zeros(100)
+    SpectralMM.grad_weights_xb!(f,g,mu,w,score,A,A*beta,y,beta)
+    fd=setprecision(256) do
+        B=BigFloat.(A); response=BigFloat.(y); b=BigFloat.(beta); h=big"1e-25"
+        [begin
+            plus=copy(b); minus=copy(b); plus[j]+=h; minus[j]-=h
+            (SpectralMM.logloss_xb(f,B*plus,response,plus)-
+             SpectralMM.logloss_xb(f,B*minus,response,minus))/(2h)
+         end for j in eachindex(b)]
+    end
+    @test maximum(abs.(g-Float64.(fd)))<1e-11
+    for eta in (-100.,-40.,-12.,-10.000001,-10.,-8.,-1.,0.,1.,8.,10.,10.000001,12.,40.,100.), response in (0.,1.)
+        loss=-Distributions.logcdf(Normal(),response==1 ? eta : -eta)
+        derivative=exp(Distributions.logpdf(Normal(),eta)+loss)*(response==1 ? -1 : 1)
+        @test isapprox(SpectralMM.probit_score(eta,response),derivative;atol=1e-11,rtol=1e-11)
+        @test isapprox(SpectralMM.logloss_xb(f,[eta],[response],[eta]),loss;atol=1e-11,rtol=1e-12)
+        native=SpectralMM.fit(ones(1,1),[response];backend=:cpp,family=:probit,
+            intercept=false,beta0=[eta],rank=0,maxiter=1,inference=false,trace=true,
+            accept_stalled=false,accept_negligible=false)
+        @test isapprox(first(native.trace).loss,loss;atol=1e-11,rtol=1e-12)
+        @test isapprox(first(native.trace).gradnorm,abs(derivative);atol=1e-11,rtol=1e-11)
+    end
+end
 
-        d = -(H \ g)
-        f0 = sum((τ - 0.5) .* r .+ 0.5 .* s)
-        α = 1.0
-
-        while α > 1e-12
-            βnew = β + α * d
-            rnew = y - X * βnew
-            fnew = sum((τ - 0.5) .* rnew .+
-                       0.5 .* sqrt.(rnew.^2 .+ ε^2))
-            if fnew <= f0 + 1e-4 * α * dot(g, d)
-                β = βnew
-                break
-            end
-            α *= 0.5
+@testset "Previously stalled small-data fits" begin
+    # Preserve actual cases that exposed inconsistent objective derivatives and
+    # false line-search rejection at floating-point rounding scale.
+    data=CSV.File(joinpath(@__DIR__,"..","examples","data.csv"))
+    features=hcat(data.x1,data.x2,data.x3)
+    for name in (:probit,:negative_binomial,:student_t), storage in (identity,sparse)
+        response=Float64.(getproperty(data,name)); A=storage(features)
+        params=name===:negative_binomial ? (theta=4.,) : name===:student_t ? (nu=4.,sigma=.5) : NamedTuple()
+        j=SpectralMM.fit(A,response;family=name,family_options=params,solver=:cho,
+            beta0=zeros(4),rank=3,maxiter=500,gtol=1e-6,relgtol=1e-8,accept_stalled=false)
+        @test last(j.result.gradnorms)<=1e-6 || last(j.result.relgradnorms)<=1e-8
+        @test j.inference.status=="ok"
+        @test j.result.iters<50
+        if name===:probit
+            reference=GLM.glm(hcat(ones(100),features),response,Bernoulli(),ProbitLink();maxiter=100,atol=1e-14,rtol=1e-14)
+            @test isapprox(coef(j),coef(reference);atol=1e-6,rtol=1e-6)
+            @test isapprox(stderror(j),stderror(reference);atol=1e-6,rtol=1e-6)
         end
     end
-    return β
 end
 
-function studentt_reference(X, y, ν, σ; tol=1e-11, maxiter=1000)
-    β = X \ y
-    for _ in 1:maxiter
-        r = y - X * β
-        w = (ν + 1) ./ (ν * σ^2 .+ r.^2)
-        sw = sqrt.(w)
-        βnew = (X .* sw) \ (y .* sw)
-        norm(βnew - β) <= tol * (1 + norm(β)) && return βnew
-        β = βnew
+@testset "Convergence on the final allowed step" begin
+    for backend in (:julia,:cpp), solver in (:pcg,:mm,:cg,:cho,:cgls,:crls,:lsqr,:lsmr)
+        m=SpectralMM.fit(ones(10,1),ones(10);family=:gaussian,backend,solver,
+            intercept=false,beta0=[0.],rank=0,maxiter=1,gtol=1e-4,relgtol=1e-8,inference=false)
+        if backend===:julia
+            @test last(m.result.gradnorms)<=1e-4 || last(m.result.relgradnorms)<=1e-8
+            @test m.result.converged
+        else
+            @test m.info.gradient_converged
+            @test m.info.converged
+        end
     end
-    return β
 end
 
-relerr(x, y) = norm(x - y) / max(norm(y), eps())
-
-
-# ============================================================
-# GLM families
-# ============================================================
-
-@testset "GLM family agreement" begin
-    rng = MersenneTwister(1234)
-    n, p = 1000, 8
-    X = hcat(ones(n), randn(rng, n, p - 1))
-    β = randn(rng, p) / (2sqrt(p))
-
-    # Bernoulli + Logit
-    η = X * β
-    μ = 1 ./ (1 .+ exp.(-η))
-    y = Float64.(rand(rng, n) .< μ)
-
-    ms = SpectralMM.glm(X, y, Bernoulli(), LogitLink(); rank=5)
-    mg = GLM.glm(X, y, Bernoulli(), LogitLink())
-    @test relerr(coef(ms), coef(mg)) < 1e-5
-
-    # Bernoulli + Probit
-    μ = cdf.(Normal(), η)
-    y = Float64.(rand(rng, n) .< μ)
-
-    ms = SpectralMM.glm(X, y, Bernoulli(), ProbitLink(); rank=5)
-    mg = GLM.glm(X, y, Bernoulli(), ProbitLink())
-    @test relerr(coef(ms), coef(mg)) < 5e-5
-
-    # Gaussian + Identity
-    y = η + randn(rng, n)
-
-    ms = SpectralMM.glm(X, y, Normal(), IdentityLink(); rank=5)
-    mg = GLM.glm(X, y, Normal(), IdentityLink())
-    @test relerr(coef(ms), coef(mg)) < 1e-6
-
-    # Gaussian + Log
-    μ = exp.(η)
-    y = μ .* exp.(0.2 .* randn(rng, n))
-    @test all(y .> 0)
-
-    ms = SpectralMM.glm(X, y, Normal(), LogLink(); rank=5)
-    mg = GLM.glm(X, y, Normal(), LogLink())
-    @test relerr(coef(ms), coef(mg)) < 1e-5
-
-    # Poisson + Log
-    μ = exp.(η)
-    y = Float64.(rand.(rng, Poisson.(μ)))
-
-    ms = SpectralMM.glm(X, y, Poisson(), LogLink(); rank=5)
-    mg = GLM.glm(X, y, Poisson(), LogLink())
-    @test relerr(coef(ms), coef(mg)) < 1e-5
-
-    # Gamma + Log
-    μ = exp.(η)
-    shape = 4.0
-    y = [rand(rng, Gamma(shape, μi / shape)) for μi in μ]
-
-    ms = SpectralMM.glm(X, y, Gamma(), LogLink(); rank=5)
-    mg = GLM.glm(X, y, Gamma(), LogLink())
-    @test relerr(coef(ms), coef(mg)) < 1e-5
-
-    # Gamma + Inverse
-    βinv = zeros(p)
-    βinv[1] = 1.5
-    βinv[2:end] .= 0.05 .* randn(rng, p - 1)
-    ηinv = X * βinv
-    @test minimum(ηinv) > 0
-
-    μ = 1.0 ./ ηinv
-    y = [rand(rng, Gamma(shape, μi / shape)) for μi in μ]
-
-    ms = SpectralMM.glm(X, y, Gamma(), InverseLink(); rank=5)
-    mg = GLM.glm(X, y, Gamma(), InverseLink())
-    @test relerr(coef(ms), coef(mg)) < 1e-5
+@testset "All-family objective derivatives" begin
+    data=CSV.File(joinpath(@__DIR__,"..","examples","data.csv"))
+    A=hcat(ones(100),data.x1,data.x2,data.x3)
+    parameters=Dict(:negative_binomial=>(theta=4.,),:tweedie=>(power=1.5,),
+        :binomial=>(trials=4.,),:smooth_quantile=>(tau=.25,smoothing=.1),
+        :expectile=>(tau=.25,),:pseudo_huber=>(delta=1.,),:student_t=>(nu=4.,sigma=.5))
+    for name in propertynames(data)[4:end]
+        family,link,params=SpectralMM._named_family(name,get(parameters,name,NamedTuple()),100)
+        f=link===nothing ? family : SpectralMM._glm_family(family,link)
+        response=Float64.(getproperty(data,name)); beta=[name===:gamma_inverse ? 2. : .2,.1,-.1,.05]
+        g=zeros(4); mu=zeros(100); w=zeros(100); score=zeros(100)
+        SpectralMM.grad_weights_xb!(f,g,mu,w,score,A,A*beta,response,beta)
+        loss=SpectralMM.logloss_xb(f,A*beta,response,beta)
+        fd=setprecision(256) do
+            B=BigFloat.(A); z=BigFloat.(response); b=BigFloat.(beta); h=big"1e-25"
+            [begin
+                plus=copy(b); minus=copy(b); plus[j]+=h; minus[j]-=h
+                (SpectralMM.logloss_xb(f,B*plus,z,plus)-SpectralMM.logloss_xb(f,B*minus,z,minus))/(2h)
+             end for j in eachindex(b)]
+        end
+        @test isapprox(g,Float64.(fd);atol=1e-10,rtol=1e-11)
+        c=SpectralMM.fit(A,response;family=name,family_options=params,backend=:cpp,
+            intercept=false,beta0=beta,rank=3,maxiter=1,inference=false,trace=true)
+        @test isapprox(first(c.trace).loss,loss;atol=1e-10,rtol=1e-12)
+        @test isapprox(first(c.trace).gradnorm,norm(g);atol=1e-10,rtol=1e-11)
+    end
 end
 
-
-# ============================================================
-# Residual models
-# ============================================================
-
-@testset "SpectralModel API" begin
-    X, y, _ = make_regression_data()
-    m = SpectralMM.fit(X, y, Expectile(0.25); rank=5, solver=:pcg)
-
-    @test m isa SpectralMM.SpectralModel
-    @test m.result isa SpectralMM.MMResult
-    @test coef(m) == m.coef
-    @test response(m) == y
-    @test modelmatrix(m) == X
-    @test nobs(m) == size(X, 1)
-    @test length(coef(m)) == size(X, 2)
-    @test length(fitted(m)) == size(X, 1)
-    @test fitted(m) ≈ X * coef(m)
-    @test predict(m) ≈ fitted(m)
-    @test coefnames(m) == ["x$(j)" for j in 1:size(X, 2)]
-    @test predict(m, X[1:10, :]) ≈ X[1:10, :] * coef(m)
-    @test m.solver == :pcg
-    @test m.rank == 5
-    @test m.result.converged
-end
-
-@testset "Expectile" begin
-    X, y, _ = make_regression_data()
-
-    m = SpectralMM.fit(X, y, Expectile(0.5); rank=5)
-    βref = X \ y
-    @test relerr(coef(m), βref) < 1e-6
-    @test relerr(X * coef(m), X * βref) < 1e-6
-
-    τ = 0.25
-    m = SpectralMM.fit(X, y, Expectile(τ); rank=5)
-    βref = expectile_reference(X, y, τ)
-    @test relerr(coef(m), βref) < 1e-6
-    @test relerr(X * coef(m), X * βref) < 1e-6
-end
-
-@testset "PseudoHuber" begin
-    X, y, _ = make_regression_data()
-    δ = 1.345
-
-    m = SpectralMM.fit(X, y, PseudoHuber(δ); rank=5)
-    βref = pseudohuber_reference(X, y, δ)
-
-    @test relerr(coef(m), βref) < 1e-6
-    @test relerr(X * coef(m), X * βref) < 1e-6
-end
-
-@testset "SmoothQuantile" begin
-    X, y, _ = make_regression_data()
-    τ, ε = 0.25, 0.1
-
-    m = SpectralMM.fit(X, y, SmoothQuantile(τ, ε); rank=5)
-    βref = smoothquantile_reference(X, y, τ, ε)
-
-    @test relerr(coef(m), βref) < 1e-6
-    @test relerr(X * coef(m), X * βref) < 1e-6
-end
-
-@testset "StudentT" begin
-    X, y, _ = make_regression_data()
-    ν, σ = 4.0, 1.0
-
-    m = SpectralMM.fit(X, y, StudentT(ν, σ); rank=5)
-    βref = studentt_reference(X, y, ν, σ)
-
-    @test relerr(coef(m), βref) < 1e-6
-    @test relerr(X * coef(m), X * βref) < 1e-6
-end
-
-
-# ============================================================
-# GLM API
-# ============================================================
-
-@testset "GLM matrix interface" begin
-    rng = MersenneTwister(1234)
-    n, p = 500, 10
-    X = hcat(ones(n), randn(rng, n, p - 1))
-    β = randn(rng, p) / sqrt(p)
-
-    η = X * β
-    μ = 1 ./ (1 .+ exp.(-η))
-    y = Float64.(rand(rng, n) .< μ)
-
-    m = SpectralMM.glm(
-        X, y, Bernoulli(), LogitLink();
-        rank=5, solver=:pcg
-    )
-
-    @test m isa SpectralMM.SpectralGLM
-    @test m.result isa SpectralMM.MMResult
-    @test coef(m) == m.coef
-    @test response(m) == y
-    @test modelmatrix(m) == X
-    @test nobs(m) == n
-    @test length(coef(m)) == p
-    @test length(fitted(m)) == n
-    @test all((0 .<= fitted(m)) .& (fitted(m) .<= 1))
-    @test coefnames(m) == ["x$(j)" for j in 1:p]
-
-    pred = predict(m, X[1:10, :])
-    @test length(pred) == 10
-    @test all((0 .<= pred) .& (pred .<= 1))
-
-    @test m.solver == :pcg
-    @test m.rank == 5
-    @test m.result.converged
-end
-
-@testset "Formula interface" begin
-    rng = MersenneTwister(1234)
-    n = 500
-    x1, x2 = randn(rng, n), randn(rng, n)
-
-    η = 0.3 .+ 0.7 .* x1 .- 0.4 .* x2
-    μ = 1 ./ (1 .+ exp.(-η))
-    y = Float64.(rand(rng, n) .< μ)
-    df = DataFrame(y=y, x1=x1, x2=x2)
-
-    m = SpectralMM.glm(
-        @formula(y ~ x1 + x2), df,
-        Bernoulli(), LogitLink();
-        rank=2
-    )
-
-    @test m isa SpectralMM.SpectralGLM
-    @test coefnames(m) == ["(Intercept)", "x1", "x2"]
-    @test length(coef(m)) == 3
-    @test nobs(m) == n
-
-    newdata = DataFrame(x1=[0.1, -0.2], x2=[0.3, 0.5])
-    pred = predict(m, newdata)
-
-    @test length(pred) == 2
-    @test all((0 .<= pred) .& (pred .<= 1))
-end
-
-@testset "Categorical formula" begin
-    rng = MersenneTwister(1234)
-    n = 300
-
-    df = DataFrame(
-        y=Float64.(rand(rng, n) .< 0.5),
-        x1=randn(rng, n),
-        group=rand(rng, ["A", "B", "C"], n)
-    )
-
-    m = SpectralMM.glm(
-        @formula(y ~ x1 + group), df,
-        Bernoulli(), LogitLink();
-        rank=3
-    )
-
-    names = coefnames(m)
-    @test "(Intercept)" in names
-    @test "x1" in names
-    @test "group: B" in names
-    @test "group: C" in names
-
-    newdata = DataFrame(x1=[0.0, 1.0], group=["A", "C"])
-    @test length(predict(m, newdata)) == 2
-end
-
-
-# ============================================================
-# Options and solvers
-# ============================================================
-
-@testset "Default spectral rank" begin
-    rng = MersenneTwister(1234)
-
-    X, y = randn(rng, 200, 8), randn(rng, 200)
-    @test SpectralMM.fit(X, y, Expectile(0.5)).rank == 7
-
-    X, y = randn(rng, 200, 25), randn(rng, 200)
-    @test SpectralMM.fit(X, y, Expectile(0.5)).rank == 10
-end
-
-@testset "Inner solvers" begin
-    X, y, _ = make_regression_data(n=300, p=15)
-
-    m1 = SpectralMM.fit(X, y, Expectile(0.5); rank=5, solver=:pcg)
-    m2 = SpectralMM.fit(
-        X, y, Expectile(0.5);
-        rank=5, solver=:mm, inner_maxiter=300
-    )
-
-    @test relerr(coef(m1), coef(m2)) < 1e-5
-end
-
-
-# ============================================================
-# Invalid inputs
-# ============================================================
-
-@testset "Invalid inputs" begin
-    rng = MersenneTwister(1234)
-    X, y = randn(rng, 100, 10), randn(rng, 100)
-    f = Expectile(0.5)
-
-    @test_throws DimensionMismatch SpectralMM.fit(X, y[1:99], f)
-    @test_throws ArgumentError SpectralMM.fit(X, y, f; rank=0)
-    @test_throws ArgumentError SpectralMM.fit(X, y, f; rank=10)
-    @test_throws ArgumentError SpectralMM.fit(X, y, f; floor=0.0)
-    @test_throws ArgumentError SpectralMM.fit(X, y, f; ridge=-1e-6)
-    @test_throws ArgumentError SpectralMM.fit(X, y, f; solver=:invalid)
-    @test_throws ArgumentError SpectralMM.fit(X, y, f; eta_max=1.0)
-    @test_throws ArgumentError SpectralMM.fit(X, y, f; correction_tol=-1.0)
-    @test_throws ArgumentError SpectralMM.fit(X, y, f; resid_tol=0.0)
-    @test_throws ArgumentError SpectralMM.fit(X, y, f; gtol=0.0)
-    @test_throws ArgumentError SpectralMM.fit(X, y, f; relgtol=0.0)
-    @test_throws ArgumentError SpectralMM.fit(X, y, f; maxiter=0)
-    @test_throws ArgumentError SpectralMM.fit(X, y, f; inner_maxiter=0)
+@testset "Inference safeguards remain strict" begin
+    for backend in (:julia,:cpp)
+        unfinished=SpectralMM.fit(X,y;backend,family=:bernoulli,beta0=zeros(4),
+            maxiter=1,gtol=1e-12,relgtol=1e-12,accept_stalled=false)
+        @test unfinished.inference.status=="unavailable"
+        @test_throws ArgumentError stderror(unfinished)
+        separated=SpectralMM.fit(ones(20,1),ones(20);backend,family=:probit,intercept=false)
+        @test separated.inference.status=="unavailable"
+        @test_throws ArgumentError stderror(separated)
+        deficient=SpectralMM.fit(hcat(X[:,1],X[:,1]),y;backend,family=:gaussian,solver=:cho)
+        @test deficient.inference.status=="unavailable"
+        @test_throws ArgumentError stderror(deficient)
+    end
 end

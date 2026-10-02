@@ -1,0 +1,344 @@
+
+=== gaussian : 100 observations, 3 features, 4 coefficients ===
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    1.6229e+01   9.488e-01      -           -    8.40e-16       -  initial
+   1    1.2915e+01   1.948e-08      1    2.05e-08           -    1.00  reuse
+
+Converged after 1 iterations
+Final loss:      1.291484e+01
+Relative grad.:  1.948e-08
+SpectralMM (gaussian)
+Covariance: model  Reference: t 
+            Estimate Std. Error Statistic Pr(>|statistic|)     lower    upper
+(Intercept)  0.17874   0.053213    3.3590        0.0011233  0.073112 0.284365
+x1           0.28718   0.114305    2.5124        0.0136599  0.060283 0.514072
+x2          -0.16744   0.112773   -1.4848        0.1408749 -0.391298 0.056408
+x3           0.26774   0.098728    2.7119        0.0079278  0.071767 0.463715
+First five fitted values: 0.4039272 0.1356244 0.07090975 0.1454541 0.3245042 
+
+=== bernoulli : 100 observations, 3 features, 4 coefficients ===
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    6.9315e+01   8.532e-01      -           -    8.40e-16       -  initial
+   1    6.7132e+01   3.250e-02      1    7.77e-08    9.82e-16    1.00  correct
+   2    6.7129e+01   1.662e-04      1    7.70e-08           -    1.00  reuse
+   3    6.7129e+01   4.067e-08      1    2.45e-04           -    1.00  reuse
+
+Converged after 3 iterations
+Final loss:      6.712854e+01
+Relative grad.:  4.067e-08
+SpectralMM (bernoulli)
+Covariance: model  Reference: z 
+             Estimate Std. Error Statistic Pr(>|statistic|)    lower   upper
+(Intercept) -0.079785    0.20927 -0.381251          0.70302 -0.48995 0.33038
+x1           0.703470    0.46083  1.526528          0.12688 -0.19974 1.60668
+x2           0.012264    0.44391  0.027627          0.97796 -0.85778 0.88231
+x3           0.511956    0.39785  1.286802          0.19816 -0.26782 1.29173
+First five fitted values: 0.5488999 0.4184224 0.5016654 0.4790691 0.5336321 
+
+=== probit : 100 observations, 3 features, 4 coefficients ===
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    6.9315e+01   9.537e-01      -           -    6.94e-16       -  initial
+   1    6.3740e+01   6.308e-02      1    2.80e-08    3.80e-16    1.00  correct
+   2    6.3702e+01   2.986e-03      1    3.92e-08    9.16e-16    1.00  correct
+   3    6.3702e+01   1.084e-04      1    3.39e-08           -    1.00  reuse
+   4    6.3702e+01   4.180e-06      1    2.17e-04           -    1.00  reuse
+   5    6.3702e+01   1.529e-07      1    2.70e-04           -    1.00  reuse
+   6    6.3702e+01   1.162e-07      1    2.15e-04           -    0.25  reuse
+   7    6.3702e+01   6.029e-08      1    2.15e-04           -    0.50  reuse
+   8    6.3702e+01   4.579e-08      1    2.16e-04           -    0.25  reuse
+
+Converged after 8 iterations
+Final loss:      6.370159e+01
+Relative grad.:  4.579e-08
+SpectralMM (probit)
+Covariance: model  Reference: z 
+            Estimate Std. Error Statistic Pr(>|statistic|)     lower   upper
+(Intercept)  0.34570    0.13406   2.57868        0.0099178  0.082945 0.60845
+x1           0.49463    0.29226   1.69240        0.0905689 -0.078198 1.06746
+x2          -0.20541    0.28385  -0.72366        0.4692744 -0.761745 0.35092
+x3           0.39269    0.24827   1.58168        0.1137238 -0.093919 0.87929
+First five fitted values: 0.7500766 0.5939002 0.5967617 0.627887 0.7126532 
+
+=== poisson : 100 observations, 3 features, 4 coefficients ===
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    1.0000e+02   9.682e-01      -           -    8.40e-16       -  initial
+   1    9.4593e+01   2.823e-01      1    1.44e-08    2.96e-16    1.00  correct
+   2    9.4181e+01   1.394e-02      1    9.71e-09    4.62e-16    1.00  correct
+   3    9.4179e+01   4.451e-05      1    1.31e-08           -    1.00  reuse
+   4    9.4179e+01   3.587e-09      1    8.20e-05           -    1.00  reuse
+
+Converged after 4 iterations
+Final loss:      9.417949e+01
+Relative grad.:  3.587e-09
+SpectralMM (poisson)
+Covariance: model  Reference: z 
+             Estimate Std. Error Statistic Pr(>|statistic|)     lower   upper
+(Intercept) 0.2643800    0.08958   2.95133        0.0031641  0.088806 0.43995
+x1          0.2356139    0.19129   1.23170        0.2180626 -0.139312 0.61054
+x2          0.0071037    0.19127   0.03714        0.9703735 -0.367777 0.38198
+x3          0.2670786    0.17380   1.53666        0.1243763 -0.073572 0.60773
+First five fitted values: 1.44213 1.213169 1.293125 1.232594 1.424037 
+
+=== gamma : 100 observations, 3 features, 4 coefficients ===
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    1.2636e+02   9.669e-01      -           -    8.40e-16       -  initial
+   1    1.2163e+02   1.929e-01      1    2.10e-08           -    1.00  reuse
+   2    1.2123e+02   1.399e-02      1    2.53e-08           -    1.00  reuse
+   3    1.2122e+02   4.201e-04      1    1.29e-08           -    1.00  reuse
+   4    1.2122e+02   4.669e-05      1    6.65e-09           -    1.00  reuse
+   5    1.2122e+02   5.611e-06      1    5.33e-09           -    1.00  reuse
+   6    1.2122e+02   6.571e-07      1    6.36e-09           -    1.00  reuse
+   7    1.2122e+02   7.924e-08      1    5.58e-09           -    1.00  reuse
+   8    1.2122e+02   9.410e-09      1    5.92e-09           -    1.00  reuse
+
+Converged after 8 iterations
+Final loss:      1.212247e+02
+Relative grad.:  9.410e-09
+SpectralMM (gamma)
+Covariance: model  Reference: t 
+            Estimate Std. Error Statistic Pr(>|statistic|)     lower     upper
+(Intercept)  0.20861   0.046153    4.5199       1.7653e-05  0.116992  0.300219
+x1           0.32110   0.099141    3.2388       1.6493e-03  0.124302  0.517889
+x2          -0.28220   0.097812   -2.8851       4.8316e-03 -0.476355 -0.088043
+x3           0.15623   0.085630    1.8245       7.1190e-02 -0.013744  0.326206
+First five fitted values: 1.651896 1.183353 1.082861 1.287733 1.448376 
+
+=== negative_binomial : 100 observations, 3 features, 4 coefficients ===
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    8.3530e+02   9.501e-01      -           -    4.13e-16       -  initial
+   1    8.3110e+02   2.965e-01      1    3.13e-08    3.17e-16    1.00  correct
+   2    8.3086e+02   1.645e-02      1    1.39e-08    6.52e-16    1.00  correct
+   3    8.3086e+02   9.166e-04      1    2.34e-08           -    1.00  reuse
+   4    8.3086e+02   7.231e-05      1    5.97e-03           -    1.00  reuse
+   5    8.3086e+02   5.645e-06      1    6.31e-03           -    1.00  reuse
+   6    8.3086e+02   4.402e-07      1    6.38e-03           -    1.00  reuse
+   7    8.3086e+02   3.434e-08      1    6.36e-03           -    1.00  reuse
+
+Converged after 7 iterations
+Final loss:      8.308615e+02
+Relative grad.:  3.434e-08
+SpectralMM (negative_binomial)
+Covariance: model  Reference: z 
+            Estimate Std. Error Statistic Pr(>|statistic|)     lower     upper
+(Intercept)  0.12349    0.11108   1.11168          0.26628 -0.094231  0.341211
+x1           0.28687    0.23115   1.24103          0.21459 -0.166184  0.739925
+x2          -0.50173    0.22487  -2.23116          0.02567 -0.942477 -0.060986
+x3           0.14023    0.20014   0.70067          0.48351 -0.252038  0.532502
+First five fitted values: 1.71356 1.174451 0.8478345 1.179149 1.399826 
+
+=== gaussian_log : 100 observations, 3 features, 4 coefficients ===
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    1.0353e+01   9.652e-01      -           -    8.40e-16       -  initial
+   1    4.2399e+00   6.857e-01      1    2.25e-08    3.34e-16    1.00  correct
+   2    3.1007e+00   3.727e-02      1    7.04e-09    2.97e-16    1.00  correct
+   3    3.0969e+00   2.856e-04      1    5.75e-09    3.78e-16    1.00  correct
+   4    3.0969e+00   1.100e-05      1    6.80e-09           -    1.00  reuse
+   5    3.0969e+00   4.348e-07      1    5.09e-04           -    1.00  reuse
+   6    3.0969e+00   1.720e-08      1    4.87e-04           -    1.00  reuse
+
+Converged after 6 iterations
+Final loss:      3.096901e+00
+Relative grad.:  1.720e-08
+SpectralMM (gaussian_log)
+Covariance: model  Reference: t 
+            Estimate Std. Error Statistic Pr(>|statistic|)    lower    upper
+(Intercept)  0.19451   0.022296    8.7242       8.1594e-14  0.15025  0.23877
+x1           0.36982   0.043714    8.4599       2.9940e-13  0.28304  0.45659
+x2          -0.27647   0.041876   -6.6022       2.2354e-09 -0.35960 -0.19335
+x3           0.20495   0.039491    5.1899       1.1732e-06  0.12657  0.28334
+First five fitted values: 1.657818 1.14728 1.072035 1.25985 1.45119 
+
+=== gamma_inverse : 100 observations, 3 features, 4 coefficients ===
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    3.6711e+01   8.270e-01      -           -    8.40e-16       -  initial
+   1    3.5312e+01   3.992e-01      1    8.87e-08    6.05e-16    1.00  correct
+   2    3.5212e+01   2.520e-02      1    2.98e-08    3.83e-16    1.00  correct
+   3    3.5212e+01   1.584e-04      1    6.55e-08           -    1.00  reuse
+   4    3.5212e+01   1.606e-08      1    1.00e-04           -    1.00  reuse
+
+Converged after 4 iterations
+Final loss:      3.521161e+01
+Relative grad.:  1.606e-08
+SpectralMM (gamma_inverse)
+Covariance: model  Reference: t 
+             Estimate Std. Error Statistic Pr(>|statistic|)    lower    upper
+(Intercept)  1.907167   0.095447  19.98134       5.6582e-36  1.71771  2.09663
+x1           0.311016   0.201324   1.54485       1.2567e-01 -0.08861  0.71064
+x2          -0.606075   0.198053  -3.06016       2.8682e-03 -0.99921 -0.21294
+x3           0.084975   0.176731   0.48081       6.3174e-01 -0.26583  0.43578
+First five fitted values: 0.4188588 0.5111146 0.6336511 0.5024428 0.4668069 
+
+=== tweedie : 100 observations, 3 features, 4 coefficients ===
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    4.5178e+02   9.691e-01      -           -    8.40e-16       -  initial
+   1    4.4396e+02   3.391e-01      1    2.48e-08    4.98e-16    1.00  correct
+   2    4.4322e+02   2.650e-02      1    1.20e-08    4.17e-16    1.00  correct
+   3    4.4322e+02   1.232e-03      1    2.05e-08           -    1.00  reuse
+   4    4.4322e+02   1.037e-04      1    8.74e-03           -    1.00  reuse
+   5    4.4322e+02   9.030e-06      1    1.01e-02           -    1.00  reuse
+   6    4.4322e+02   7.714e-07      1    9.80e-03           -    1.00  reuse
+   7    4.4322e+02   6.712e-08      1    1.01e-02           -    1.00  reuse
+   8    4.4322e+02   5.745e-09      1    9.83e-03           -    1.00  reuse
+
+Converged after 8 iterations
+Final loss:      4.432151e+02
+Relative grad.:  5.745e-09
+SpectralMM (tweedie)
+Covariance: model  Reference: t 
+            Estimate Std. Error Statistic Pr(>|statistic|)     lower     upper
+(Intercept)  0.16987   0.095699    1.7750         0.079067 -0.020095  0.359828
+x1           0.56849   0.201697    2.8185         0.005859  0.168125  0.968855
+x2          -0.41385   0.197253   -2.0981         0.038526 -0.805393 -0.022304
+x3           0.20646   0.175411    1.1770         0.242099 -0.141727  0.554650
+First five fitted values: 1.874702 1.065773 1.029505 1.332521 1.521518 
+
+=== binomial : 100 observations, 3 features, 4 coefficients ===
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    2.7726e+02   9.593e-01      -           -    8.40e-16       -  initial
+   1    2.7134e+02   2.332e-02      1    2.39e-08    5.96e-16    1.00  correct
+   2    2.7133e+02   5.148e-05      1    2.65e-08           -    1.00  reuse
+   3    2.7133e+02   2.839e-09      1    5.67e-05           -    1.00  reuse
+
+Converged after 3 iterations
+Final loss:      2.713315e+02
+Relative grad.:  2.839e-09
+SpectralMM (binomial)
+Covariance: model  Reference: z 
+            Estimate Std. Error Statistic Pr(>|statistic|)       lower   upper
+(Intercept)  0.20377    0.10420   1.95557         0.050516 -0.00045762 0.40799
+x1           0.56093    0.22670   2.47433         0.013349  0.11660706 1.00526
+x2          -0.24654    0.22186  -1.11121         0.266479 -0.68137974 0.18831
+x3           0.19251    0.19331   0.99589         0.319304 -0.18636174 0.57138
+First five fitted values: 2.54192 2.050004 2.18103 2.32155 2.398587 
+
+=== smooth_quantile : 100 observations, 3 features, 4 coefficients ===
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    1.9343e+01   8.997e-01      -           -    8.03e-16       -  initial
+   1    1.6563e+01   5.833e-01      1    7.33e-08    1.32e-15    0.50  correct
+   2    1.5976e+01   2.851e-01      1    5.67e-08    1.33e-15    1.00  correct
+   3    1.5735e+01   7.013e-02      1    2.67e-08    1.56e-15    1.00  correct
+   4    1.5719e+01   9.112e-03      1    1.57e-01    1.87e-15    1.00  correct
+   5    1.5719e+01   1.031e-04      1    3.73e-08    1.27e-15    1.00  correct
+   6    1.5719e+01   1.750e-08      1    3.12e-08           -    1.00  reuse
+
+Converged after 6 iterations
+Final loss:      1.571871e+01
+Relative grad.:  1.750e-08
+SpectralMM (smooth_quantile)
+Covariance: sandwich  Reference: z 
+            Estimate Std. Error Statistic Pr(>|statistic|)     lower     upper
+(Intercept)  0.17235   0.048147    3.5795       3.4420e-04  0.077978  0.266713
+x1           0.47812   0.160722    2.9748       2.9314e-03  0.163113  0.793130
+x2          -0.28433   0.113768   -2.4992       1.2448e-02 -0.507309 -0.061346
+x3           0.38199   0.078819    4.8464       1.2574e-06  0.227505  0.536472
+First five fitted values: 0.5432357 0.09332754 0.0145545 0.152928 0.404482 
+
+=== expectile : 100 observations, 3 features, 4 coefficients ===
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    6.2666e+00   9.001e-01      -           -    2.15e-16       -  initial
+   1    4.5596e+00   1.557e-01      1    6.46e-08    2.41e-16    1.00  correct
+   2    4.5225e+00   2.267e-03      1    3.43e-08    6.91e-16    1.00  correct
+   3    4.5225e+00   1.083e-10      1    4.78e-08           -    1.00  reuse
+
+Converged after 3 iterations
+Final loss:      4.522450e+00
+Relative grad.:  1.083e-10
+SpectralMM (expectile)
+Covariance: sandwich  Reference: z 
+             Estimate Std. Error Statistic Pr(>|statistic|)     lower     upper
+(Intercept)  0.214702   0.053181   4.03722       5.4088e-05  0.110470  0.318935
+x1           0.368848   0.111904   3.29610       9.8036e-04  0.149520  0.588177
+x2          -0.309377   0.109039  -2.83729       4.5498e-03 -0.523090 -0.095663
+x3           0.076899   0.090161   0.85291       3.9371e-01 -0.099813  0.253611
+First five fitted values: 0.5306366 0.1498694 0.1179128 0.3232593 0.3771684 
+
+=== pseudo_huber : 100 observations, 3 features, 4 coefficients ===
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    2.2839e+01   9.570e-01      -           -    2.89e-16       -  initial
+   1    1.8255e+01   6.330e-02      1    2.53e-08    4.55e-16    1.00  correct
+   2    1.8218e+01   2.303e-04      1    3.59e-08           -    1.00  reuse
+   3    1.8218e+01   7.597e-07      1    3.28e-03           -    1.00  reuse
+   4    1.8218e+01   2.747e-09      1    3.62e-03           -    1.00  reuse
+
+Converged after 4 iterations
+Final loss:      1.821779e+01
+Relative grad.:  2.747e-09
+SpectralMM (pseudo_huber)
+Covariance: sandwich  Reference: z 
+             Estimate Std. Error Statistic Pr(>|statistic|)     lower   upper
+(Intercept)  0.324575   0.071301   4.55220       5.3087e-06  0.184828 0.46432
+x1           0.409854   0.161259   2.54158       1.1035e-02  0.093792 0.72592
+x2          -0.076844   0.181104  -0.42431       6.7134e-01 -0.431801 0.27811
+x3           0.108016   0.116685   0.92570       3.5460e-01 -0.120682 0.33671
+First five fitted values: 0.5146969 0.1774113 0.3930267 0.4302185 0.4364975 
+
+=== student_t : 100 observations, 3 features, 4 coefficients ===
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    8.0192e+01   9.847e-01      -           -    2.87e-16       -  initial
+   1    6.6980e+01   3.026e-01      1    5.85e-09    1.14e-15    1.00  correct
+   2    6.6018e+01   3.722e-02      1    3.93e-03           -    1.00  reuse
+   3    6.6008e+01   1.136e-02      1    4.27e-03           -    1.00  reuse
+   4    6.6007e+01   1.670e-03      1    4.25e-03           -    1.00  reuse
+   5    6.6007e+01   5.342e-04      1    4.37e-03           -    1.00  reuse
+   6    6.6007e+01   8.850e-05      1    4.79e-03           -    1.00  reuse
+   7    6.6007e+01   2.493e-05      1    4.34e-03           -    1.00  reuse
+   8    6.6007e+01   7.788e-06      1    4.34e-03           -    1.00  reuse
+   9    6.6007e+01   1.216e-06      1    4.56e-03           -    1.00  reuse
+  10    6.6007e+01   3.871e-07      1    4.44e-03           -    1.00  reuse
+  11    6.6007e+01   1.185e-07      1    4.40e-03           -    1.00  reuse
+  12    6.6007e+01   1.746e-08      1    4.44e-03           -    1.00  reuse
+  13    6.6007e+01   5.583e-09      1    4.51e-03           -    1.00  reuse
+
+Converged after 13 iterations
+Final loss:      6.600726e+01
+Relative grad.:  5.583e-09
+SpectralMM (student_t)
+Covariance: sandwich  Reference: z 
+            Estimate Std. Error Statistic Pr(>|statistic|)     lower    upper
+(Intercept)  0.21702   0.059606    3.6409       0.00027167  0.100196  0.33385
+x1           0.30462   0.114365    2.6636       0.00773156  0.080468  0.52877
+x2          -0.35512   0.101660   -3.4932       0.00047723 -0.554371 -0.15587
+x3           0.16589   0.135066    1.2282       0.21936256 -0.098833  0.43062
+First five fitted values: 0.5509043 0.2069156 0.02695811 0.2498018 0.3977603 

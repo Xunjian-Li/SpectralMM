@@ -1,0 +1,17 @@
+stage,family,solver,sparse_input,iterations,converged,reported_grad,reported_relgrad,inference
+before,probit,pcg,false,500,false,3.252402279459562e-6,1.5064332756730696e-7,unavailable
+before,probit,pcg,true,500,false,2.8829655074484032e-6,1.3353191886704823e-7,unavailable
+before,probit,cho,false,7,true,3.2696734322769455e-6,1.5144328517026574e-7,unavailable
+before,probit,cho,true,9,true,2.870035270359203e-6,1.3293302187522992e-7,unavailable
+before,negative_binomial,cho,false,9,true,6.10095456996469e-7,3.0469588897866116e-8,ok
+before,negative_binomial,cho,true,9,true,1.131718778918682e-6,5.6520673193353824e-8,unavailable
+before,student_t,cho,false,13,true,4.03886662069988e-7,6.179132501982102e-9,ok
+before,student_t,cho,true,13,true,1.352568009643675e-6,2.069317393819308e-8,unavailable
+after,probit,pcg,false,6,true,1.2619124562089986e-7,5.844870176566456e-9,ok
+after,probit,pcg,true,6,true,1.2619124944460076e-7,5.8448703536709395e-9,ok
+after,probit,cho,false,6,true,1.260471435655714e-7,5.838195721445365e-9,ok
+after,probit,cho,true,6,true,1.2604714636164894e-7,5.838195850952845e-9,ok
+after,negative_binomial,cho,false,8,true,3.8052381780488787e-7,1.900424623950043e-8,ok
+after,negative_binomial,cho,true,8,true,9.391137399209888e-8,4.690152869618189e-9,ok
+after,student_t,cho,false,13,true,4.03886662069988e-7,6.179132501982102e-9,ok
+after,student_t,cho,true,13,true,4.0388667160618066e-7,6.179132647877975e-9,ok

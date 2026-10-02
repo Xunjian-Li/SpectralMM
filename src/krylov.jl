@@ -223,9 +223,25 @@ function irls_krylov(
     t_outer, grad_scale, base_loss = one(T), one(T), T(Inf)
     line_search_failures, converged = 0, false
 
+    logger=verbose ? IterationLog(X,y,family,ridge,penalize_intercept,w_floor,solver) : nothing
+    logger===nothing || log_point!(logger,0,β_base,Xβ_base)
+    termination_reason="maximum iterations reached"
+
     function finish(iter,nsteps,ok)
         resize!(losses,iter); resize!(gradnorms,iter); resize!(relgradnorms,iter)
         resize!(inner_iters,nsteps); resize!(stepsizes,nsteps)
+        # Preserve the initial scale and append the returned endpoint when it
+        # differs from the most recent evaluation point (e.g. iteration limit).
+        if β_base != β_eval
+            grad_weights_xb!(family,g,μ,w,grad_resid,X,Xβ_base,y,β_base;
+                ridge=ridge,penalize_intercept=penalize_intercept,w_floor=w_floor)
+            push!(losses,logloss_xb(family,Xβ_base,y,β_base;ridge=ridge,penalize_intercept=penalize_intercept))
+            push!(gradnorms,norm(g))
+            push!(relgradnorms,norm(g)/grad_scale)
+        end
+        # A final accepted step may meet tolerance exactly at the iteration limit.
+        ok = ok || last(gradnorms)<=gtol || last(relgradnorms)<=relgtol
+        logger===nothing || finish_log!(logger,nsteps,β_base,Xβ_base,gtol,relgtol,termination_reason,ok)
         IRLSKrylovResult(copy(β_base),losses,gradnorms,relgradnorms,inner_iters,stepsizes,nsteps,ok,solver)
     end
 
@@ -239,7 +255,7 @@ function irls_krylov(
             copyto!(β_eval,β_base); copyto!(Xβ,Xβ_base)
         end
 
-        f0 = logloss_xb(family,Xβ,y,β_eval; ridge=ridge)
+        f0 = logloss_xb(family,Xβ,y,β_eval; ridge=ridge, penalize_intercept=penalize_intercept)
         if iter == 1
             base_loss = f0
         elseif outer_nesterov && f0 > base_loss
@@ -247,7 +263,7 @@ function irls_krylov(
             f0, t_outer = base_loss, one(T)
         end
 
-        grad_weights_xb!(family,g,μ,w,grad_resid,X,Xβ,y,β_eval; ridge=ridge,w_floor=w_floor)
+        grad_weights_xb!(family,g,μ,w,grad_resid,X,Xβ,y,β_eval; ridge=ridge, penalize_intercept=penalize_intercept,w_floor=w_floor)
         gnorm = norm(g)
         iter == 1 && (grad_scale = one(T)+gnorm)
         relgnorm = gnorm/grad_scale
@@ -255,15 +271,14 @@ function irls_krylov(
 
         if gnorm <= gtol || relgnorm <= relgtol
             copyto!(β_base,β_eval); copyto!(Xβ_base,Xβ)
-            verbose && @printf("outer=%4d  loss=%.6e  |g|=%.3e  rel|g|=%.3e  converged=true\n",iter,f0,gnorm,relgnorm)
             converged = true
             return finish(iter,iter-1,true)
         end
 
         # All inner methods solve for a correction s around β_eval.
         # CG: (X'WX + λD)s = -g.
-        # LS methods: min_s ||sqrt(W)(Xs-r)||² + λ||D s||²,
-        # where r = z-Xβ_eval. Its normal equations are the same system.
+        # LS methods use the score RHS and -sqrt(λ)Dβ_eval below,
+        # giving the same penalized correction system as CG.
         if preconditioner === :jacobi
             build_wls_diag!(diagH,X,w; ridge=ridge,penalize_intercept=penalize_intercept)
             @inbounds @simd for j in 1:p; invscale[j] = inv(sqrt(diagH[j])); end
@@ -282,29 +297,22 @@ function irls_krylov(
                     Krylov.cg(H,rhs; atol=krylov_abstol,rtol=krylov_reltol,itmax=krylov_maxiter)
             end
         else
-            work_y!(family,z,Xβ,y,μ,w; w_floor=w_floor)
             @inbounds @simd for i in 1:m
                 sqrtw[i] = sqrt(w[i])
-                wz[i] = sqrtw[i]*(z[i]-Xβ[i])
+                wz[i] = -grad_resid[i]/sqrtw[i]
             end
-
-            # If the intercept is unpenalized, ridge is represented by the
-            # matrix-free augmented operator. Otherwise Krylov's native λ is used.
-            use_aug = ridge > zero(T) && !penalize_intercept
+            # Penalization acts on beta_eval+s, not just on the correction s.
+            use_aug = ridge > zero(T)
             use_prec = preconditioner === :jacobi
             Als = use_aug ? (use_prec ? BR : B) : (use_prec ? AR : A)
-            bls = use_aug ? vcat(wz,zeros(T,p)) : wz
-
-            # IMPORTANT: after right scaling, native λ*I would regularize u rather
-            # than s. Therefore with Jacobi scaling we also use the augmented
-            # formulation whenever ridge > 0.
-            if use_prec && ridge > zero(T) && penalize_intercept
-                Als = BR
-                bls = vcat(wz,zeros(T,p))
-                λls = zero(T)
+            if use_aug
+                @. augtmpn = -sqrt(ridge)*β_eval
+                penalize_intercept || (augtmpn[1] = zero(T))
+                bls = vcat(wz, augtmpn)
             else
-                λls = (!use_aug && !use_prec && ridge > zero(T)) ? sqrt(ridge) : zero(T)
+                bls = wz
             end
+            λls = zero(T)
 
             if solver === :lsmr
                 unew, stats = Krylov.lsmr(Als,bls; λ=λls,atol=krylov_abstol,rtol=krylov_reltol,itmax=krylov_maxiter)
@@ -327,11 +335,17 @@ function irls_krylov(
         copyto!(s,snew)
         inner_it = stats.niter
         if !finite_all(s)
-            verbose && println("  Krylov solver produced nonfinite step")
+            termination_reason="nonfinite step"
             return finish(iter,iter-1,false)
         end
         copyto!(s_prev,s)
 
+        inner_residual=NaN
+        if logger!==nothing
+            mul!(logger.g,H,s)
+            logger.g .+= g
+            inner_residual=norm(logger.g)/max(gnorm,floatmin(T))
+        end
         mul!(Xs,X,s)
         α, fnew, gd = one(T), T(Inf), dot(g,s)
         if line_search
@@ -340,16 +354,16 @@ function irls_krylov(
                 @. Xβ_new = Xβ + α*Xs
                 invalid = !admissible_eta(family, Xβ_new)
                 if invalid; α *= backtrack_factor; continue; end
-                fnew = logloss_xb(family,Xβ_new,y,β_trial; ridge=ridge)
+                fnew = logloss_xb(family,Xβ_new,y,β_trial; ridge=ridge, penalize_intercept=penalize_intercept)
                 if !isfinite(fnew); α *= backtrack_factor; continue; end
-                ((gd < zero(T) && fnew <= min(f0+c_armijo*α*gd,base_loss)) ||
-                 (gd >= zero(T) && fnew <= min(f0,base_loss))) && break
+                ((gd < zero(T) && fnew <= min(f0+c_armijo*α*gd,base_loss)+objective_roundoff(base_loss)) ||
+                 (gd >= zero(T) && fnew <= min(f0,base_loss)+objective_roundoff(base_loss))) && break
                 α *= backtrack_factor
             end
 
             if α < alpha_min
                 line_search_failures += 1
-                verbose && @printf("  %s_it=%d  line search failed\n",String(solver),inner_it)
+                termination_reason="line search failed"
                 if accept_stalled_as_converged && relgnorm <= stalled_relgtol
                     copyto!(β_base,β_eval); copyto!(Xβ_base,Xβ)
                     inner_iters[iter], stepsizes[iter], converged = inner_it, zero(T), true
@@ -368,16 +382,20 @@ function irls_krylov(
         else
             @. β_trial = β_eval + s
             @. Xβ_new = Xβ + Xs
-            fnew = logloss_xb(family,Xβ_new,y,β_trial; ridge=ridge)
+            fnew = logloss_xb(family,Xβ_new,y,β_trial; ridge=ridge, penalize_intercept=penalize_intercept)
         end
 
         inner_iters[iter], stepsizes[iter] = inner_it, α
         step_norm = abs(α)*norm(s)
         α > zero(T) && (line_search_failures = 0)
 
+        logger===nothing || log_point!(logger,iter,β_trial,Xβ_new;
+            inner=inner_it,residual=inner_residual,step=α)
+
         if accept_stalled_as_converged && relgnorm <= stalled_relgtol &&
            step_norm <= step_reltol*(one(T)+norm(β_eval))
             copyto!(β_base,β_trial); copyto!(Xβ_base,Xβ_new)
+            termination_reason="stalled near tolerance"
             converged = true
             return finish(iter,iter,true)
         end
@@ -394,9 +412,8 @@ function irls_krylov(
             base_loss = fnew
         end
 
-        verbose && @printf("outer=%4d  loss=%.6e  |g|=%.3e  rel|g|=%.3e  solver=%s  inner=%d\n",
-                           iter,f0,gnorm,relgnorm,String(solver),inner_it)
     end
 
+    termination_reason="maximum iterations reached"
     return finish(maxiter,maxiter,converged)
 end

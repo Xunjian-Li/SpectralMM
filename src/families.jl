@@ -1,3 +1,13 @@
+# Low-level design-matrix APIs penalize all coefficients by default.
+# High-level interfaces explicitly exclude the leading intercept coefficient.
+penalty_norm2(b, penalize_intercept::Bool) = sum(abs2, view(b, (penalize_intercept ? 1 : 2):length(b)))
+function add_penalty!(out, b, ridge, penalize_intercept::Bool)
+    @inbounds @simd for j in (penalize_intercept ? 1 : 2):length(b)
+        out[j] += ridge*b[j]
+    end
+    return out
+end
+
 
 ## Helper functions
 
@@ -83,18 +93,21 @@ end
     end
 end
 
-@inline function erf_approx(x::T) where {T <: Real}
-    s = ifelse(x < zero(T), -one(T), one(T))
-    a = abs(x)
-    t = inv(one(T) + T(0.3275911) * a)
-    c1, c2, c3 = T(0.254829592), T(-0.284496736), T(1.421413741)
-    c4, c5 = T(-1.453152027), T(1.061405429)
-    y = one(T) - (((((c5 * t + c4) * t + c3) * t + c2) * t + c1) * t) * exp(-a^2)
-    return s * y
+# The objective and its derivatives must use the same normal distribution.
+@inline stdnorm_pdf(x::T) where {T<:Real} = exp(-T(0.5)*x^2)/sqrt(T(2)*T(pi))
+@inline stdnorm_cdf(x::T) where {T<:Real} = Distributions.cdf(Distributions.Normal(zero(T),one(T)),x)
+@inline stdnorm_logcdf(x::T) where {T<:Real} = Distributions.logcdf(Distributions.Normal(zero(T),one(T)),x)
+@inline stdnorm_logpdf(x::T) where {T<:Real} = -x*x/T(2)-log(T(2)*T(pi))/T(2)
+@inline probit_score(e::T,y) where {T<:Real} = begin
+    z=y==one(y) ? e : -e
+    h=exp(stdnorm_logpdf(e)-stdnorm_logcdf(z))
+    y==one(y) ? -h : h
 end
+@inline probit_information(e::T) where {T<:Real} =
+    exp(T(2)*stdnorm_logpdf(e)-stdnorm_logcdf(e)-stdnorm_logcdf(-e))
 
-@inline stdnorm_pdf(x::T) where {T <: Real} = exp(-T(0.5) * x^2) / sqrt(T(2π))
-@inline stdnorm_cdf(x::T) where {T <: Real} = T(0.5) * (one(T) + erf_approx(x / sqrt(T(2))))
+# Allow only rounding-scale objective increases; gradient tolerances are unchanged.
+@inline objective_roundoff(f::T) where {T<:AbstractFloat} = T(8)*eps(T)*max(one(T),abs(f))
 @inline clamp_prob(x::T) where {T <: Real} = min(one(T) - eps(T), max(eps(T), x))
 @inline poisson_mean(η::T) where {T <: Real} = exp(min(η, T(700)))
 @inline positive_eta(η::T) where {T <: Real} = max(η, sqrt(eps(T)))
@@ -188,7 +201,7 @@ function logloss_xb(
     Xβ::AbstractVector{T},
     y::AbstractVector{T},
     β::AbstractVector{T};
-    ridge::T = zero(T)
+    ridge::T = zero(T), penalize_intercept::Bool=true
 ) where {T <: Real}
 
     val = zero(T)
@@ -204,7 +217,7 @@ function logloss_xb(
     end
 
     if ridge > zero(T)
-        val += T(0.5) * ridge * dot(β, β)
+        val += T(0.5) * ridge * penalty_norm2(β, penalize_intercept)
     end
 
     return val
@@ -215,17 +228,16 @@ function logloss_xb(
     Xβ::AbstractVector{T},
     y::AbstractVector{T},
     β::AbstractVector{T};
-    ridge::T = zero(T)
+    ridge::T = zero(T), penalize_intercept::Bool=true
 ) where {T <: Real}
 
     val = zero(T)
 
     @inbounds for i in eachindex(y)
-        p = clamp_prob(stdnorm_cdf(Xβ[i]))
-        val -= y[i] * log(p) + (one(T) - y[i]) * log1p(-p)
+        val -= stdnorm_logcdf(y[i]==one(T) ? Xβ[i] : -Xβ[i])
     end
 
-    return ridge > zero(T) ? val + T(0.5) * ridge * dot(β, β) : val
+    return ridge > zero(T) ? val + T(0.5) * ridge * penalty_norm2(β, penalize_intercept) : val
 end
 
 function logloss_xb(
@@ -233,7 +245,7 @@ function logloss_xb(
     Xβ::AbstractVector{T},
     y::AbstractVector{T},
     β::AbstractVector{T};
-    ridge::T = zero(T)
+    ridge::T = zero(T), penalize_intercept::Bool=true
 ) where {T <: Real}
 
     val = zero(T)
@@ -249,7 +261,7 @@ function logloss_xb(
         end
     end
 
-    return ridge > zero(T) ? val + T(0.5) * ridge * dot(β, β) : val
+    return ridge > zero(T) ? val + T(0.5) * ridge * penalty_norm2(β, penalize_intercept) : val
 end
 
 function logloss_xb(
@@ -257,7 +269,7 @@ function logloss_xb(
     Xβ::AbstractVector{T},
     y::AbstractVector{T},
     β::AbstractVector{T};
-    ridge::T = zero(T)
+    ridge::T = zero(T), penalize_intercept::Bool=true
 ) where {T <: Real}
 
     val = zero(T)
@@ -266,7 +278,7 @@ function logloss_xb(
         val += poisson_mean(Xβ[i]) - y[i] * Xβ[i]
     end
 
-    return ridge > zero(T) ? val + T(0.5) * ridge * dot(β, β) : val
+    return ridge > zero(T) ? val + T(0.5) * ridge * penalty_norm2(β, penalize_intercept) : val
 end
 
 function logloss_xb(
@@ -274,7 +286,7 @@ function logloss_xb(
     Xβ::AbstractVector{T},
     y::AbstractVector{T},
     β::AbstractVector{T};
-    ridge::T = zero(T)
+    ridge::T = zero(T), penalize_intercept::Bool=true
 ) where {T <: Real}
 
     θ = T(f.theta)
@@ -285,7 +297,7 @@ function logloss_xb(
         val += (y[i] + θ) * log(θ + μi) - y[i] * Xβ[i]
     end
 
-    return ridge > zero(T) ? val + T(0.5) * ridge * dot(β, β) : val
+    return ridge > zero(T) ? val + T(0.5) * ridge * penalty_norm2(β, penalize_intercept) : val
 end
 
 function logloss_xb(
@@ -293,7 +305,7 @@ function logloss_xb(
     Xβ::AbstractVector{T},
     y::AbstractVector{T},
     β::AbstractVector{T};
-    ridge::T = zero(T)
+    ridge::T = zero(T), penalize_intercept::Bool=true
 ) where {T <: Real}
 
     val = zero(T)
@@ -303,7 +315,7 @@ function logloss_xb(
         val += T(0.5) * ri^2
     end
 
-    return ridge > zero(T) ? val + T(0.5) * ridge * dot(β, β) : val
+    return ridge > zero(T) ? val + T(0.5) * ridge * penalty_norm2(β, penalize_intercept) : val
 end
 
 function logloss_xb(
@@ -311,7 +323,7 @@ function logloss_xb(
     Xβ::AbstractVector{T},
     y::AbstractVector{T},
     β::AbstractVector{T};
-    ridge::T = zero(T)
+    ridge::T = zero(T), penalize_intercept::Bool=true
 ) where {T <: Real}
 
     val = zero(T)
@@ -321,7 +333,7 @@ function logloss_xb(
         val += T(0.5) * ri^2
     end
 
-    return ridge > zero(T) ? val + T(0.5) * ridge * dot(β, β) : val
+    return ridge > zero(T) ? val + T(0.5) * ridge * penalty_norm2(β, penalize_intercept) : val
 end
 
 function logloss_xb(
@@ -329,7 +341,7 @@ function logloss_xb(
     Xβ::AbstractVector{T},
     y::AbstractVector{T},
     β::AbstractVector{T};
-    ridge::T = zero(T)
+    ridge::T = zero(T), penalize_intercept::Bool=true
 ) where {T <: Real}
 
     val = zero(T)
@@ -339,7 +351,7 @@ function logloss_xb(
         val += y[i] / μi + log(μi)
     end
 
-    return ridge > zero(T) ? val + T(0.5) * ridge * dot(β, β) : val
+    return ridge > zero(T) ? val + T(0.5) * ridge * penalty_norm2(β, penalize_intercept) : val
 end
 
 function logloss_xb(
@@ -347,7 +359,7 @@ function logloss_xb(
     Xβ::AbstractVector{T},
     y::AbstractVector{T},
     β::AbstractVector{T};
-    ridge::T = zero(T)
+    ridge::T = zero(T), penalize_intercept::Bool=true
 ) where {T <: Real}
 
     val = zero(T)
@@ -357,7 +369,7 @@ function logloss_xb(
         val += y[i] * ηi - log(ηi)
     end
 
-    return ridge > zero(T) ? val + T(0.5) * ridge * dot(β, β) : val
+    return ridge > zero(T) ? val + T(0.5) * ridge * penalty_norm2(β, penalize_intercept) : val
 end
 
 function logloss_xb(
@@ -365,7 +377,7 @@ function logloss_xb(
     Xβ::AbstractVector{T},
     y::AbstractVector{T},
     β::AbstractVector{T};
-    ridge::T = zero(T)
+    ridge::T = zero(T), penalize_intercept::Bool=true
 ) where {T <: Real}
 
     p = T(f.p)
@@ -383,11 +395,11 @@ function logloss_xb(
         end
     end
 
-    return ridge > zero(T) ? val + T(0.5) * ridge * dot(β, β) : val
+    return ridge > zero(T) ? val + T(0.5) * ridge * penalty_norm2(β, penalize_intercept) : val
 end
 
-logloss_xb(Xβ, y, β; ridge = zero(eltype(Xβ))) =
-    logloss_xb(BernoulliLogit(), Xβ, y, β; ridge = ridge)
+logloss_xb(Xβ, y, β; ridge = zero(eltype(Xβ)), penalize_intercept::Bool=true) =
+    logloss_xb(BernoulliLogit(), Xβ, y, β; ridge=ridge, penalize_intercept=penalize_intercept)
 
 function weights_xb!(
     family::GLMFamily,
@@ -408,6 +420,33 @@ function weights_xb!(
     return μ, w
 end
 
+function weights_xb!(::BernoulliProbit, mu::AbstractVector{T}, w::AbstractVector{T},
+                     eta::AbstractVector{T}; w_floor::T=T(1e-12)) where {T<:Real}
+    for i in eachindex(eta)
+        mu[i]=clamp_prob(stdnorm_cdf(eta[i]))
+        w[i]=max(probit_information(eta[i]),w_floor)
+    end
+    return mu,w
+end
+
+function grad_weights_xb!(f::BernoulliProbit, g::AbstractVector{T}, mu::AbstractVector{T},
+    w::AbstractVector{T}, score::AbstractVector{T}, X::AbstractMatrix{T}, eta::AbstractVector{T},
+    y::AbstractVector{T}, beta::AbstractVector{T}; ridge::T=zero(T),
+    penalize_intercept::Bool=true, w_floor::T=T(1e-12)) where {T<:Real}
+    weights_xb!(f,mu,w,eta;w_floor)
+    for i in eachindex(y); score[i]=probit_score(eta[i],y[i]); end
+    mul!(g,transpose(X),score)
+    ridge>zero(T) && add_penalty!(g,beta,ridge,penalize_intercept)
+    return g,mu,w
+end
+
+function work_y!(::BernoulliProbit,z::AbstractVector{T},eta::AbstractVector{T},
+    y::AbstractVector{T},mu::AbstractVector{T},w::AbstractVector{T};
+    w_floor::T=T(1e-12)) where {T<:Real}
+    for i in eachindex(y); z[i]=eta[i]-probit_score(eta[i],y[i])/max(w[i],w_floor); end
+    return z
+end
+
 weights_xb!(μ, w, Xβ; w_floor = eltype(Xβ)(1e-12)) =
     weights_xb!(BernoulliLogit(), μ, w, Xβ; w_floor = w_floor)
 
@@ -421,7 +460,7 @@ function grad_weights_xb!(
     Xβ::AbstractVector{T},
     y::AbstractVector{T},
     β::AbstractVector{T};
-    ridge::T = zero(T),
+    ridge::T = zero(T), penalize_intercept::Bool=true,
     w_floor::T = T(1e-12)
 ) where {T <: Real}
 
@@ -442,14 +481,14 @@ function grad_weights_xb!(
     mul!(g, transpose(X), resid)
 
     if ridge > zero(T)
-        g .+= ridge .* β
+        add_penalty!(g, β, ridge, penalize_intercept)
     end
 
     return g, μ, w
 end
 
-grad_weights_xb!(g, μ, w, resid, X, Xβ, y, β; ridge = zero(eltype(Xβ)), w_floor = eltype(Xβ)(1e-12)) =
-    grad_weights_xb!(BernoulliLogit(), g, μ, w, resid, X, Xβ, y, β; ridge = ridge, w_floor = w_floor)
+grad_weights_xb!(g, μ, w, resid, X, Xβ, y, β; ridge = zero(eltype(Xβ)), penalize_intercept::Bool=true, w_floor = eltype(Xβ)(1e-12)) =
+    grad_weights_xb!(BernoulliLogit(), g, μ, w, resid, X, Xβ, y, β; ridge=ridge, penalize_intercept=penalize_intercept, w_floor = w_floor)
 
 function work_y!(
     family::GLMFamily,
@@ -481,7 +520,7 @@ function wls!(
     z::AbstractVector{T},
     w::AbstractVector{T},
     β::AbstractVector{T};
-    ridge::T = zero(T)
+    ridge::T = zero(T), penalize_intercept::Bool=true
 ) where {T <: Real}
 
     mul!(r, X, β)
@@ -494,13 +533,13 @@ function wls!(
     mul!(g, transpose(X), wr)
 
     if ridge > zero(T)
-        g .+= ridge .* β
+        add_penalty!(g, β, ridge, penalize_intercept)
     end
 
     q = T(0.5) * dot(r, wr)
 
     if ridge > zero(T)
-        q += T(0.5) * ridge * dot(β, β)
+        q += T(0.5) * ridge * penalty_norm2(β, penalize_intercept)
     end
 
     return q
@@ -513,7 +552,7 @@ function wls_r!(
     r::AbstractVector{T},
     w::AbstractVector{T},
     β::AbstractVector{T};
-    ridge::T = zero(T)
+    ridge::T = zero(T), penalize_intercept::Bool=true
 ) where {T <: Real}
 
     @inbounds @simd for i in eachindex(r)
@@ -523,13 +562,13 @@ function wls_r!(
     mul!(g, transpose(X), wr)
 
     if ridge > zero(T)
-        g .+= ridge .* β
+        add_penalty!(g, β, ridge, penalize_intercept)
     end
 
     q = T(0.5) * dot(r, wr)
 
     if ridge > zero(T)
-        q += T(0.5) * ridge * dot(β, β)
+        q += T(0.5) * ridge * penalty_norm2(β, penalize_intercept)
     end
 
     return q
@@ -557,19 +596,19 @@ end
 
 function logloss_xb(
     f::SmoothQuantile, eta::AbstractVector{T}, y::AbstractVector{T},
-    beta::AbstractVector{T}; ridge::T=zero(T)
+    beta::AbstractVector{T}; ridge::T=zero(T), penalize_intercept::Bool=true
 ) where {T<:Real}
     tau, eps0, val = T(f.tau), T(f.epsilon), zero(T)
     @inbounds @simd for i in eachindex(y)
         r = y[i] - eta[i]
         val += (tau-T(0.5))*r + T(0.5)*sqrt(r*r + eps0*eps0)
     end
-    return ridge > zero(T) ? val + T(0.5)*ridge*dot(beta,beta) : val
+    return ridge > zero(T) ? val + T(0.5)*ridge*penalty_norm2(beta, penalize_intercept) : val
 end
 
 function logloss_xb(
     f::Expectile, eta::AbstractVector{T}, y::AbstractVector{T},
-    beta::AbstractVector{T}; ridge::T=zero(T)
+    beta::AbstractVector{T}; ridge::T=zero(T), penalize_intercept::Bool=true
 ) where {T<:Real}
     tau, val = T(f.tau), zero(T)
     @inbounds @simd for i in eachindex(y)
@@ -577,24 +616,24 @@ function logloss_xb(
         a = r >= zero(T) ? tau : one(T)-tau
         val += T(0.5)*a*r*r
     end
-    return ridge > zero(T) ? val + T(0.5)*ridge*dot(beta,beta) : val
+    return ridge > zero(T) ? val + T(0.5)*ridge*penalty_norm2(beta, penalize_intercept) : val
 end
 
 function logloss_xb(
     f::PseudoHuber, eta::AbstractVector{T}, y::AbstractVector{T},
-    beta::AbstractVector{T}; ridge::T=zero(T)
+    beta::AbstractVector{T}; ridge::T=zero(T), penalize_intercept::Bool=true
 ) where {T<:Real}
     delta, val = T(f.delta), zero(T)
     @inbounds @simd for i in eachindex(y)
         r = y[i] - eta[i]
         val += delta*delta*(sqrt(one(T)+(r/delta)^2)-one(T))
     end
-    return ridge > zero(T) ? val + T(0.5)*ridge*dot(beta,beta) : val
+    return ridge > zero(T) ? val + T(0.5)*ridge*penalty_norm2(beta, penalize_intercept) : val
 end
 
 function logloss_xb(
     f::StudentT, eta::AbstractVector{T}, y::AbstractVector{T},
-    beta::AbstractVector{T}; ridge::T=zero(T)
+    beta::AbstractVector{T}; ridge::T=zero(T), penalize_intercept::Bool=true
 ) where {T<:Real}
     nu, sigma, val = T(f.nu), T(f.sigma), zero(T)
     c = nu*sigma*sigma
@@ -602,7 +641,7 @@ function logloss_xb(
         r = y[i] - eta[i]
         val += T(0.5)*(nu+one(T))*log1p(r*r/c)
     end
-    return ridge > zero(T) ? val + T(0.5)*ridge*dot(beta,beta) : val
+    return ridge > zero(T) ? val + T(0.5)*ridge*penalty_norm2(beta, penalize_intercept) : val
 end
 
 function weights_xb!(
@@ -664,7 +703,7 @@ function grad_weights_xb!(
     f::SmoothQuantile, g::AbstractVector{T}, mu::AbstractVector{T},
     w::AbstractVector{T}, q::AbstractVector{T}, X::AbstractMatrix{T},
     eta::AbstractVector{T}, y::AbstractVector{T}, beta::AbstractVector{T};
-    ridge::T=zero(T), w_floor::T=T(1e-12)
+    ridge::T=zero(T), penalize_intercept::Bool=true, w_floor::T=T(1e-12)
 ) where {T<:Real}
     weights_xb!(f,mu,w,eta,y;w_floor=w_floor)
     tau, eps0 = T(f.tau), T(f.epsilon)
@@ -673,7 +712,7 @@ function grad_weights_xb!(
         q[i] = -(tau-T(0.5)+r/(T(2)*sqrt(r*r+eps0*eps0)))
     end
     mul!(g,transpose(X),q)
-    ridge > zero(T) && (@. g += ridge*beta)
+    ridge > zero(T) && add_penalty!(g, beta, ridge, penalize_intercept)
     return g,mu,w
 end
 
@@ -681,7 +720,7 @@ function grad_weights_xb!(
     f::Expectile, g::AbstractVector{T}, mu::AbstractVector{T},
     w::AbstractVector{T}, q::AbstractVector{T}, X::AbstractMatrix{T},
     eta::AbstractVector{T}, y::AbstractVector{T}, beta::AbstractVector{T};
-    ridge::T=zero(T), w_floor::T=T(1e-12)
+    ridge::T=zero(T), penalize_intercept::Bool=true, w_floor::T=T(1e-12)
 ) where {T<:Real}
     weights_xb!(f,mu,w,eta,y;w_floor=w_floor)
     tau = T(f.tau)
@@ -691,7 +730,7 @@ function grad_weights_xb!(
         q[i] = -a*r
     end
     mul!(g,transpose(X),q)
-    ridge > zero(T) && (@. g += ridge*beta)
+    ridge > zero(T) && add_penalty!(g, beta, ridge, penalize_intercept)
     return g,mu,w
 end
 
@@ -699,7 +738,7 @@ function grad_weights_xb!(
     f::PseudoHuber, g::AbstractVector{T}, mu::AbstractVector{T},
     w::AbstractVector{T}, q::AbstractVector{T}, X::AbstractMatrix{T},
     eta::AbstractVector{T}, y::AbstractVector{T}, beta::AbstractVector{T};
-    ridge::T=zero(T), w_floor::T=T(1e-12)
+    ridge::T=zero(T), penalize_intercept::Bool=true, w_floor::T=T(1e-12)
 ) where {T<:Real}
     weights_xb!(f,mu,w,eta,y;w_floor=w_floor)
     delta = T(f.delta)
@@ -708,7 +747,7 @@ function grad_weights_xb!(
         q[i] = -r/sqrt(one(T)+(r/delta)^2)
     end
     mul!(g,transpose(X),q)
-    ridge > zero(T) && (@. g += ridge*beta)
+    ridge > zero(T) && add_penalty!(g, beta, ridge, penalize_intercept)
     return g,mu,w
 end
 
@@ -716,14 +755,14 @@ function grad_weights_xb!(
     f::StudentT, g::AbstractVector{T}, mu::AbstractVector{T},
     w::AbstractVector{T}, q::AbstractVector{T}, X::AbstractMatrix{T},
     eta::AbstractVector{T}, y::AbstractVector{T}, beta::AbstractVector{T};
-    ridge::T=zero(T), w_floor::T=T(1e-12)
+    ridge::T=zero(T), penalize_intercept::Bool=true, w_floor::T=T(1e-12)
 ) where {T<:Real}
     weights_xb!(f,mu,w,eta,y;w_floor=w_floor)
     @inbounds @simd for i in eachindex(q)
         q[i] = w[i]*(eta[i]-y[i])
     end
     mul!(g,transpose(X),q)
-    ridge > zero(T) && (@. g += ridge*beta)
+    ridge > zero(T) && add_penalty!(g, beta, ridge, penalize_intercept)
     return g,mu,w
 end
 

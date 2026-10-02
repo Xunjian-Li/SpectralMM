@@ -68,6 +68,7 @@ for family in families
 
         spectral = SpectralMM.SpectralOptions{T}(
             k = 5,
+            rho = 1e-6,
             krylovdim = 12,
             ridge = 0.0,
             resid_tol = 5e-1,

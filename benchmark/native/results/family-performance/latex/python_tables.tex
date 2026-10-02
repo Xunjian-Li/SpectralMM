@@ -1,0 +1,325 @@
+% Requires \usepackage{booktabs}. Times and stopping flags are from recorded benchmark files.
+
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{
+Computational comparison for generalized linear models using Python with a dense design matrix,
+$n=2{,}000$ and $p=1{,}001$ (including the intercept).
+Runtime is reported in seconds. ``Iteration\textquotedblright{} denotes the number of outer iterations,
+``Rel.\ grad.\textquotedblright{} denotes the relative gradient norm at termination, and
+``Converged\textquotedblright{} reports whether the solver declared convergence.}
+\label{tab:python-glm-comparison-dense}
+\begin{tabular}{llrrrc}
+\toprule
+Model & Method & Time (s) & Iteration & Rel.\ grad. & Converged \\
+\midrule
+
+Gaussian-identity
+& Spectral-MM & 0.048 & 25 & $9.38\times10^{-9}$ & Yes \\
+& CRLS & 0.031 & 2 & $7.38\times10^{-9}$ & Yes \\
+& LSMR & 0.031 & 2 & $7.38\times10^{-9}$ & Yes \\
+& CG & 0.032 & 2 & $7.34\times10^{-9}$ & Yes \\
+& CGLS & 0.032 & 2 & $7.34\times10^{-9}$ & Yes \\
+& LSQR & 0.033 & 2 & $7.34\times10^{-9}$ & Yes \\
+& \texttt{statsmodels.GLM} & 0.515 & 3 & $5.12\times10^{-15}$ & Yes \\
+\midrule
+
+Bernoulli-logit$^{\ddagger}$
+& Spectral-MM & 0.208 & 54 & $6.21\times10^{-9}$ & Yes \\
+& CRLS & 0.612 & 11 & $5.29\times10^{-9}$ & Yes \\
+& LSMR & 0.613 & 11 & $5.29\times10^{-9}$ & Yes \\
+& CG & 0.623 & 11 & $5.28\times10^{-9}$ & Yes \\
+& CGLS & 0.625 & 11 & $5.32\times10^{-9}$ & Yes \\
+& LSQR & 0.628 & 11 & $5.27\times10^{-9}$ & Yes \\
+& \texttt{statsmodels.GLM} & 3.557 & 42 & $5.08\times10^{-16}$ & Yes \\
+\midrule
+
+Bernoulli-probit$^{\ddagger}$
+& Spectral-MM & 0.152 & 37 & $6.68\times10^{-9}$ & Yes \\
+& CRLS & 0.618 & 11 & $2.91\times10^{-10}$ & Yes \\
+& LSMR & 0.621 & 11 & $2.91\times10^{-10}$ & Yes \\
+& CG & 0.631 & 11 & $2.83\times10^{-10}$ & Yes \\
+& LSQR & 0.632 & 11 & $2.82\times10^{-10}$ & Yes \\
+& CGLS & 0.632 & 11 & $2.81\times10^{-10}$ & Yes \\
+& \texttt{statsmodels.GLM} & 3.332 & 39 & $2.73\times10^{-15}$ & Yes \\
+\midrule
+
+Poisson-log
+& Spectral-MM & 0.108 & 34 & $1.04\times10^{-8}$ & Yes$^{\dagger}$ \\
+& CRLS & 0.135 & 6 & $5.66\times10^{-10}$ & Yes \\
+& LSMR & 0.138 & 6 & $5.66\times10^{-10}$ & Yes \\
+& CG & 0.147 & 6 & $5.28\times10^{-10}$ & Yes \\
+& LSQR & 0.149 & 6 & $6.08\times10^{-10}$ & Yes \\
+& CGLS & 0.150 & 6 & $6.05\times10^{-10}$ & Yes \\
+& \texttt{statsmodels.GLM} & 1.135 & 11 & $1.11\times10^{-14}$ & Yes \\
+\midrule
+
+Gamma-log
+& Spectral-MM & 0.085 & 59 & $2.68\times10^{-8}$ & Yes$^{\dagger}$ \\
+& CG & 0.699 & 45 & $7.50\times10^{-9}$ & Yes \\
+& CRLS & 0.702 & 49 & $5.41\times10^{-9}$ & Yes \\
+& CGLS & 0.708 & 45 & $7.50\times10^{-9}$ & Yes \\
+& LSQR & 0.711 & 45 & $7.50\times10^{-9}$ & Yes \\
+& LSMR & 0.714 & 49 & $5.41\times10^{-9}$ & Yes \\
+& \texttt{statsmodels.GLM} & 89.726 & 1000 & $2.41\times10^{-2}$ & No \\
+\midrule
+
+Negative-binomial-log
+& Spectral-MM & 0.079 & 39 & $2.39\times10^{-8}$ & Yes$^{\dagger}$ \\
+& CRLS & 0.439 & 28 & $7.34\times10^{-9}$ & Yes \\
+& LSMR & 0.447 & 28 & $7.34\times10^{-9}$ & Yes \\
+& CG & 0.488 & 28 & $4.98\times10^{-9}$ & Yes \\
+& LSQR & 0.496 & 28 & $4.98\times10^{-9}$ & Yes \\
+& CGLS & 0.496 & 28 & $4.98\times10^{-9}$ & Yes \\
+& \texttt{statsmodels.GLM} & 10.308 & 21 & $5.30\times10^{-9}$ & Yes \\
+
+\bottomrule
+\end{tabular}
+\par\smallskip
+\begin{minipage}{\linewidth}
+\footnotesize
+$^{\dagger}$The solver declared convergence, but neither $\|g\|\leq 10^{-6}$ nor
+$\|g\|/(1+\|g_0\|)\leq 10^{-8}$ was satisfied.
+$^{\ddagger}$These data exhibit separation/perfect prediction; a small gradient does not establish a finite maximum-likelihood estimate.
+Spectral-MM and the Krylov methods use the shared C++ core.
+Native timings are medians of five interleaved rounds after warm-up.
+GLM timings are medians of three runs from an earlier timing session;
+cross-session timing variation was observed. Sparse GLM inputs were converted to dense, with conversion included in timing.
+The negative-binomial shape parameter is fixed at $\theta=4$.
+All native/Julia fits use $\rho=10^{-6}$ and no ridge penalty.
+\end{minipage}
+\end{table}
+
+\clearpage
+
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{
+Computational comparison for generalized linear models using Python with a sparse design matrix,
+$n=2{,}000$ and $p=1{,}001$ (including the intercept).
+The non-intercept design has approximately 20 nonzeros per row (about $2\%$ density).
+Runtime is reported in seconds. ``Iteration\textquotedblright{} denotes the number of outer iterations,
+``Rel.\ grad.\textquotedblright{} denotes the relative gradient norm at termination, and
+``Converged\textquotedblright{} reports whether the solver declared convergence.}
+\label{tab:python-glm-comparison-sparse}
+\begin{tabular}{llrrrc}
+\toprule
+Model & Method & Time (s) & Iteration & Rel.\ grad. & Converged \\
+\midrule
+
+Gaussian-identity
+& Spectral-MM & 0.005 & 25 & $1.19\times10^{-8}$ & Yes$^{\dagger}$ \\
+& CG & 0.002 & 2 & $6.76\times10^{-9}$ & Yes \\
+& CGLS & 0.002 & 2 & $6.76\times10^{-9}$ & Yes \\
+& CRLS & 0.002 & 2 & $6.81\times10^{-9}$ & Yes \\
+& LSQR & 0.002 & 2 & $6.76\times10^{-9}$ & Yes \\
+& LSMR & 0.002 & 2 & $6.81\times10^{-9}$ & Yes \\
+& \texttt{statsmodels.GLM} & 0.510 & 3 & $1.35\times10^{-14}$ & Yes \\
+\midrule
+
+Bernoulli-logit$^{\ddagger}$
+& Spectral-MM & 0.053 & 86 & $5.12\times10^{-9}$ & Yes \\
+& CRLS & 0.102 & 16 & $1.34\times10^{-9}$ & Yes \\
+& CGLS & 0.103 & 16 & $2.00\times10^{-9}$ & Yes \\
+& CG & 0.103 & 16 & $2.59\times10^{-9}$ & Yes \\
+& LSQR & 0.104 & 16 & $2.93\times10^{-9}$ & Yes \\
+& LSMR & 0.105 & 16 & $1.34\times10^{-9}$ & Yes \\
+& \texttt{statsmodels.GLM} & 20.618 & 47 & $1.44\times10^{-15}$ & Yes \\
+\midrule
+
+Bernoulli-probit$^{\ddagger}$
+& Spectral-MM & 0.052 & 76 & $9.07\times10^{-9}$ & Yes \\
+& CG & 0.089 & 14 & $7.70\times10^{-9}$ & Yes \\
+& CGLS & 0.090 & 14 & $7.94\times10^{-9}$ & Yes \\
+& LSQR & 0.092 & 14 & $7.66\times10^{-9}$ & Yes \\
+& CRLS & 0.095 & 16 & $5.48\times10^{-9}$ & Yes \\
+& LSMR & 0.098 & 16 & $5.14\times10^{-9}$ & Yes \\
+& \texttt{statsmodels.GLM} & 3.575 & 42 & $1.09\times10^{-14}$ & Yes \\
+\midrule
+
+Poisson-log
+& Spectral-MM & 0.007 & 30 & $5.85\times10^{-9}$ & Yes \\
+& CRLS & 0.006 & 5 & $9.87\times10^{-9}$ & Yes \\
+& CG & 0.006 & 5 & $9.91\times10^{-9}$ & Yes \\
+& LSMR & 0.006 & 5 & $9.87\times10^{-9}$ & Yes \\
+& CGLS & 0.006 & 5 & $9.91\times10^{-9}$ & Yes \\
+& LSQR & 0.006 & 5 & $9.91\times10^{-9}$ & Yes \\
+& \texttt{statsmodels.GLM} & 0.889 & 7 & $7.84\times10^{-15}$ & Yes \\
+\midrule
+
+Gamma-log
+& Spectral-MM & 0.017 & 78 & $3.43\times10^{-8}$ & Yes$^{\dagger}$ \\
+& CRLS & 0.036 & 38 & $1.69\times10^{-8}$ & Yes$^{\dagger}$ \\
+& LSMR & 0.039 & 38 & $1.69\times10^{-8}$ & Yes$^{\dagger}$ \\
+& CG & 0.039 & 40 & $9.41\times10^{-9}$ & Yes \\
+& CGLS & 0.041 & 41 & $5.05\times10^{-9}$ & Yes \\
+& LSQR & 0.041 & 40 & $9.41\times10^{-9}$ & Yes \\
+& \texttt{statsmodels.GLM} & 306.984 & 1000 & $8.25\times10^{-2}$ & No \\
+\midrule
+
+Negative-binomial-log
+& Spectral-MM & 0.009 & 34 & $1.72\times10^{-8}$ & Yes$^{\dagger}$ \\
+& CRLS & 0.017 & 16 & $1.75\times10^{-8}$ & Yes$^{\dagger}$ \\
+& LSMR & 0.018 & 16 & $1.75\times10^{-8}$ & Yes$^{\dagger}$ \\
+& CG & 0.018 & 17 & $6.16\times10^{-9}$ & Yes \\
+& CGLS & 0.019 & 17 & $6.16\times10^{-9}$ & Yes \\
+& LSQR & 0.019 & 17 & $6.16\times10^{-9}$ & Yes \\
+& \texttt{statsmodels.GLM} & 7.910 & 16 & $1.16\times10^{-8}$ & Yes$^{\dagger}$ \\
+
+\bottomrule
+\end{tabular}
+\par\smallskip
+\begin{minipage}{\linewidth}
+\footnotesize
+$^{\dagger}$The solver declared convergence, but neither $\|g\|\leq 10^{-6}$ nor
+$\|g\|/(1+\|g_0\|)\leq 10^{-8}$ was satisfied.
+$^{\ddagger}$These data exhibit separation/perfect prediction; a small gradient does not establish a finite maximum-likelihood estimate.
+Spectral-MM and the Krylov methods use the shared C++ core.
+Native timings are medians of five interleaved rounds after warm-up.
+GLM timings are medians of three runs from an earlier timing session;
+cross-session timing variation was observed. Sparse GLM inputs were converted to dense, with conversion included in timing.
+The negative-binomial shape parameter is fixed at $\theta=4$.
+All native/Julia fits use $\rho=10^{-6}$ and no ridge penalty.
+\end{minipage}
+\end{table}
+
+\clearpage
+
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{
+Computational comparison for non-GLM models using Python with a dense design matrix,
+$n=2{,}000$ and $p=1{,}001$ (including the intercept).
+Runtime is reported in seconds. ``Iteration\textquotedblright{} denotes the number of outer iterations,
+``Rel.\ grad.\textquotedblright{} denotes the relative gradient norm at termination, and
+``Converged\textquotedblright{} reports whether the solver declared convergence.}
+\label{tab:python-nonglm-comparison-dense}
+\begin{tabular}{llrrrc}
+\toprule
+Model & Method & Time (s) & Iteration & Rel.\ grad. & Converged \\
+\midrule
+
+Smooth quantile
+& Spectral-MM & 0.236 & 40 & $2.74\times10^{-8}$ & Yes$^{\dagger}$ \\
+& CRLS & 1.107 & 21 & $7.87\times10^{-10}$ & Yes \\
+& CGLS & 1.171 & 20 & $7.95\times10^{-10}$ & Yes \\
+& LSQR & 1.173 & 20 & $8.19\times10^{-10}$ & Yes \\
+& LSMR & 1.243 & 23 & $6.29\times10^{-9}$ & Yes \\
+& CG & 1.713 & 29 & $8.31\times10^{-10}$ & Yes \\
+\midrule
+
+Expectile
+& Spectral-MM & 0.062 & 28 & $1.15\times10^{-8}$ & Yes$^{\dagger}$ \\
+& CRLS & 0.082 & 5 & $3.47\times10^{-10}$ & Yes \\
+& LSMR & 0.083 & 5 & $3.47\times10^{-10}$ & Yes \\
+& CG & 0.088 & 5 & $3.59\times10^{-10}$ & Yes \\
+& LSQR & 0.089 & 5 & $3.59\times10^{-10}$ & Yes \\
+& CGLS & 0.089 & 5 & $3.59\times10^{-10}$ & Yes \\
+\midrule
+
+Pseudo-Huber
+& Spectral-MM & 0.068 & 30 & $7.55\times10^{-9}$ & Yes \\
+& CRLS & 0.175 & 9 & $3.79\times10^{-9}$ & Yes \\
+& LSMR & 0.177 & 9 & $3.79\times10^{-9}$ & Yes \\
+& CG & 0.190 & 9 & $3.69\times10^{-9}$ & Yes \\
+& CGLS & 0.190 & 9 & $3.69\times10^{-9}$ & Yes \\
+& LSQR & 0.191 & 9 & $3.69\times10^{-9}$ & Yes \\
+\midrule
+
+Student-$t$
+& Spectral-MM & 0.076 & 43 & $5.28\times10^{-8}$ & Yes$^{\dagger}$ \\
+& CRLS & 0.353 & 25 & $7.14\times10^{-9}$ & Yes \\
+& LSMR & 0.360 & 25 & $6.20\times10^{-9}$ & Yes \\
+& CG & 0.370 & 24 & $8.54\times10^{-9}$ & Yes \\
+& LSQR & 0.374 & 24 & $8.54\times10^{-9}$ & Yes \\
+& CGLS & 0.374 & 24 & $8.54\times10^{-9}$ & Yes \\
+
+\bottomrule
+\end{tabular}
+\par\smallskip
+\begin{minipage}{\linewidth}
+\footnotesize
+$^{\dagger}$The solver declared convergence, but neither $\|g\|\leq 10^{-6}$ nor
+$\|g\|/(1+\|g_0\|)\leq 10^{-8}$ was satisfied.
+Spectral-MM and the Krylov methods use the shared C++ core.
+Native timings are medians of five interleaved rounds after warm-up.
+Parameters: smooth quantile $(\tau,\epsilon)=(0.25,0.1)$; expectile $\tau=0.25$;
+pseudo-Huber $\delta=1$; Student-$t$ $(\nu,\sigma)=(4,1)$.
+All native/Julia fits use $\rho=10^{-6}$ and no ridge penalty.
+\end{minipage}
+\end{table}
+
+\clearpage
+
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{
+Computational comparison for non-GLM models using Python with a sparse design matrix,
+$n=2{,}000$ and $p=1{,}001$ (including the intercept).
+The non-intercept design has approximately 20 nonzeros per row (about $2\%$ density).
+Runtime is reported in seconds. ``Iteration\textquotedblright{} denotes the number of outer iterations,
+``Rel.\ grad.\textquotedblright{} denotes the relative gradient norm at termination, and
+``Converged\textquotedblright{} reports whether the solver declared convergence.}
+\label{tab:python-nonglm-comparison-sparse}
+\begin{tabular}{llrrrc}
+\toprule
+Model & Method & Time (s) & Iteration & Rel.\ grad. & Converged \\
+\midrule
+
+Smooth quantile
+& Spectral-MM & 0.021 & 43 & $9.25\times10^{-9}$ & Yes \\
+& CRLS & 0.079 & 19 & $1.82\times10^{-9}$ & Yes \\
+& LSMR & 0.082 & 19 & $1.15\times10^{-9}$ & Yes \\
+& CG & 0.089 & 19 & $3.10\times10^{-9}$ & Yes \\
+& CGLS & 0.090 & 19 & $5.30\times10^{-9}$ & Yes \\
+& LSQR & 0.092 & 19 & $4.68\times10^{-9}$ & Yes \\
+\midrule
+
+Expectile
+& Spectral-MM & 0.006 & 25 & $9.93\times10^{-9}$ & Yes \\
+& CRLS & 0.006 & 5 & $1.32\times10^{-10}$ & Yes \\
+& CG & 0.006 & 5 & $1.11\times10^{-10}$ & Yes \\
+& CGLS & 0.006 & 5 & $1.11\times10^{-10}$ & Yes \\
+& LSMR & 0.006 & 5 & $1.32\times10^{-10}$ & Yes \\
+& LSQR & 0.006 & 5 & $1.11\times10^{-10}$ & Yes \\
+\midrule
+
+Pseudo-Huber
+& Spectral-MM & 0.008 & 26 & $6.17\times10^{-9}$ & Yes \\
+& CRLS & 0.013 & 10 & $4.07\times10^{-9}$ & Yes \\
+& CG & 0.014 & 10 & $4.04\times10^{-9}$ & Yes \\
+& LSMR & 0.014 & 10 & $4.07\times10^{-9}$ & Yes \\
+& CGLS & 0.014 & 10 & $4.04\times10^{-9}$ & Yes \\
+& LSQR & 0.015 & 10 & $4.04\times10^{-9}$ & Yes \\
+\midrule
+
+Student-$t$
+& Spectral-MM & 0.010 & 42 & $8.82\times10^{-9}$ & Yes \\
+& CRLS & 0.025 & 25 & $6.23\times10^{-9}$ & Yes \\
+& CG & 0.026 & 25 & $7.02\times10^{-9}$ & Yes \\
+& LSMR & 0.027 & 25 & $6.23\times10^{-9}$ & Yes \\
+& CGLS & 0.027 & 25 & $7.02\times10^{-9}$ & Yes \\
+& LSQR & 0.027 & 25 & $7.02\times10^{-9}$ & Yes \\
+
+\bottomrule
+\end{tabular}
+\par\smallskip
+\begin{minipage}{\linewidth}
+\footnotesize
+$^{\dagger}$The solver declared convergence, but neither $\|g\|\leq 10^{-6}$ nor
+$\|g\|/(1+\|g_0\|)\leq 10^{-8}$ was satisfied.
+Spectral-MM and the Krylov methods use the shared C++ core.
+Native timings are medians of five interleaved rounds after warm-up.
+Parameters: smooth quantile $(\tau,\epsilon)=(0.25,0.1)$; expectile $\tau=0.25$;
+pseudo-Huber $\delta=1$; Student-$t$ $(\nu,\sigma)=(4,1)$.
+All native/Julia fits use $\rho=10^{-6}$ and no ridge penalty.
+\end{minipage}
+\end{table}

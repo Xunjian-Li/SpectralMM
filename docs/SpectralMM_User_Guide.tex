@@ -1,0 +1,732 @@
+% Standalone Overleaf document. Compiler: pdfLaTeX.
+% No external figures, bibliography, source files, or shell escape are required.
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=25mm]{geometry}
+\usepackage{amsmath,amssymb,booktabs,longtable,tabularx}
+\usepackage{xcolor,listings,hyperref,microtype}
+\hypersetup{colorlinks=true,linkcolor=blue!55!black,urlcolor=blue!55!black,
+  pdftitle={SpectralMM: A User Guide for the Python and R Interfaces}}
+\definecolor{codebackground}{RGB}{247,248,250}
+\lstset{basicstyle=\ttfamily\footnotesize,backgroundcolor=\color{codebackground},
+  frame=single,rulecolor=\color{black!15},breaklines=true,columns=fullflexible,
+  keepspaces=true,showstringspaces=false,aboveskip=8pt,belowskip=8pt}
+\setlength{\emergencystretch}{2em}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\newcommand{\pkg}{\textsf{SpectralMM}}
+\newcommand{\code}[1]{\texttt{#1}}
+\title{\pkg: A User Guide for the Python and R Interfaces}
+\author{}
+\date{Version 0.1.0}
+\begin{document}
+% R installation is independent of the standalone CMake build.
+
+\maketitle
+\begin{abstract}
+\pkg{} fits generalized linear models and residual-based statistical models
+using a shared C++ computational core. It provides spectral-preconditioned
+PCG and MM solvers, direct Cholesky, and five alternative Krylov solvers for dense and sparse design
+matrices. This guide describes installation from source, the Python and R
+interfaces, supported models, convergence diagnostics, and reproducible
+performance comparisons with the original Julia implementation.
+\end{abstract}
+\tableofcontents
+\clearpage
+
+\section*{Companion small-data examples}
+The standalone document \texttt{Small\_Model\_Examples.tex} provides runnable
+100-by-3 examples for all fourteen models, fitted coefficients and inference,
+three-language comparisons, and complete Python iteration logs. The source
+scripts and results are in the repository's \texttt{examples} directory.
+
+\section*{Automatic Python and Julia installation}
+From a local checkout, run \texttt{python -m pip install .}; subsequent Python
+sessions use \texttt{import spectralmm}. The wheel contains the shared library.
+In Julia, use \texttt{Pkg.develop(path="/path/to/SpectralMM")} and then
+\texttt{using SpectralMM}. Call \texttt{SpectralMM.fit(X, y; family=:bernoulli, backend=:cpp)}
+for the C++ implementation. Omitting \texttt{backend} selects pure Julia.
+Both backends support GLM and non-GLM models through the same matrix API.
+The returned model exposes \texttt{model.backend}. On first C++ use, the package builds the core automatically and reuses
+its cached library across sessions. All fourteen families are supported.
+Existing positional-family Julia methods and \texttt{glm} retain their original
+implementation. The manual CMake instructions below are for standalone development.
+See \texttt{docs/Automatic\_Installation.md} for details.
+
+\section*{Automatic R package installation}
+The repository root is a standard R package. After the updated source is
+published, install it with \texttt{remotes::install\_github("Xunjian-Li/SpectralMM")}.
+For a local checkout use \texttt{remotes::install\_local("/path/to/SpectralMM")}.
+Installation compiles the shared C++ core automatically using R's build system,
+RcppEigen and R's configured BLAS. Subsequent sessions only need
+\texttt{library(SpectralMM)}. A C++17 toolchain is required for source installation;
+R users do not need the standalone CMake commands below. Formula support is not
+introduced by packaging. See \texttt{docs/R\_Package.md} for the complete workflow.
+
+\section{Overview}
+The Python and R interfaces call the same C++ library. Optimization iterations
+run inside C++; neither interface requires a Julia runtime for model fitting.
+Julia is needed only when running the original Julia implementation or generating
+the shared reference data used in the supplied benchmarks.
+
+The repository provides a standard R package, Python source and wheel builds,
+and a Julia package with automatic C++ build/cache support. The C++ interfaces
+support fourteen families. Original Julia algorithms remain available.
+GitHub installation requires publishing these changes; no public index release
+is claimed. Repository scripts below assume its root as the working directory.
+
+\subsection{Computational approach}
+For a feature matrix $X\in\mathbb{R}^{n\times d}$, slope vector
+$\beta\in\mathbb{R}^{d}$, and intercept $\alpha$, the linear predictor is
+$\eta=\alpha\mathbf{1}+X\beta$. The total parameter count is $p=d+1$
+with an intercept and $p=d$ without one.
+The solver minimizes a sum of model-specific losses, optionally with a ridge penalty:
+\[
+ F(\alpha,\beta)=\sum_{i=1}^{n}\ell_i(\alpha+x_i^\top\beta;y_i)
+       +\frac{\lambda}{2}\|\beta\|^2.
+\]
+The automatic intercept is excluded from ridge by default. Set
+\code{penalize\_intercept} to true to penalize it as well. Response-only
+likelihood constants may be omitted from the reported loss.
+
+Weighted least-squares subproblems use an operator of the form
+\[
+ H_Wv=\widetilde X^\top\!\left(W(\widetilde Xv)\right)+\lambda Dv,
+ \qquad \widetilde X=[\mathbf{1},X],\quad D=\operatorname{diag}(0,1,\ldots,1).
+\]
+The intercept column is implemented implicitly in the C++ products, without
+copying the feature matrix. This operator is evaluated without forming a dense
+$p\times p$ Hessian. Without an intercept, use $\widetilde X=X$ and $D=I$.
+Depending on the family, $H_W$ represents a Hessian, Fisher-scoring operator, or
+MM surrogate curvature. In particular, Student-$t$ uses the positive MM weights
+of the Julia implementation rather than the exact Hessian of its loss.
+
+The spectral solver uses a small Lanczos subspace and spectral correction to
+construct its preconditioner. Cached products such as $HQ$ are retained without
+materializing the full Hessian. The parameter \code{floor} controls the spectral
+regularization parameter $\rho$; it is distinct from the ridge penalty $\lambda$.
+
+\subsection{Supported solvers}
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\code{solver} & Method \\
+\midrule
+\code{spectral}/\code{pcg} & Spectral-preconditioned conjugate gradient (PCG) \\
+\code{mm} & Spectral MM with quadratic line search \\
+\code{cho}/\code{cholesky} & Direct Cholesky weighted least squares \\
+\code{cg} & Conjugate gradient \\
+\code{cgls} & Conjugate gradient for least squares \\
+\code{crls} & Conjugate residual for least squares \\
+\code{lsqr} & LSQR \\
+\code{lsmr} & LSMR \\
+\bottomrule
+\end{tabular}
+\end{center}
+All eight methods support the same native model families and dense/CSC inputs.
+Cholesky forms a full curvature matrix; the other methods use matrix-vector products.
+Original Julia high-level fitting supports the same choices as symbols, such as
+\code{solver=:cho} or \code{solver=:mm}. The Julia C++ interface supports all fourteen families. The low-level \code{spectral\_mm} function
+supports only \code{:pcg} and \code{:mm}. CG uses Jacobi scaling by default;
+set \code{preconditioner="none"} (Julia \code{:none}) for unpreconditioned CG.
+Cholesky retries failed factorizations with small diagonal jitter. This numerical
+safeguard does not alter the objective or remove inference validity checks.
+Archived native benchmark tables still cover the original six choices.
+
+\section{Installation}
+\subsection{Build the shared library}
+The native build requires a C++17 compiler, CMake 3.18 or later, and Eigen 3.4
+headers. Replace the example Eigen path with a directory containing
+\path{Eigen/Core}.
+\begin{lstlisting}[language=bash]
+export EIGEN3_INCLUDE_DIR=/path/to/eigen-3.4.0
+cmake -S cpp -B build/native \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DEIGEN3_INCLUDE_DIR="$EIGEN3_INCLUDE_DIR" \
+  -DSPECTRALMM_USE_BLAS=ON
+cmake --build build/native -j2
+\end{lstlisting}
+This command enables system BLAS for supported dense Eigen operations.
+The current macOS binary links Apple Accelerate; add
+\texttt{-DBLA\_VENDOR=Apple} to select it explicitly.
+Restart language sessions after replacing a loaded library.
+Rebuild the library after changing the native source or moving to another machine.
+
+\subsection{Python dependencies}
+NumPy is required for fitting. SciPy is required for statistical inference, sparse input and the examples
+below. The full benchmark additionally uses statsmodels and threadpoolctl.
+\begin{lstlisting}[language=bash]
+python3 -m pip install .
+# Optional benchmark dependencies:
+python3 -m pip install statsmodels threadpoolctl
+\end{lstlisting}
+
+\subsection{R dependencies}
+Install the standard R package once; Rcpp and RcppEigen are resolved automatically.
+Sparse examples use Matrix. The standalone benchmark also uses jsonlite and MASS.
+\begin{lstlisting}[language=R]
+install.packages("remotes")
+remotes::install_github("Xunjian-Li/SpectralMM")
+library(SpectralMM)
+\end{lstlisting}
+The installation compiles and registers the native code. No manual loading is
+needed during a session beyond \code{library(SpectralMM)}.
+
+\subsection{Library discovery}
+The installed Python package loads its bundled library; Julia automatically
+builds and reuses a library in its scratch cache. Neither requires a manual path.
+The installed R package instead loads its own registered library automatically.
+The expected names are \code{libspectralmm.dylib} on macOS,
+\code{libspectralmm.so} on Linux, and \code{spectralmm.dll} on Windows.
+To use another build, set \code{SPECTRALMM\_LIBRARY} to its absolute path before
+loading the interface. The shell examples in this guide use POSIX syntax.
+The retained validation results were obtained on macOS arm64; they do not
+constitute testing on every operating system.
+
+\section{Quick Start}
+\subsection{Python: logistic regression}
+The interface fits an intercept automatically. Supply feature columns only;
+To fit without an automatic intercept, set the option below. It also supports
+complete design matrices that already contain a constant column.
+\begin{lstlisting}
+fit_intercept=False
+\end{lstlisting}
+\begin{lstlisting}[language=Python]
+import numpy as np
+from scipy.special import expit
+from spectralmm import fit
+
+rng = np.random.default_rng(3124)
+Z = rng.normal(size=(200, 6))
+X = Z
+beta = np.array([0.5, 0.2, -0.3, 0.1, 0.2, -0.1, 0.15])
+y = (rng.random(200) < expit(beta[0] + X @ beta[1:])).astype(float)
+
+model = fit(X, y, family="bernoulli", solver="spectral",
+            rank=5, floor=1e-6)
+print(model.intercept_)
+print(model.coef_)
+print(model.info)
+probability = model.predict(X)
+\end{lstlisting}
+
+\subsection{R: logistic regression}
+\begin{lstlisting}[language=R]
+library(SpectralMM)
+
+set.seed(3124)
+Z <- matrix(rnorm(200 * 6), nrow=200)
+X <- Z
+beta <- c(0.5, 0.2, -0.3, 0.1, 0.2, -0.1, 0.15)
+y <- rbinom(200, 1, plogis(as.vector(beta[1] + X %*% beta[-1])))
+
+model <- spectralmm_fit(X, y, family="bernoulli",
+                        solver="spectral", rank=5, floor=1e-6)
+coef(model)
+model$info
+probability <- predict(model, X)
+\end{lstlisting}
+The Python and R examples are independent simulations. Identical seed values do
+not make their random samples identical. Use the shared binary benchmark inputs
+when comparing the interfaces.
+
+\subsection{Intercept conventions and Julia usage}
+Python uses \code{fit\_intercept=True}; R and Julia use
+\code{intercept=TRUE} and \code{intercept=true}, respectively.
+Prediction accepts the same feature columns as training and adds the fitted
+intercept automatically. R labels the coefficient \code{(Intercept)}.
+Do not add a column of ones when automatic intercept is enabled. A nonzero
+constant feature triggers a warning; it is not silently removed.
+
+To retain an existing explicit design matrix, disable automatic intercept.
+All supplied columns then retain the legacy ridge penalty. This is the convention
+used by the benchmark scripts, whose fixtures already contain a constant column.
+The low-level C ABI and original Julia \code{spectral\_mm} continue to accept
+complete design matrices. The original Julia low-level solvers can exclude the
+first column from ridge using \code{penalize\_intercept=false}; for
+\code{spectral\_mm}, set this flag in \code{SpectralOptions}.
+
+The original Julia package now uses the same matrix-interface convention:
+\begin{lstlisting}
+using SpectralMM, Distributions, GLM
+model = SpectralMM.glm(X, y, Bernoulli(), LogitLink();
+                       intercept=true, ridge=0.1)
+model = SpectralMM.fit(X, y, PseudoHuber(1.0); intercept=true)
+\end{lstlisting}
+Its formula interface controls the intercept through the formula:
+\code{y ~ x1 + x2} includes it, \code{y ~ 0 + x1 + x2} excludes it,
+and \code{y ~ 1} fits only an intercept. Do not also pass the
+\code{intercept} keyword to formula fits. The standalone native Julia wrapper
+uses \code{SpectralMM.fit(X, y; backend=:cpp, intercept=true)}.
+Python, R, and native Julia still use matrix inputs, without formula parsing.
+
+\subsection{Residual models}
+Model-specific parameters are supplied through \code{family\_options}, using a
+Python dictionary or a named R list.
+\begin{lstlisting}[language=Python]
+y_cont = beta[0] + X @ beta[1:] + rng.standard_t(4, size=X.shape[0])
+robust = fit(X, y_cont, family="student_t",
+             family_options={"nu": 4, "sigma": 1})
+quantile = fit(X, y_cont, family="smooth_quantile",
+               family_options={"tau": 0.25, "smoothing": 0.1})
+\end{lstlisting}
+\begin{lstlisting}[language=R]
+y_cont <- as.vector(beta[1] + X %*% beta[-1]) + rt(nrow(X), df=4)
+robust <- spectralmm_fit(X, y_cont, family="student_t",
+                        family_options=list(nu=4, sigma=1))
+quantile <- spectralmm_fit(
+  X, y_cont, family="smooth_quantile",
+  family_options=list(tau=0.25, smoothing=0.1))
+\end{lstlisting}
+
+\subsection{Sparse matrices and alternative solvers}
+Python accepts SciPy sparse matrices and converts them to canonical CSC format
+when necessary. R accepts \code{dgCMatrix} objects.
+\begin{lstlisting}[language=Python]
+from scipy import sparse
+Xs = sparse.csc_matrix(X)
+model_cg = fit(Xs, y, family="bernoulli", solver="cg",
+               preconditioner="jacobi")
+\end{lstlisting}
+\begin{lstlisting}[language=R]
+library(Matrix)
+Xs <- as(Matrix(X, sparse=TRUE), "dgCMatrix")
+model_cg <- spectralmm_fit(Xs, y, family="bernoulli",
+                          solver="cg", preconditioner="jacobi")
+\end{lstlisting}
+Changing a dense matrix to CSC does not create sparsity; this example illustrates
+the accepted input format. Sparse computations are most useful when the design
+already contains relatively few nonzero entries.
+
+\section{Model Families}
+Both interfaces use the names below. Unknown or inapplicable model parameters
+are rejected. All responses must be finite.
+\begin{center}
+\small
+\begin{tabular}{lll}
+\toprule
+\code{family} & Model & Parameter defaults \\
+\midrule
+\code{gaussian} & Gaussian identity & None \\
+\code{bernoulli} & Bernoulli logit & None \\
+\code{probit} & Bernoulli probit & None \\
+\code{poisson} & Poisson log & None \\
+\code{gamma} & Gamma log & None \\
+\code{negative\_binomial} & Negative-binomial log & \code{theta=1} \\
+\code{smooth\_quantile} & Smooth quantile & \code{tau=0.5, smoothing=0.1} \\
+\code{expectile} & Expectile & \code{tau=0.5} \\
+\code{pseudo\_huber} & Pseudo-Huber & \code{delta=1.345} \\
+\code{student\_t} & Student-$t$ & \code{nu=4, sigma=1} \\
+\code{gaussian\_log} & Gaussian log & None \\
+\code{gamma\_inverse} & Gamma inverse & None \\
+\code{tweedie} & Tweedie log & \code{power=1.5} \\
+\code{binomial} & Binomial logit & \code{trials=1} \\
+\bottomrule
+\end{tabular}
+\end{center}
+The \code{smoothing} parameter corresponds to Julia's \code{epsilon}.
+Require $0<\tau<1$, positive finite scale/shape/trial-count parameters, and
+$1\leq\code{power}\leq2$.
+
+Bernoulli responses must be exactly zero or one. Poisson, negative-binomial,
+and Tweedie responses must be nonnegative. Gamma, Gaussian-log, and Gamma-inverse
+responses must be positive. Binomial responses must satisfy
+$0\leq y_i\leq n_i$, where \code{trials} specifies a scalar or a length-$n$ vector.
+The four residual models accept finite real responses.
+
+For Gamma inverse, the initial linear predictor must be positive. Supply a
+feasible \code{beta0} when automatic initialization cannot produce one, for
+example when there is no constant column. Probit follows the normal-CDF
+approximation used in the Julia implementation.
+
+\section{Function Reference}
+\subsection{Fitting a model}
+\begin{lstlisting}[language=Python]
+fit(X, y, family="gaussian", *, family_options=None,
+    beta0=None, fit_intercept=True, penalize_intercept=False,
+    solver="spectral", preconditioner="jacobi",
+    krylov_rtol=1e-4, krylov_atol=1e-8, trace=False, verbose=False,
+    **options)
+\end{lstlisting}
+\begin{lstlisting}[language=R]
+spectralmm_fit(X, y, family="gaussian", beta0=NULL,
+               intercept=TRUE, penalize_intercept=FALSE,
+               solver="spectral", preconditioner="jacobi",
+               krylov_rtol=1e-4, krylov_atol=1e-8,
+               family_options=list(), ...)
+\end{lstlisting}
+These are abbreviated signatures; stopping options are described below.
+Python uses keyword arguments for solver options; R passes them through
+\code{...}. Python and R both support \code{verbose} and \code{trace}, disabled by default.
+Use \code{verbose=True} in Python or \code{verbose=TRUE} in R to print the
+iteration table. Enable \code{trace} to retain structured rows in the model.
+
+\begin{description}
+\item[\code{X}] A finite, real $n\times d$ feature matrix, with $n>0$.
+Zero feature columns are allowed when fitting an intercept; otherwise $d\geq1$.
+The core uses double precision. Conversion copies may be needed for dtype,
+storage layout, or sparse normalization.
+\item[\code{y}] A real vector of length $n$, satisfying the family-specific domain.
+\item[\code{beta0}] An optional length-$p$ initial coefficient vector, with
+the intercept first when enabled. Otherwise, the intercept is initialized from
+the response mean and link; without one, coefficients start at zero when feasible.
+\item[\code{family\_options}] Model parameters from the family table.
+\item[\code{preconditioner}] Either \code{jacobi} or \code{none} for the five
+alternative Krylov methods. The spectral solver uses its own preconditioner.
+\end{description}
+
+\subsection{Common numerical options}
+\small
+\begin{longtable}{@{}p{.24\linewidth}p{.16\linewidth}p{.54\linewidth}@{}}
+\toprule
+Option & Default & Meaning \\
+\midrule
+\endhead
+\code{rank} & 0 & Automatic spectral rank: $p-1$ for $p<20$, otherwise 10.
+An explicit rank must satisfy $1\leq k<p$. With $p=1$, automatic rank is zero. \\
+\code{krylovdim} & 0 & Automatic initial Lanczos dimension. An explicit value
+must lie in $[k+1,p]$. Restart attempts may increase the dimension. \\
+\code{floor} & $10^{-6}$ & Spectral regularization parameter $\rho$. \\
+\code{ridge} & 0 & Ridge penalty $\lambda$, excluding the automatic intercept by default. \\
+\code{maxiter} & 200 & Maximum number of outer iterations. \\
+\code{inner\_maxiter} & 100 & Maximum number of inner iterations. \\
+\code{gtol} & $10^{-7}$ & Absolute gradient stopping tolerance. \\
+\code{relgtol} & $10^{-8}$ & Relative gradient stopping tolerance. \\
+\code{eta\_max} & 0.5 & Inner forcing parameter for spectral PCG. \\
+\code{correction\_tol} & 0.01 & Threshold for projected curvature changes. \\
+\code{resid\_tol} & 0.5 & Spectral residual acceptance tolerance. \\
+\code{nesterov} & True & Enable outer Nesterov extrapolation. Use
+\code{True}/\code{False} in Python and \code{TRUE}/\code{FALSE} in R. \\
+\code{krylov\_rtol} & $10^{-4}$ & Relative inner tolerance for alternative
+Krylov solvers. \\
+\code{krylov\_atol} & $10^{-8}$ & Absolute inner tolerance for alternative
+Krylov solvers. \\
+\bottomrule
+\end{longtable}
+\normalsize
+The benchmark settings differ from several interface defaults; they are listed
+in Section~\ref{sec:benchmark}.
+
+\subsection{Unified iteration table}
+All solver choices use the columns Iter, Loss, RelGrad, Inner, InnerRes, EigRes,
+Step and Spectrum. Row 0 describes the initial coefficients and has no inner
+iteration or step. PCG/MM label the initial spectrum as \code{initial}; methods
+without spectral information show a dash. Subsequent rows report loss and
+relative gradient at the updated accepted coefficients. The final row and footer
+use identical relative-gradient values and precision. Checking convergence at
+the next loop entry is not an additional parameter update.
+
+InnerRes is the relative WLS gradient residual before the outer line search;
+it differs from the outer RelGrad. Spectrum reports correction, reuse, restart
+or correction failure. CG, CHO and other non-spectral methods show dashes for
+Spectrum and EigRes. The footer distinguishes gradient convergence from other
+stopping reasons. Native output is buffered until the fit completes. Detailed
+logging can add diagnostic matrix products; disable it for benchmarks.
+Original Julia high-level functions use \code{verbose=true} for the same table.
+The native Julia wrapper also offers \code{trace=true}; original Julia retains
+its existing history arrays.
+
+\subsection{Returned model and predictions}
+Python returns a \code{Model} with \code{coef} (all parameters, intercept first),
+\code{coef\_} (slopes only), \code{intercept\_} (scalar), \code{family},
+\code{family\_options}, \code{info}, and an optional \code{trace}.
+R returns an object of class \code{spectralmm\_native}, with \code{coef()},
+\code{predict()}, and the corresponding list components.
+
+Predictions are response means for GLMs and fitted locations, quantiles, or
+expectiles for residual models. Binomial predictions are expected counts, not
+success probabilities. For new binomial observations, pass appropriate trial
+counts to \code{predict}:
+\begin{lstlisting}[language=Python]
+counts = binomial_model.predict(X_new, trials=10)
+\end{lstlisting}
+\begin{lstlisting}[language=R]
+counts <- predict(binomial_model, X_new, trials=10)
+\end{lstlisting}
+The examples assume that \code{binomial\_model} was fitted with
+\code{family="binomial"}. A vector of new trial counts must have one entry per
+new observation.
+
+\subsection{Diagnostics and stopping rules}
+The \code{info} object reports outer and inner iteration counts, spectral restarts
+and corrections, loss, absolute and relative gradient norms, spectral residual,
+and termination status. In Python use \code{model.info["termination\_reason"]};
+in R use \code{model\$info\$termination\_reason}.
+
+With $g_0$ denoting the gradient at the initial coefficients, gradient convergence
+means
+\[
+ \|g\|\leq\code{gtol}
+ \quad\text{or}\quad
+ \frac{\|g\|}{1+\|g_0\|}\leq\code{relgtol}.
+\]
+The wrappers also accept negligible steps and near-tolerance stalled steps by
+default. The corresponding defaults are shown below; use R logical syntax
+when calling the R interface. The step-relative tolerance is the square root
+of double-precision machine epsilon.
+\begin{lstlisting}
+accept_negligible = True
+accept_stalled = True
+negligible_step_tol = 1e-14
+step_reltol = 1.4901161193847656e-8
+stalled_relgtol = 1e-4
+\end{lstlisting}
+
+Consequently, \code{converged} and \code{gradient\_converged} are distinct.
+A fit accepted because of a small step need not satisfy the gradient tolerance.
+Check both flags when comparing solvers at a common accuracy target.
+The termination reasons are \code{gradient}, \code{maxiter},
+\code{line\_search\_failed}, \code{inner\_breakdown},
+\code{negligible\_step}, and \code{stalled\_step}.
+Invalid inputs raise errors; ordinary nonconvergence is returned in the diagnostics.
+
+\section{Optional Statistical Inference}
+The interfaces support coefficient standard errors, full covariance matrices,
+coefficient-wise Wald statistics, two-sided p-values, and confidence intervals.
+Inference is a separate post-fit stage; it does not alter the fitted coefficients.
+
+\subsection{Automatic size policy}
+The default is \code{inference="auto"} in Python/R and
+\code{inference=:auto} in Julia. Inference is attempted when the total parameter
+count $p$ is at most \code{inference\_max\_p=50}. This count includes the
+intercept and any expanded categorical or interaction columns. Above the cutoff,
+the covariance allocation is skipped. Boolean true bypasses the size cutoff;
+boolean false disables the post-fit stage entirely.
+
+The cutoff is an engineering default for this implementation, not a universal
+statistical rule or a common documented default of R \code{glm}, statsmodels,
+and GLM.jl. One double-precision covariance matrix needs $8p^2$ bytes: about
+20 kB at $p=50$ and 200 MB at $p=5000$. Factorization and sandwich calculations
+need additional matrices. Dense work is approximately $O(np^2+p^3)$;
+observation count and sparsity also affect runtime. The fitting algorithm remains
+matrix-free, but this optional stage explicitly forms full statistical matrices.
+It does not interpret the spectral preconditioner as an approximate covariance.
+
+\subsection{Accessors}
+\begin{lstlisting}[language=Python]
+model = fit(X, y, family="bernoulli", inference="auto",
+            inference_max_p=50, level=.95)
+print(model.summary())
+model.bse
+model.pvalues
+model.cov_params()
+model.conf_int()
+model.inference["wald_chisq"]
+model.inference["wald_p_value"]
+\end{lstlisting}
+\begin{lstlisting}[language=R]
+model <- spectralmm_fit(X, y, family="bernoulli",
+                        inference="auto", inference_max_p=50)
+summary(model)
+vcov(model)
+confint(model, level=.95)
+model$inference$wald_chisq
+\end{lstlisting}
+\begin{lstlisting}
+using SpectralMM, Distributions, GLM, StatsAPI
+model = SpectralMM.glm(X, y, Bernoulli(), LogitLink();
+                       inference=:auto, inference_max_p=50)
+stderror(model)
+vcov(model)
+confint(model; level=.95)
+coeftable(model)
+model.inference.wald_chisq
+\end{lstlisting}
+The native Julia wrapper exposes its own \code{stderror}, \code{vcov}, and
+\code{confint} functions and now uses Distributions.jl for reference distributions.
+Python needs SciPy when inference is computed. Original Julia's coefficient table
+is a named tuple of column vectors. Summary displays show at most 20 rows by
+default; this display limit does not limit the stored inference results.
+
+\subsection{Covariance and reference distributions}
+Let $A$ denote the complete design, including the intercept. For GLMs, the default
+model-based covariance is
+\[
+ \widehat{\operatorname{Var}}(\widehat\beta)
+ =\widehat\phi(A^\top W A)^{-1},\qquad
+ W_{ii}=\frac{(d\mu_i/d\eta_i)^2}{V(\mu_i)}.
+\]
+Inference uses statistical weights without the optimization weight floor.
+Dispersion is fixed at one for Bernoulli, Probit, Binomial, Poisson, and
+negative binomial with supplied shape. Gaussian, Gamma, and Tweedie models use
+the Pearson dispersion estimate divided by $n-p$ unless a positive
+\code{dispersion} value is supplied. Binomial trial counts enter the weights;
+$n$ counts independent rows.
+
+For residual models, \code{cov\_type="auto"} selects an HC1 sandwich estimator:
+\[
+ \widehat{\operatorname{Var}}(\widehat\beta)
+ =\frac{n}{n-p}H^{-1}BH^{-1},\quad
+ H=\sum_i x_i x_i^\top\frac{\partial q_i}{\partial\eta_i},\quad
+ B=\sum_i x_i x_i^\top q_i^2.
+\]
+Here $q_i$ is the score of the fitted objective. Student-$t$ uses the actual score
+derivative rather than its positive MM weights. SmoothQuantile inference targets
+the smoothed objective at its fixed smoothing parameter. Family shape, scale, and
+tuning parameters are treated as fixed. Sandwich covariance can also be requested
+for GLMs; its bread uses observed score derivatives. No cluster or time-series
+correction is included. Model-based covariance is not offered for residual models,
+and a dispersion override is not applicable to sandwich covariance.
+
+The coefficient statistic is $\widehat\beta_j/\operatorname{SE}_j$. Estimated
+dispersion with model-based covariance defaults to a Student-$t_{n-p}$ reference;
+other cases default to a standard normal reference. This follows R's
+\code{summary.glm} convention. The \code{use\_t} option overrides it.
+\code{wald\_chisq} is the squared statistic; \code{wald\_p\_value} uses its
+asymptotic $\chi^2_1$ reference and can therefore differ from the displayed
+$t$-based p-value. The \code{level} option defaults to 0.95.
+
+\subsection{Availability and validation}
+The inference object always provides \code{status} and \code{reason}.
+Results may be \code{ok}, \code{disabled}, \code{skipped} by size, or
+\code{unavailable}. Ordinary Wald results require an unpenalized fit whose final
+gradient meets the configured tolerance, $n>p$, and nonsingular, sufficiently
+well-conditioned statistical curvature. Detected separation, nonpositive
+information, and degenerate dispersion prevent inference; the fitted model is
+still returned. Separation screening checks the fitted predictor and is not an
+exhaustive linear-programming separation test. Forcing inference bypasses only
+the size policy. Ridge inference would require a separately defined approximation
+or bias correction and is not reported as ordinary Wald inference.
+
+For step-stopped fits, inspect convergence and, when appropriate, refit with
+the following options in Python (use R/Julia boolean syntax):
+\begin{lstlisting}
+accept_stalled=False, accept_negligible=False
+\end{lstlisting}
+Original Julia exposes the stalled-step option;
+the native Julia wrapper exposes both. No automatic refit is performed.
+
+The retained benchmark scripts explicitly disable inference to keep fitting
+and post-fit costs separate. Tests compare against R \code{glm}, statsmodels,
+closed-form Gaussian results and independently computed sandwich matrices.
+Relevant documentation: \href{https://stat.ethz.ch/R-manual/R-devel/library/stats/html/summary.glm.html}{R summary.glm},
+\href{https://www.statsmodels.org/stable/generated/statsmodels.genmod.generalized_linear_model.GLMResults.html}{statsmodels GLMResults},
+\href{https://juliastats.org/GLM.jl/latest/examples/}{GLM.jl examples}, and
+\href{https://sandwich.r-forge.r-project.org/reference/sandwich.html}{sandwich covariance construction}.
+
+\section{Reproducible Benchmarks}\label{sec:benchmark}
+\subsection{Scope and data}
+The retained comparison covers six GLM families---Gaussian identity,
+Bernoulli logit, Bernoulli probit, Poisson log, Gamma log, and negative-binomial
+log---and the four residual models. Gaussian-log, Gamma-inverse, Tweedie, and
+Binomial are supported by the core but were not included in this timing study.
+
+The archived timings predate the automatic-intercept interface update; they
+are preserved measurements. Re-run the scripts to time the current code.
+The archived study uses $n=2000$ and $p=1001$, including an intercept.
+The Julia generator follows the original dense/sparse benchmark construction
+and exports common binary matrices, responses, and initial coefficients.
+Using the same binary inputs avoids cross-language differences in random-number
+generation and decimal parsing. Rebuildable input files were removed during
+cleanup; the generator and recorded results are retained.
+
+\subsection{Run the comparison}
+Julia, Python, and Rscript must be available on PATH. Install the Python/R
+benchmark dependencies and build the native library first.
+The commands below write to a fresh directory rather than overwriting the archive.
+\begin{lstlisting}[language=bash]
+julia --project=. -e 'using Pkg; Pkg.instantiate()'
+BENCH_OUT=build/family-benchmark
+
+julia --compiled-modules=existing --project=. \
+  benchmark/native/family_performance.jl 1000 "$BENCH_OUT"
+
+python3 benchmark/native/family_performance.py \
+  --size 1000 --output "$BENCH_OUT" --language both
+
+python3 benchmark/native/repeat_family_native.py \
+  --output "$BENCH_OUT" --language both
+
+python3 benchmark/native/report_family_performance.py \
+  --output "$BENCH_OUT"
+python3 benchmark/native/export_latex.py \
+  --results "$BENCH_OUT"
+\end{lstlisting}
+The Julia step generates inputs and times the original Spectral-MM solver.
+The first Python/R step includes applicable GLM references; the repeat step
+measures the six native solvers in interleaved order.
+Use \code{--language python} or \code{--language R} for one interface; the combined
+report requires both interfaces' result files.
+
+The argument 1000 is the number of features before adding the intercept, and the
+sample size is twice that number. To run $n=10000$, $p=5001$, replace both size
+arguments with 5000. Those larger dimensions are not the dimensions of the
+archived results. GLM fits that reach the 1000-iteration limit can take a long time.
+
+\subsection{Timing protocol and accuracy}
+Each method is warmed up before timing. The initial comparison uses three
+measured runs and reports their median. The native repeat uses five rounds with
+shuffled method order; short calls are timed in batches. Thread settings are
+restricted for the numerical libraries.
+
+Timing includes fitting, wrapper conversion, and model construction. It excludes
+imports, compilation, data generation, and scoring. The GLM references convert
+sparse designs to dense arrays; conversion time is included.
+Python uses \code{statsmodels.GLM}; R uses \code{glm.fit}, with a fixed
+negative-binomial shape parameter supplied through MASS. No GLM reference is
+substituted for the four residual models.
+
+The benchmark uses $\rho=10^{-6}$, no ridge penalty, spectral rank 5, initial
+Lanczos dimension 12, at most 1000 outer and 200 inner iterations,
+\code{eta\_max}=0.6, \code{correction\_tol}=0.05,
+\code{resid\_tol}=0.5, and outer Nesterov extrapolation.
+The common gradient check uses \code{gtol}=$10^{-6}$ and
+\code{relgtol}=$10^{-8}$. GLM implementations use their own stopping criteria
+with an internal tolerance of $10^{-12}$ and are evaluated afterwards using the
+common gradient measure.
+
+Family parameters are fixed at $\theta=4$ for negative binomial,
+$(\tau,\epsilon)=(0.25,0.1)$ for smooth quantile, $\tau=0.25$ for expectile,
+$\delta=1$ for pseudo-Huber, and $(\nu,\sigma)=(4,1)$ for Student-$t$.
+
+\subsection{Reading and exporting results}
+The retained report is
+\path{benchmark/native/results/family-performance/report.md}.
+CSV files preserve the first-run and repeat summaries, individual timing samples,
+and convergence diagnostics; configuration and environment records accompany them.
+The main native tables use the interleaved repeat. GLM and Julia timings come
+from the earlier three-run sessions, so cross-session timing differences should
+not be interpreted as pure language overhead.
+
+The binary examples exhibited separation/perfect prediction. Small gradients
+therefore do not establish a unique finite maximum-likelihood estimate.
+Several fits stopped on a step criterion without meeting the common gradient
+threshold, and the Gamma GLM references reached the iteration limit.
+These outcomes remain visible in the report rather than being counted as
+same-accuracy speedups.
+
+To compile the exported tables locally:
+\begin{lstlisting}[language=bash]
+cd "$BENCH_OUT/latex"
+pdflatex -interaction=nonstopmode -halt-on-error performance_tables.tex
+\end{lstlisting}
+The table fragments require \code{booktabs}. A dagger marks solver-declared
+convergence without passing the strict gradient check; a double dagger identifies
+separable binary examples. Nonconverged runs retain their measured times and
+reported diagnostics.
+
+\section{Validation and Current Scope}
+Completed validation compared all 14 families across native and Julia implementations,
+including dense/sparse designs and all six solvers. Development test scripts and
+generated fixtures were removed during cleanup; recorded validation results and
+final benchmark data are retained.
+
+The native wrappers currently provide matrix-based fitting and prediction.
+They do not expose formula processing, offsets, observation weights,
+or a complete R/Julia model-object compatibility layer. Optional inference is
+described above.
+Native and Julia optimization trajectories need not be identical: Lanczos random
+starts and floating-point operation orders differ. Agreement should be assessed
+using the objective, gradient diagnostics, and fitted coefficients at a suitable
+accuracy target.
+
+\section*{Using This Document on Overleaf}
+Upload this \code{.tex} file to a blank Overleaf project, set it as the main
+document, and select \textbf{pdfLaTeX}. All required packages are standard LaTeX
+packages. No external figures, bibliography database, shell escape, local fonts,
+or additional input files are required. The commands in the code listings are
+instructions to run in the local project, not commands executed by Overleaf.
+
+\end{document}

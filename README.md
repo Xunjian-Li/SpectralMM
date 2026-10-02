@@ -1,4 +1,4 @@
-# SpectralMM.jl
+# SpectralMM
 
 `SpectralMM.jl` is a Julia package for large-scale statistical estimation problems that are solved through a sequence of weighted least-squares (WLS) or quadratic subproblems. The package combines matrix-free curvature operations, low-rank spectral majorization, and iterative linear solvers, with spectral information reused and updated across successive reweighting iterations.
 
@@ -10,12 +10,75 @@ The main computational goal is to avoid repeatedly forming and factorizing dense
 - **Matrix-free curvature operations** without explicitly forming `X' * W * X` in the main spectral solver.
 - **Low-rank spectral majorization** based on Lanczos iterations.
 - **Spectral reuse and correction** across successive reweighting iterations.
-- **PCG and PSD inner solvers** for the majorized quadratic subproblems.
+- **PCG and MM inner solvers** for the majorized quadratic subproblems.
 - **Dense and sparse design matrices** through the same high-level interface.
 - **GLM-style interface** using `Distribution` and `Link` objects from `Distributions.jl` and `GLM.jl`.
 - **Formula interface** through `StatsModels.jl`.
 - **Asymmetric and robust regression** including expectile, smooth quantile, pseudo-Huber, and Student-t models.
 - Reference implementations based on **Cholesky** and matrix-free **Krylov methods** are included for numerical comparisons.
+
+## Python and Julia installation
+
+```sh
+python -m pip install .
+```
+
+```python
+import spectralmm
+fit = spectralmm.fit(X, y, family="bernoulli")
+```
+
+```julia
+using Pkg
+Pkg.develop(path="/path/to/SpectralMM")
+using SpectralMM
+model = SpectralMM.fit(X, y; family=:bernoulli) # Pure Julia by default
+model_cpp = SpectralMM.fit(X, y; family=:bernoulli, backend=:cpp)
+```
+
+Python installation builds and bundles the C++ library. Julia builds it during
+installation or first use and reuses its cache. A C++17 toolchain is required for
+source builds; users do not manually invoke CMake or locate Eigen/library files.
+See [automatic installation](docs/Automatic_Installation.md) for remote installs,
+platform scope and the distinction between original Julia and C++ methods.
+
+## R package
+
+Install the updated GitHub source with:
+
+```r
+install.packages("remotes")
+remotes::install_github("Xunjian-Li/SpectralMM")
+library(SpectralMM)
+fit <- spectralmm_fit(X, y, family = "bernoulli")
+summary(fit)
+```
+
+R automatically compiles the C++ core during installation. No CMake, manual
+library loading or Julia runtime is needed for R usage. Source installation
+requires a C++17 toolchain; R dependencies include Rcpp and RcppEigen.
+For the current local checkout use `remotes::install_local("/path/to/SpectralMM")`.
+The GitHub command uses the new package layout after these changes are published.
+See the [R package guide](docs/R_Package.md) for a complete example and developer checks.
+
+## Experimental C++ core
+
+An opt-in [C++ prototype](cpp/README.md) provides a shared native solver with
+Python and R wrappers for all 14 Julia family types, including the GLM, quantile,
+expectile, PseudoHuber, and Student-t models, with dense and sparse inputs.
+The Julia package exposes the C++ core through `SpectralMM.fit(X, y; family=:..., backend=:cpp)`
+for all fourteen families. Existing original Julia methods remain available.
+See the prototype guide for build instructions, examples, validation, and scope.
+
+The [LaTeX quick-start guide](docs/usage_and_benchmark.tex) gives Python/R usage and
+benchmark commands. The [final comparison](benchmark/native/results/family-performance/report.md)
+and its LaTeX tables are retained; intermediate experiments have been cleaned up.
+
+## Small-data examples
+
+[Fourteen runnable model examples](examples/README.md) use the same 100-by-3 data
+in Python, R and Julia, with fitted coefficients, inference and iteration logs.
+The [standalone English LaTeX source](docs/Small_Model_Examples.tex) is ready for Overleaf.
 
 ## Installation
 
@@ -55,7 +118,7 @@ Xfit = hcat(ones(n), X)
 y = Float64.([rand(rng) < pi for pi in π])
 
 model = SpectralMM.glm(
-    Xfit,
+    X,
     y,
     Bernoulli(),
     LogitLink();
@@ -69,6 +132,29 @@ predict(model)
 ```
 
 Other supported GLM distribution-link combinations can be fitted by replacing the distribution and link objects. The current high-level interface supports Bernoulli-logit, Bernoulli-probit, Gaussian-identity, Gaussian-log, Poisson-log, Gamma-log, and Gamma-inverse models.
+
+### Intercept convention
+
+Matrix interfaces now accept **feature columns only** and fit an intercept by default:
+Python `fit_intercept=True`, R `intercept=TRUE`, and Julia `intercept=true`.
+Predict with the same feature columns; the fitted intercept is added automatically.
+Ridge excludes the automatic intercept unless `penalize_intercept` is enabled.
+`beta0` and full coefficient vectors include the intercept first. Python also exposes
+`model.intercept_` and `model.coef_` (slopes only); R/Julia label it `(Intercept)`.
+
+For existing code with a column of ones, pass `fit_intercept=False` (Python) or
+`intercept=false` / `FALSE` (Julia/R). This keeps design-matrix semantics, including
+penalizing every supplied column when ridge is nonzero. A duplicate constant column
+triggers a warning, not silent removal. Zero feature columns fit an intercept-only
+model. Native wrappers implement the added column implicitly; the original Julia
+backend constructs a sparse-preserving design matrix.
+
+Julia formulas control the intercept through `y ~ x` (included), `y ~ 0 + x`
+(omitted), or `y ~ 1` (intercept only). Python/R/C++-backed Julia interfaces still accept
+matrices only. Low-level `spectral_mm`, `irls_krylov`, `irls_cholesky` and existing
+C ABI entry points keep explicit design-matrix semantics; Julia's low-level
+`penalize_intercept=false` excludes the **first** supplied column (for
+`spectral_mm`, set it in `SpectralOptions`).
 
 ### Formula interface
 
@@ -106,7 +192,7 @@ Residual-based models are fitted with `fit`.
 
 ```julia
 model = SpectralMM.fit(
-    Xfit,
+    X,
     y,
     PseudoHuber(1.0);
     rank=5,
@@ -174,10 +260,9 @@ The main spectral solver accepts `AbstractMatrix` inputs and performs curvature 
 using SparseArrays
 
 X = sprandn(10_000, 2_000, 0.01)
-Xfit = hcat(sparse(ones(10_000)), X)
 
 model = SpectralMM.glm(
-    Xfit,
+    X,
     y,
     Bernoulli(),
     LogitLink();
@@ -187,6 +272,24 @@ model = SpectralMM.glm(
 ```
 
 The spectral basis itself is stored as a low-rank dense factor, while multiplication by the original design matrix retains its sparse structure.
+
+## Standard errors and Wald inference
+
+High-level fits now offer optional post-fit inference. The default `inference="auto"`
+(Python/R; `:auto` in Julia) attempts inference for at most 50 total coefficients,
+including the intercept. Use `inference_max_p` to configure this engineering cutoff;
+boolean true forces computation past the cutoff, and false disables it.
+
+Python: `model.summary()`, `model.bse`, `model.pvalues`, `model.cov_params()`.
+R: `summary(model)`, `vcov(model)`, `confint(model)`.
+Julia: `stderror(model)`, `vcov(model)`, `confint(model)`, `coeftable(model)`.
+The inference result records why a calculation was disabled, skipped or unavailable.
+
+GLMs default to model-based covariance; residual models use HC1 sandwich covariance.
+This optional stage forms full statistical matrices after the matrix-free fit.
+It does not substitute the low-rank preconditioner for a covariance matrix.
+Ordinary Wald results are withheld for ridge fits and failed validity checks.
+See [inference guide](docs/README.md) for assumptions, options and references.
 
 ## Benchmarks
 
@@ -213,15 +316,6 @@ benchmark/scaling_results.csv
 benchmark/scaling_sparse_results.csv
 ```
 
-## Tests
-
-Run the package tests with
-
-```julia
-using Pkg
-Pkg.test("SpectralMM")
-```
-
 ## Repository structure
 
 ```text
@@ -240,13 +334,65 @@ SpectralMM/
 │   ├── common.jl
 │   ├── scaling.jl
 │   └── scaling_sparse.jl
-├── test/
-│   └── runtests.jl
 ├── SpectralMM.ipynb
 ├── Poisson equation.ipynb
 └── Project.toml
 ```
 
+## Solver selection
+
+High-level `glm` and `fit` support `:pcg` (alias `:spectral`), `:mm`, `:cg`,
+`:cho` (alias `:cholesky`), `:cgls`, `:crls`, `:lsqr` and `:lsmr`.
+Python/R accept the same names as strings. See [the unified guide](docs/README.md#choosing-a-solver)
+for algorithm definitions and examples. Cholesky forms a full curvature matrix.
+
 ## License
 
 SpectralMM.jl is released under the GNU General Public License version 3 (GPL-3.0). See the `LICENSE` file for details.
+
+
+## Julia backend selection
+
+The Julia package currently requires Julia 1.12 or later.
+The main matrix API is `SpectralMM.fit(X, y; family=:gaussian, backend=:julia)`.
+Pure Julia is the default. Select `backend=:cpp` explicitly to use the shared
+C++ core; its first use builds the library automatically, and subsequent calls
+reuse the cache. Installing or fitting with the Julia backend does not compile
+C++ code. Build-tool dependencies are still resolved by the package manager.
+
+```julia
+julia_model = SpectralMM.fit(X, y; family=:pseudo_huber,
+    family_options=(delta=1.0,), backend=:julia, solver=:pcg)
+cpp_model = SpectralMM.fit(X, y; family=:pseudo_huber,
+    family_options=(delta=1.0,), backend=:cpp, solver=:pcg)
+julia_model.backend  # :julia
+cpp_model.backend    # :cpp
+coef(julia_model)
+predict(cpp_model, X)
+```
+
+Both backends support all fourteen named families and the eight solvers. Common
+matrix defaults are `intercept=true`, `maxiter=200`, `inner_maxiter=100`,
+`gtol=1e-7`, `relgtol=1e-8`, `floor=1e-6`, and `solver=:pcg`. The default spectral
+rank is `p-1` for `p<20` and 10 otherwise, where `p` includes the intercept.
+Inference remains automatic for at most 50 coefficients. Backend-specific
+advanced options are not interchangeable: for example, `trace=true` and
+`krylovdim` are C++ interface options. Unsupported options raise an error rather
+than switching the backend. Use an explicit `beta0` when comparing initialization.
+
+Legacy positional-family `fit` and `glm` methods remain pure Julia, including
+formula support through `glm`. The unified `fit` API accepts matrices.
+The earlier two-argument keyword API used C++; callers wanting that implementation
+must now specify `backend=:cpp`. Legacy development loader shims have been removed; use the installed package
+and request C++ explicitly. R and Python keep their C++ backend.
+
+
+## Numerical correctness update (2026-10-01)
+
+Probit objective/gradient consistency, rounding-scale line-search comparisons,
+and convergence reporting on the final allowed step have been corrected.
+The previously documented small-data inference discrepancies are resolved at
+unchanged gradient thresholds. See the [numerical audit](benchmark/native/results/numerical-correctness-audit.md)
+for before/after evidence and validation scope. Outdated archives under `output/` have been removed. Generate independent
+packages from current sources with `python3 tools/build_packages.py`.
+See [packaging instructions](docs/Packaging.md).

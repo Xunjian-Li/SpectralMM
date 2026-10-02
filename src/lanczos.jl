@@ -1,4 +1,5 @@
-# Hessian products for H = X'WX + ridge I.
+# Hessian products for H = X'WX + ridge D; D excludes the first column
+# when penalize_intercept=false.
 # Optimized restart path: all large Lanczos/Ritz/residual arrays are persistent.
 mutable struct LanczosRestartWorkspace{T}
     # H*v workspace
@@ -7,6 +8,7 @@ mutable struct LanczosRestartWorkspace{T}
 
     # Lanczos recurrence (allocated to maximum Krylov dimension)
     Q::Matrix{T}
+    HQ::Matrix{T}  # Unmodified H*q for the current Lanczos run only.
     alpha::Vector{T}
     beta::Vector{T}
     q::Vector{T}
@@ -41,6 +43,7 @@ function LanczosRestartWorkspace(
         zeros(T, m),                    # Xv
         zeros(T, m),                    # WXv
         zeros(T, p, maxkd),             # Q
+        zeros(T, p, maxkd),             # HQ
         zeros(T, maxkd),                # alpha
         zeros(T, max(maxkd - 1, 1)),    # beta
         zeros(T, p),                    # q
@@ -65,7 +68,7 @@ end
     Xt,
     w::AbstractVector{T},
     v::AbstractVector{T};
-    ridge::T = zero(T)
+    ridge::T = zero(T), penalize_intercept::Bool=true
 ) where {T <: Real}
     mul!(ws.Xv, X, v)
     @inbounds @simd for i in eachindex(ws.Xv)
@@ -74,7 +77,7 @@ end
     mul!(Hv, Xt, ws.WXv)
     if ridge > zero(T)
         @inbounds @simd for i in eachindex(Hv)
-            Hv[i] += ridge * v[i]
+            Hv[i] += (penalize_intercept || i != 1) ? ridge * v[i] : zero(T)
         end
     end
     return Hv
@@ -85,7 +88,7 @@ function hess_mv(
     X::AbstractMatrix{T},
     w::AbstractVector{T},
     v::AbstractVector{T};
-    ridge::T = zero(T)
+    ridge::T = zero(T), penalize_intercept::Bool=true
 ) where {T <: Real}
     Xv = X * v
     WXv = similar(Xv)
@@ -95,7 +98,7 @@ function hess_mv(
     Hv = transpose(X) * WXv
     if ridge > zero(T)
         @inbounds @simd for i in eachindex(Hv)
-            Hv[i] += ridge * v[i]
+            Hv[i] += (penalize_intercept || i != 1) ? ridge * v[i] : zero(T)
         end
     end
     return Hv
@@ -124,14 +127,14 @@ function hess_xv!(
     w::AbstractVector{T},
     V::AbstractMatrix{T},
     XV::AbstractMatrix{T};
-    ridge::T = zero(T)
+    ridge::T = zero(T), penalize_intercept::Bool=true
 ) where {T <: Real}
     weight_rows!(WXV, w, XV)
     mul!(HV, Xt, WXV)
     if ridge > zero(T)
         @inbounds for j in axes(HV, 2)
             @simd for i in axes(HV, 1)
-                HV[i, j] += ridge * V[i, j]
+                HV[i, j] += (penalize_intercept || i != 1) ? ridge * V[i, j] : zero(T)
             end
         end
     end
@@ -142,9 +145,9 @@ end
 function hess_xv!(
     HV::AbstractMatrix{T}, WXV::AbstractMatrix{T}, X::AbstractMatrix{T},
     w::AbstractVector{T}, V::AbstractMatrix{T}, XV::AbstractMatrix{T};
-    ridge::T = zero(T)
+    ridge::T = zero(T), penalize_intercept::Bool=true
 ) where {T <: Real}
-    return hess_xv!(HV, WXV, X, transpose(X), w, V, XV; ridge=ridge)
+    return hess_xv!(HV, WXV, X, transpose(X), w, V, XV; ridge=ridge, penalize_intercept=penalize_intercept)
 end
 
 function eig_resid_hv!(
@@ -171,9 +174,9 @@ function eig_resid_xv!(
     V::AbstractMatrix{T},
     XV::AbstractMatrix{T},
     lambda::AbstractVector{T};
-    ridge::T = zero(T)
+    ridge::T = zero(T), penalize_intercept::Bool=true
 ) where {T <: Real}
-    hess_xv!(HV, WXV, X, Xt, w, V, XV; ridge=ridge)
+    hess_xv!(HV, WXV, X, Xt, w, V, XV; ridge=ridge, penalize_intercept=penalize_intercept)
     return eig_resid_hv!(HV, V, lambda)
 end
 
@@ -185,7 +188,7 @@ function top_eigs!(
     Xt,
     w::AbstractVector{T},
     r::Int;
-    ridge::T = zero(T),
+    ridge::T = zero(T), penalize_intercept::Bool=true,
     krylovdim::Int = min(size(X, 2), max(3r + 20, r + 10)),
     tol::T = T(1e-10),
     seed::Int = 1,
@@ -226,8 +229,11 @@ function top_eigs!(
             Xt,
             w,
             q;
-            ridge = ridge,
+            ridge=ridge, penalize_intercept=penalize_intercept,
         )
+
+        # Save the operator product before recurrence/reorthogonalization changes z.
+        copyto!(@view(ws.HQ[:, j]), z)
 
         if j > 1
             bj = beta[j - 1]
@@ -293,6 +299,7 @@ function top_eigs!(
     Zv = @view ws.Z[1:actual_dim, 1:r]
 
     mul!(ws.V, Qv, Zv)
+    mul!(ws.HV, @view(ws.HQ[:, 1:actual_dim]), Zv)
 
     @inbounds for j in 1:r
         vj = @view ws.V[:, j]
@@ -301,6 +308,7 @@ function top_eigs!(
 
         @simd for i in eachindex(vj)
             vj[i] *= invnv
+            ws.HV[i, j] *= invnv
         end
     end
 
@@ -314,7 +322,7 @@ function checked_lz!(
     Xt,
     w::AbstractVector{T},
     r::Int;
-    ridge::T = zero(T),
+    ridge::T = zero(T), penalize_intercept::Bool=true,
     krylovdim::Int = min(size(X, 2), max(3r + 20, r + 10)),
     max_krylovdim::Int = size(X, 2),
     tol::T = T(1e-8),
@@ -339,7 +347,7 @@ function checked_lz!(
             Xt,
             w,
             r;
-            ridge = ridge,
+            ridge=ridge, penalize_intercept=penalize_intercept,
             krylovdim = kd,
             tol = tol,
             seed = seed + 7919 * attempt,
@@ -348,17 +356,8 @@ function checked_lz!(
 
         mul!(ws.XV, X, V)
 
-        res = eig_resid_xv!(
-            ws.HV,
-            ws.WXV,
-            X,
-            Xt,
-            w,
-            V,
-            ws.XV,
-            lambda;
-            ridge = ridge,
-        )
+        # HV matches the normalized Ritz vectors; this consumes HV, not HQ.
+        res = eig_resid_hv!(ws.HV, V, lambda)
 
         if res < best_res
             best_res = res
@@ -408,7 +407,7 @@ function checked_lz(
     w::AbstractVector{T},
     r::Int;
     Xt = transpose(X),
-    ridge::T = zero(T),
+    ridge::T = zero(T), penalize_intercept::Bool=true,
     krylovdim::Int = min(size(X, 2), max(3r + 20, r + 10)),
     max_krylovdim::Int = size(X, 2),
     tol::T = T(1e-8),
@@ -419,7 +418,7 @@ function checked_lz(
 ) where {T <: Real}
     ws = LanczosRestartWorkspace(X, r, max_krylovdim)
     return checked_lz!(ws, X, Xt, w, r;
-        ridge=ridge,
+        ridge=ridge, penalize_intercept=penalize_intercept,
         krylovdim=krylovdim,
         max_krylovdim=max_krylovdim,
         tol=tol,
@@ -494,7 +493,7 @@ function hess_xv_skinny!(
     HV::AbstractMatrix{T}, WXV::AbstractMatrix{T},
     X::AbstractMatrix{T}, w::AbstractVector{T},
     V::AbstractMatrix{T}, XV::AbstractMatrix{T};
-    ridge::T=zero(T)
+    ridge::T=zero(T), penalize_intercept::Bool=true
 ) where {T <: Real}
     weight_rows!(WXV, w, XV)
     @inbounds for j in axes(HV, 2)
@@ -502,7 +501,7 @@ function hess_xv_skinny!(
     end
     if ridge != zero(T)
         @inbounds for j in axes(HV, 2), i in axes(HV, 1)
-            HV[i,j] += ridge * V[i,j]
+            HV[i,j] += (penalize_intercept || i != 1) ? ridge * V[i,j] : zero(T)
         end
     end
     return HV
@@ -520,18 +519,23 @@ function perturb!(
     WXV_workspace::AbstractMatrix{T}, Ssmall_mat::AbstractMatrix{T},
     X::AbstractMatrix{T}, w_old::AbstractVector{T}, w_new::AbstractVector{T},
     V_old::AbstractMatrix{T}, XV_old::AbstractMatrix{T}, λ_old::AbstractVector{T};
-    ridge::T=zero(T), gap_tol::T=T(1e-8)
+    ridge::T=zero(T), penalize_intercept::Bool=true, gap_tol::T=T(1e-8), projection_ready::Bool=false
 ) where {T <: Real}
     r = size(V_old, 2)
 
-    @inbounds @simd for i in eachindex(Δw)
-        Δw[i] = w_new[i] - w_old[i]
+    # Only the immediate caller of projected_hessian_change! may reuse these
+    # buffers. Bmat is consumed below; standalone calls rebuild the projection.
+    if !projection_ready
+        @inbounds @simd for i in eachindex(Δw)
+            Δw[i] = w_new[i] - w_old[i]
+        end
     end
     (!finite_all(Δw) || !finite_all(V_old) || !finite_all(XV_old) || !finite_all(λ_old)) && return T(Inf)
 
-    # B = V' ΔH V = (XV)' diag(Δw) XV.
-    weight_rows!(ΔWXV_old, Δw, XV_old)
-    mul!(Bmat, transpose(XV_old), ΔWXV_old)
+    if !projection_ready
+        weight_rows!(ΔWXV_old, Δw, XV_old)
+        mul!(Bmat, transpose(XV_old), ΔWXV_old)
+    end
     !finite_all(Bmat) && return T(Inf)
 
     # First-order retained-subspace rotation A = I + E.
@@ -564,7 +568,7 @@ function perturb!(
     # Rayleigh-Ritz refinement. For small r use repeated GEMV rather than
     # a p×m by m×r skinny GEMM.
     hess_xv_skinny!(HV_workspace, WXV_workspace, X, w_new,
-                    V_corr, XV_corr; ridge=ridge)
+                    V_corr, XV_corr; ridge=ridge, penalize_intercept=penalize_intercept)
     mul!(Ssmall_mat, transpose(V_corr), HV_workspace)
     !finite_all(Ssmall_mat) && return T(Inf)
 

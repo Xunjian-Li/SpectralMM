@@ -24,8 +24,9 @@ end
 
 Base.@kwdef struct SpectralOptions{T<:Real}
     k::Int = 5
-    rho::T = T(1e-3)
+    rho::T = T(1e-6)
     ridge::T = zero(T)
+    penalize_intercept::Bool = true
     resid_tol::T = T(5e-1)
     restart_every::Int = 0
     correction_tol::T = T(5e-2)
@@ -195,13 +196,13 @@ function wls_hess_mul!(
     X::AbstractMatrix{T},
     w::AbstractVector{T},
     v::AbstractVector{T};
-    ridge::T=zero(T)
+    ridge::T=zero(T), penalize_intercept::Bool=true
 ) where {T<:Real}
     mul!(Xv, X, v)
     @inbounds @simd for i in eachindex(Xv); WXv[i] = w[i] * Xv[i]; end
     mul!(out, transpose(X), WXv)
     if ridge > zero(T)
-        @. out += ridge * v
+        add_penalty!(out, v, ridge, penalize_intercept)
     end
     return out
 end
@@ -213,12 +214,12 @@ function wls_hess_from_Xv!(
     w::AbstractVector{T},
     v::AbstractVector{T},
     Xv::AbstractVector{T};
-    ridge::T=zero(T)
+    ridge::T=zero(T), penalize_intercept::Bool=true
 ) where {T<:Real}
     @inbounds @simd for i in eachindex(Xv); WXv[i] = w[i] * Xv[i]; end
     mul!(out, transpose(X), WXv)
     if ridge > zero(T)
-        @. out += ridge * v
+        add_penalty!(out, v, ridge, penalize_intercept)
     end
     return out
 end
@@ -230,13 +231,13 @@ function wls_grad_from_resid!(
     w::AbstractVector{T},
     r::AbstractVector{T},
     beta::AbstractVector{T};
-    ridge::T=zero(T)
+    ridge::T=zero(T), penalize_intercept::Bool=true
 ) where {T<:Real}
 
     @inbounds @simd for i in eachindex(r); Wr[i] = w[i] * r[i]; end
     mul!(g, transpose(X), Wr)
     if ridge > zero(T)
-        @. g += ridge * beta
+        add_penalty!(g, beta, ridge, penalize_intercept)
     end
     return g
 end
@@ -254,7 +255,7 @@ function solve_wls_spectral_mm!(
     factor_base::T,
     factor_coeff::AbstractVector{T},
     ws::InnerWorkspace{T};
-    ridge::T=zero(T),
+    ridge::T=zero(T), penalize_intercept::Bool=true,
     maxiter::Int=50,
     forcing::T=T(0.1),
     abstol::T=T(1e-10),
@@ -274,7 +275,7 @@ function solve_wls_spectral_mm!(
     end
 
     @. ws.residual = Xbeta_start - z
-    wls_grad_from_resid!(ws.g, ws.Wr, X, w, ws.residual, beta_start; ridge=ridge)
+    wls_grad_from_resid!(ws.g, ws.Wr, X, w, ws.residual, beta_start; ridge=ridge, penalize_intercept=penalize_intercept)
     g0 = norm(ws.g)
     g0 <= abstol && return 0, zero(T), false
     t = one(T)
@@ -302,7 +303,7 @@ function solve_wls_spectral_mm!(
         !finite_all(ws.Xd) && return iter - 1, eta, true
         curvature = zero(T)
         @inbounds @simd for i in eachindex(ws.Xd); curvature += w[i] * ws.Xd[i]^2; end
-        ridge > zero(T) && (curvature += ridge * dot(ws.d, ws.d))
+        ridge > zero(T) && (curvature += ridge * penalty_norm2(ws.d, penalize_intercept))
         slope = dot(ws.g, ws.d)
         alpha = curvature > zero(T) ? -slope / curvature : one(T)
         alpha = isfinite(alpha) ? clamp(alpha, alpha_min, alpha_max) : alpha_min
@@ -322,7 +323,7 @@ function solve_wls_spectral_mm!(
             (!finite_all(ws.beta_y) || !finite_all(ws.Xbeta_y)) && return iter, eta, true
             @. ws.residual = ws.Xbeta_y - z
             begin
-                wls_grad_from_resid!(ws.g, ws.Wr, X, w, ws.residual, ws.beta_y; ridge=ridge)
+                wls_grad_from_resid!(ws.g, ws.Wr, X, w, ws.residual, ws.beta_y; ridge=ridge, penalize_intercept=penalize_intercept)
             end
             t = tnew
         else
@@ -331,7 +332,7 @@ function solve_wls_spectral_mm!(
             @. Xbeta_out += alpha * ws.Xd
             (!finite_all(beta_out) || !finite_all(Xbeta_out)) && return iter - 1, eta, true
             begin
-                wls_hess_from_Xv!(ws.Hp, ws.WXp, X, w, ws.d, ws.Xd; ridge=ridge)
+                wls_hess_from_Xv!(ws.Hp, ws.WXp, X, w, ws.d, ws.Xd; ridge=ridge, penalize_intercept=penalize_intercept)
             end
             @. ws.g += alpha * ws.Hp
         end
@@ -340,7 +341,7 @@ function solve_wls_spectral_mm!(
     # Report the forcing statistic at the point actually returned/evaluated.
     if nesterov
         @. ws.residual = Xbeta_out - z
-        wls_grad_from_resid!(ws.g, ws.Wr, X, w, ws.residual, beta_out; ridge=ridge)
+        wls_grad_from_resid!(ws.g, ws.Wr, X, w, ws.residual, beta_out; ridge=ridge, penalize_intercept=penalize_intercept)
     end
     eta = norm(ws.g) / g0
     failed = !isfinite(eta)
@@ -354,11 +355,11 @@ function solve_wls_spectral_pcg!(
     X::AbstractMatrix{T}, z::AbstractVector{T}, w::AbstractVector{T},
     Vk::AbstractMatrix{T}, factor_base::T, factor_coeff::AbstractVector{T},
     ws::InnerWorkspace{T};
-    ridge::T=zero(T), maxiter::Int=50, forcing::T=T(0.1), abstol::T=T(1e-10)
+    ridge::T=zero(T), penalize_intercept::Bool=true, maxiter::Int=50, forcing::T=T(0.1), abstol::T=T(1e-10)
 ) where {T<:Real}
 
     @. ws.residual = Xbeta_start - z
-    wls_grad_from_resid!(ws.g, ws.Wr, X, w, ws.residual, beta_start; ridge=ridge)
+    wls_grad_from_resid!(ws.g, ws.Wr, X, w, ws.residual, beta_start; ridge=ridge, penalize_intercept=penalize_intercept)
     g0 = norm(ws.g)
     g0 <= abstol && (copyto!(beta_out, beta_start); copyto!(Xbeta_out, Xbeta_start); return 0, zero(T), false)
     fill!(ws.delta, zero(T))
@@ -372,7 +373,7 @@ function solve_wls_spectral_pcg!(
     eta = one(T)
 
     for iter in 1:maxiter
-        wls_hess_mul!(ws.Hp, ws.Xp, ws.WXp, X, w, ws.p_cg; ridge=ridge)
+        wls_hess_mul!(ws.Hp, ws.Xp, ws.WXp, X, w, ws.p_cg; ridge=ridge, penalize_intercept=penalize_intercept)
         pHp = dot(ws.p_cg, ws.Hp)
         (!isfinite(pHp) || pHp <= zero(T)) && return iter - 1, eta, true
         alpha = rz / pHp
@@ -417,18 +418,19 @@ function solve_inner!(
     ws::InnerWorkspace{T},
     opts::InnerOptions{T};
     ridge::T,
+    penalize_intercept::Bool=true,
     forcing::T
 ) where {T}
     if opts.solver === :mm
         return solve_wls_spectral_mm!(
             beta_out, Xbeta_out, beta, Xbeta, X, z, w, Vk, factor_base, factor_coeff, ws;
-            ridge=ridge, maxiter=opts.maxiter, forcing=forcing, abstol=opts.abstol,
+            ridge=ridge, penalize_intercept=penalize_intercept, maxiter=opts.maxiter, forcing=forcing, abstol=opts.abstol,
             alpha_min=opts.alpha_min, alpha_max=opts.alpha_max, nesterov=opts.nesterov
         )
     elseif opts.solver === :pcg
         return solve_wls_spectral_pcg!(
             beta_out, Xbeta_out, beta, Xbeta, X, z, w, Vk, factor_base, factor_coeff, ws;
-            ridge=ridge, maxiter=opts.maxiter, forcing=forcing, abstol=opts.abstol
+            ridge=ridge, penalize_intercept=penalize_intercept, maxiter=opts.maxiter, forcing=forcing, abstol=opts.abstol
         )
     else
         throw(ArgumentError("inner solver must be :mm or :pcg"))
@@ -462,6 +464,7 @@ function outer_linesearch!(
     family::IRLSFamily,
     fref::T;
     ridge::T,
+    penalize_intercept::Bool=true,
     alpha_min::T,
     shrink::T
 ) where {T}
@@ -470,8 +473,8 @@ function outer_linesearch!(
         @. beta_new = beta + alpha * direction
         @. Xbeta_new = Xbeta + alpha * Xdirection
         if admissible_eta(family, Xbeta_new)
-            fnew = logloss_xb(family, Xbeta_new, y, beta_new; ridge=ridge)
-            if isfinite(fnew) && fnew <= fref
+            fnew = logloss_xb(family, Xbeta_new, y, beta_new; ridge=ridge, penalize_intercept=penalize_intercept)
+            if isfinite(fnew) && fnew <= fref + objective_roundoff(fref)
                 return alpha, fnew
             end
         end
@@ -494,7 +497,7 @@ function restart_spectrum!(
     kd = something(opts.krylovdim, min(p, max(3r + 20, r + 10)))
     maxkd = something(opts.max_krylovdim, p)
     V, XV, lambda, res, _, ok = checked_lz(X, w, r;
-        ridge=opts.ridge, krylovdim=kd, max_krylovdim=maxkd, tol=opts.lanczos_tol,
+        ridge=opts.ridge, penalize_intercept=opts.penalize_intercept, krylovdim=kd, max_krylovdim=maxkd, tol=opts.lanczos_tol,
         resid_tol=opts.resid_tol, seed=iter + 100, max_retries=opts.lanczos_retries, verbose=false)
     copyto!(sp.V, V)
     copyto!(sp.XV, XV)
@@ -528,11 +531,13 @@ function correct_spectrum!(
     X,
     w_old,
     w_new,
-    ridge::T
+    ridge::T;
+    penalize_intercept::Bool=true,
+    projection_ready::Bool=false
 ) where {T}
     res = perturb!(
         sp.Vnew, sp.XVnew, sp.lambda_new, sp.dw, sp.dWXV, sp.B, sp.E, sp.A, sp.Vraw, sp.XVraw, sp.HV, sp.WXV,
-        sp.Ssmall, X, w_old, w_new, sp.V, sp.XV, sp.lambda; ridge=ridge)
+        sp.Ssmall, X, w_old, w_new, sp.V, sp.XV, sp.lambda; ridge=ridge, penalize_intercept=penalize_intercept, projection_ready=projection_ready)
     return res
 end
 
@@ -546,50 +551,6 @@ function accept_spectrum!(
 end
 
 # Diagnostics
-
-function print_trace_header(solver, rank)
-    println()
-    @printf("SpectralMM  Solver: %s   Rank: %d\n\n", uppercase(String(solver)), rank)
-    @printf("%4s  %12s  %10s  %5s  %10s  %10s  %6s  %s\n",
-            "Iter", "Loss", "RelGrad", "Inner", "InnerRes", "EigRes", "Step", "Spectral")
-end
-
-function print_iteration(iter, loss, relgrad, inner_iter, inner_stat, eigres, step, status::Symbol)
-    eigstr = isfinite(eigres) ? @sprintf("%.2e", eigres) : "-"
-    statusstr =
-        status === :init            ? "init" :
-        status === :init_correct    ? "init+correct" :
-        status === :init_fail       ? "init+fail" :
-        status === :restart         ? "restart" :
-        status === :correct         ? "correct" :
-        status === :correct_fail    ? "correct-fail" :
-        status === :restart_correct ? "restart+correct" :
-        status === :restart_fail    ? "restart+fail" :
-                                      "reuse"
-
-    @printf("%4d  %12.4e  %10.2e  %5d  %10.2e  %10s  %6.2f  %s\n",
-            iter, loss, relgrad, inner_iter, inner_stat, eigstr, step, statusstr)
-end
-
-function print_failure_iteration(iter, inner_iter, status)
-    @printf("%4d  %12s  %10s  %5d  %10s  %10s  %6s  %s\n",
-            iter, "-", "-", inner_iter, "-", "-", "-", status)
-end
-
-function print_convergence(iters, loss, relgrad)
-    println()
-    @printf("Converged after %d iterations\n", iters)
-    @printf("Final loss:      %.6e\n", loss)
-    @printf("Relative grad.:  %.3e\n", relgrad)
-end
-
-function print_termination(reason, iters, loss, relgrad)
-    println()
-    @printf("Terminated after %d iterations (%s)\n", iters, reason)
-    @printf("Final loss:      %.6e\n", loss)
-    @printf("Relative grad.:  %.3e\n", relgrad)
-end
-
 
 # ================================================================
 # Persistent Lanczos restart support
@@ -628,7 +589,7 @@ function restart_spectrum!(
 
     V, XV, lambda, res, _, ok = checked_lz!(
         lzws, X, Xt, w, r;
-        ridge=opts.ridge, krylovdim=kd, max_krylovdim=maxkd,
+        ridge=opts.ridge, penalize_intercept=opts.penalize_intercept, krylovdim=kd, max_krylovdim=maxkd,
         tol=opts.lanczos_tol, resid_tol=opts.resid_tol,
         seed=iter + 100, max_retries=opts.lanczos_retries, verbose=false
     )
@@ -658,7 +619,7 @@ function spectral_mm(
     m, p = size(X)
     k = spectral.k
     length(y) == m || throw(DimensionMismatch("length(y) must equal size(X,1)"))
-    1 <= k < p || throw(ArgumentError("k must satisfy 1 <= k < p"))
+    ((p == 1 && k == 0) || 1 <= k < p) || throw(ArgumentError("k must satisfy 1 <= k < p"))
     inner.solver in (:mm, :pcg) || throw(ArgumentError("solver must be :mm or :pcg"))
     zero(T) < inner.shrink < one(T) || throw(ArgumentError("shrink must lie in (0,1)"))
     zero(T) < inner.eta_max < one(T) || throw(ArgumentError("eta_max must lie in (0,1)"))
@@ -689,7 +650,7 @@ function spectral_mm(
     lzws = LanczosRestartWorkspace(X, r_lz, maxkd_lz)
 
     mul!(ws.Xbeta_base, X, beta)
-    fbase = logloss_xb(family, ws.Xbeta_base, y, beta; ridge=spectral.ridge)
+    fbase = logloss_xb(family, ws.Xbeta_base, y, beta; ridge=spectral.ridge, penalize_intercept=spectral.penalize_intercept)
 
     # ------------------------------------------------------------
     # History
@@ -713,6 +674,7 @@ function spectral_mm(
     need_restart = true
     last_eigres = T(NaN)
     restarts = 0
+    accepted_gradient_valid = false
 
     # ============================================================
     # Outer loop
@@ -726,12 +688,14 @@ function spectral_mm(
         copyto!(ws.beta_eval, beta)
         copyto!(ws.Xbeta, ws.Xbeta_base)
 
-        grad_weights_xb!(
-            family, ws.g, ws.mu, ws.w, ws.grad_resid,
-            X, ws.Xbeta, y, ws.beta_eval;
-            ridge=spectral.ridge,
-            w_floor=outer.w_floor,
-        )
+        if !accepted_gradient_valid
+            grad_weights_xb!(
+                family, ws.g, ws.mu, ws.w, ws.grad_resid,
+                X, ws.Xbeta, y, ws.beta_eval;
+                ridge=spectral.ridge, penalize_intercept=spectral.penalize_intercept,
+                w_floor=outer.w_floor,
+            )
+        end
 
         gnorm = norm(ws.g)
 
@@ -747,6 +711,7 @@ function spectral_mm(
         push!(relgradnorms, relgrad)
 
         if gnorm <= outer.gtol || relgrad <= outer.relgtol
+            outer.verbose && iter == 1 && print_initial_iteration(fbase, relgrad, T(NaN))
             outer.verbose && print_convergence(iter - 1, fbase, relgrad)
 
             return MMResult(
@@ -759,13 +724,14 @@ function spectral_mm(
         # --------------------------------------------------------
         # Nesterov evaluation point
         # --------------------------------------------------------
+        accepted_gradient_valid = false
         if outer.nesterov && iter > 1
             extrapolate!(ws.beta_eval, beta, beta_prev, t_outer)
             mul!(ws.Xbeta, X, ws.beta_eval)
 
             f0 = logloss_xb(
                 family, ws.Xbeta, y, ws.beta_eval;
-                ridge=spectral.ridge,
+                ridge=spectral.ridge, penalize_intercept=spectral.penalize_intercept,
             )
 
             # Monotone restart.
@@ -780,7 +746,7 @@ function spectral_mm(
                 grad_weights_xb!(
                     family, ws.g, ws.mu, ws.w, ws.grad_resid,
                     X, ws.Xbeta, y, ws.beta_eval;
-                    ridge=spectral.ridge,
+                    ridge=spectral.ridge, penalize_intercept=spectral.penalize_intercept,
                     w_floor=outer.w_floor,
                 )
 
@@ -810,6 +776,8 @@ function spectral_mm(
             restarts += 1
             need_restart = false
         end
+
+        outer.verbose && iter == 1 && print_initial_iteration(fbase, relgrad, restart_eigres)
 
         push!(eigresiduals, last_eigres)
         push!(restart_flags, restarted)
@@ -842,7 +810,7 @@ function spectral_mm(
         nit, stat, failed = solve_inner!(
             iw.beta_inner, iw.Xbeta_inner, ws.beta_eval, ws.Xbeta,
             X, ws.z, ws.w, Vk, factor_base, sp.factor_coeff, iw, inner;
-            ridge=spectral.ridge, forcing=eta_m
+            ridge=spectral.ridge, penalize_intercept=spectral.penalize_intercept, forcing=eta_m
         )
 
         push!(inner_iters, nit)
@@ -887,7 +855,7 @@ function spectral_mm(
             alpha, fnew = outer_linesearch!(
                 ws.beta_new, ws.Xbeta_new, ws.beta_eval, ws.Xbeta,
                 ws.direction, ws.Xdirection, y, family, fbase;
-                ridge=spectral.ridge,
+                ridge=spectral.ridge, penalize_intercept=spectral.penalize_intercept,
                 alpha_min=inner.alpha_min,
                 shrink=inner.shrink
             )
@@ -897,7 +865,7 @@ function spectral_mm(
             @. ws.Xbeta_new = ws.Xbeta + ws.Xdirection
             fnew = logloss_xb(
                 family, ws.Xbeta_new, y, ws.beta_new;
-                ridge=spectral.ridge
+                ridge=spectral.ridge, penalize_intercept=spectral.penalize_intercept
             )
         end
         push!(outer_steps, alpha)
@@ -924,8 +892,20 @@ function spectral_mm(
 
             copyto!(beta, ws.beta_new)
             copyto!(ws.Xbeta_base, ws.Xbeta_new)
+            grad_weights_xb!(family, ws.g, ws.mu, ws.w, ws.grad_resid,
+                X, ws.Xbeta_base, y, beta;
+                ridge=spectral.ridge, penalize_intercept=spectral.penalize_intercept,
+                w_floor=outer.w_floor)
+            final_gnorm = norm(ws.g)
+            final_relgrad = final_gnorm / grad_scale
+            push!(losses, fnew)
+            push!(gradnorms, final_gnorm)
+            push!(relgradnorms, final_relgrad)
+            outer.verbose && print_iteration(iter, fnew, final_relgrad, nit, stat,
+                restarted && iter > 1 ? restart_eigres : T(NaN), alpha,
+                restarted && iter > 1 ? :restart : :reuse)
             outer.verbose &&
-                print_termination("stalled near tolerance", iter, fnew, relgrad)
+                print_termination("stalled near tolerance", iter, fnew, final_relgrad)
 
             return MMResult(
                 beta, losses, gradnorms, relgradnorms, eigresiduals,
@@ -955,7 +935,8 @@ function spectral_mm(
 
         if do_correction
             eigres_new = correct_spectrum!(
-                sp, X, ws.w_spectral, ws.w_new, spectral.ridge
+                sp, X, ws.w_spectral, ws.w_new, spectral.ridge;
+                projection_ready=true, penalize_intercept=spectral.penalize_intercept
             )
 
             correction_failed =
@@ -984,23 +965,30 @@ function spectral_mm(
             display_eigres = restarted ? restart_eigres : T(NaN)
         end
         
-        if restarted && do_correction
-            if iter == 1
-                spectral_status = correction_failed ? :init_fail : :init_correct
-            else
-                spectral_status = correction_failed ? :restart_fail : :restart_correct
-            end
-        elseif restarted && iter == 1
-            spectral_status = :init
+        if restarted && iter > 1 && do_correction
+            spectral_status = correction_failed ? :restart_fail : :restart_correct
+        elseif restarted && iter == 1 && !do_correction
+            spectral_status = :reuse
+            display_eigres = T(NaN)
         end
 
         push!(correction_flags, correction_failed)
 
         # --------------------------------------------------------
+        # Cache diagnostics at the new accepted point for the next convergence check.
+        # --------------------------------------------------------
+        grad_weights_xb!(family, ws.g, ws.mu, ws.w, ws.grad_resid,
+            X, ws.Xbeta_new, y, ws.beta_new;
+            ridge=spectral.ridge, penalize_intercept=spectral.penalize_intercept,
+            w_floor=outer.w_floor)
+        accepted_gradient_valid = true
+        new_relgrad = norm(ws.g) / grad_scale
+
+        # --------------------------------------------------------
         # Diagnostics
         # --------------------------------------------------------
         outer.verbose && print_iteration(
-            iter, fnew, relgrad, nit, stat,
+            iter, fnew, new_relgrad, nit, stat,
             display_eigres, alpha, spectral_status
         )
 
@@ -1027,17 +1015,27 @@ function spectral_mm(
     # ------------------------------------------------------------
     # Maximum iterations
     # ------------------------------------------------------------
-    outer.verbose &&
-        print_termination(
-            "maximum iterations reached",
-            outer.maxiter,
-            fbase,
-            relgradnorms[end]
-        )
+    if !accepted_gradient_valid
+        grad_weights_xb!(family, ws.g, ws.mu, ws.w, ws.grad_resid,
+            X, ws.Xbeta_base, y, beta;
+            ridge=spectral.ridge, penalize_intercept=spectral.penalize_intercept,
+            w_floor=outer.w_floor)
+    end
+    push!(losses, fbase)
+    push!(gradnorms, norm(ws.g))
+    push!(relgradnorms, norm(ws.g) / grad_scale)
+    gradient_ok = gradnorms[end]<=outer.gtol || relgradnorms[end]<=outer.relgtol
+    if outer.verbose
+        if gradient_ok
+            print_convergence(outer.maxiter,fbase,relgradnorms[end])
+        else
+            print_termination("maximum iterations reached",outer.maxiter,fbase,relgradnorms[end])
+        end
+    end
 
     return MMResult(
         beta, losses, gradnorms, relgradnorms, eigresiduals,
         inner_iters, inner_stats, outer_steps, restart_flags,
-        correction_flags, restarts, outer.maxiter, false
+        correction_flags, restarts, outer.maxiter, gradient_ok
     )
 end

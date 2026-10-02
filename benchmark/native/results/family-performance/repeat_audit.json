@@ -1,0 +1,28 @@
+{
+  "python": {
+    "cases": 120,
+    "spectral_gradient_failures": 9,
+    "max_min_ratio_over_1_5": []
+  },
+  "R": {
+    "cases": 120,
+    "spectral_gradient_failures": 9,
+    "max_min_ratio_over_1_5": [
+      [
+        "gaussian",
+        "dense",
+        "Spectral-MM"
+      ],
+      [
+        "gaussian",
+        "dense",
+        "CGLS"
+      ],
+      [
+        "gaussian",
+        "dense",
+        "CRLS"
+      ]
+    ]
+  }
+}

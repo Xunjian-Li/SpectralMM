@@ -1,0 +1,144 @@
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    6.9315e+01   8.532e-01      -           -    8.67e-16       -  initial
+   1    6.7132e+01   3.250e-02      1    7.77e-08    8.38e-16    1.00  correct
+   2    6.7129e+01   1.662e-04      1    7.70e-08           -    1.00  reuse
+   3    6.7129e+01   4.067e-08      1    2.45e-04           -    1.00  reuse
+
+Converged after 3 iterations
+Final loss:      6.712854e+01
+Relative grad.:  4.067e-08
+SpectralMM (bernoulli); covariance=model; reference=z
+term               estimate    std.error     statistic      p.value        lower        upper
+(Intercept)         -0.079785     0.209271    -0.381251     0.703017     -0.48995      0.33038
+x1                    0.70347      0.46083      1.52653     0.126878     -0.19974      1.60668
+x2                  0.0122638     0.443908    0.0276269      0.97796     -0.85778     0.882308
+x3                   0.511956     0.397851       1.2868     0.198163    -0.267818      1.29173
+
+SpectralMM  Solver: MM   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    6.9315e+01   8.532e-01      -           -    8.67e-16       -  initial
+   1    6.7132e+01   3.250e-02      1    7.77e-08    8.38e-16    1.00  correct
+   2    6.7129e+01   1.662e-04      1    7.70e-08           -    1.00  reuse
+   3    6.7129e+01   4.067e-08      1    2.45e-04           -    1.00  reuse
+
+Converged after 3 iterations
+Final loss:      6.712854e+01
+Relative grad.:  4.067e-08
+SpectralMM (bernoulli); covariance=model; reference=z
+term               estimate    std.error     statistic      p.value        lower        upper
+(Intercept)         -0.079785     0.209271    -0.381251     0.703017     -0.48995      0.33038
+x1                    0.70347      0.46083      1.52653     0.126878     -0.19974      1.60668
+x2                  0.0122638     0.443908    0.0276269      0.97796     -0.85778     0.882308
+x3                   0.511956     0.397851       1.2868     0.198163    -0.267818      1.29173
+
+SpectralMM  Solver: CG   Rank: -
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    6.9315e+01   8.532e-01      -           -           -       -  -
+   1    6.7132e+01   3.250e-02      4    1.08e-16           -    1.00  -
+   2    6.7129e+01   1.662e-04      4    2.82e-16           -    1.00  -
+   3    6.7129e+01   4.665e-09      4    2.59e-16           -    1.00  -
+
+Converged after 3 iterations
+Final loss:      6.712854e+01
+Relative grad.:  4.665e-09
+SpectralMM (bernoulli); covariance=model; reference=z
+term               estimate    std.error     statistic      p.value        lower        upper
+(Intercept)        -0.0797849     0.209271    -0.381251     0.703017     -0.48995      0.33038
+x1                    0.70347      0.46083      1.52653     0.126878     -0.19974      1.60668
+x2                  0.0122638     0.443908     0.027627      0.97796     -0.85778     0.882308
+x3                   0.511956     0.397851       1.2868     0.198163    -0.267818      1.29173
+
+SpectralMM  Solver: CHO   Rank: -
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    6.9315e+01   8.532e-01      -           -           -       -  -
+   1    6.7132e+01   3.250e-02      1    2.30e-16           -    1.00  -
+   2    6.7129e+01   1.662e-04      1    4.69e-16           -    1.00  -
+   3    6.7129e+01   4.665e-09      1    5.35e-16           -    1.00  -
+
+Converged after 3 iterations
+Final loss:      6.712854e+01
+Relative grad.:  4.665e-09
+SpectralMM (bernoulli); covariance=model; reference=z
+term               estimate    std.error     statistic      p.value        lower        upper
+(Intercept)        -0.0797849     0.209271    -0.381251     0.703017     -0.48995      0.33038
+x1                    0.70347      0.46083      1.52653     0.126878     -0.19974      1.60668
+x2                  0.0122638     0.443908     0.027627      0.97796     -0.85778     0.882308
+x3                   0.511956     0.397851       1.2868     0.198163    -0.267818      1.29173
+
+SpectralMM  Solver: CGLS   Rank: -
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    6.9315e+01   8.532e-01      -           -           -       -  -
+   1    6.7132e+01   3.250e-02      4    9.55e-17           -    1.00  -
+   2    6.7129e+01   1.662e-04      4    1.08e-14           -    1.00  -
+   3    6.7129e+01   4.665e-09      4    1.39e-12           -    1.00  -
+
+Converged after 3 iterations
+Final loss:      6.712854e+01
+Relative grad.:  4.665e-09
+SpectralMM (bernoulli); covariance=model; reference=z
+term               estimate    std.error     statistic      p.value        lower        upper
+(Intercept)        -0.0797849     0.209271    -0.381251     0.703017     -0.48995      0.33038
+x1                    0.70347      0.46083      1.52653     0.126878     -0.19974      1.60668
+x2                  0.0122638     0.443908     0.027627      0.97796     -0.85778     0.882308
+x3                   0.511956     0.397851       1.2868     0.198163    -0.267818      1.29173
+
+SpectralMM  Solver: CRLS   Rank: -
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    6.9315e+01   8.532e-01      -           -           -       -  -
+   1    6.7132e+01   3.250e-02      4    1.53e-16           -    1.00  -
+   2    6.7129e+01   1.662e-04      4    4.22e-16           -    1.00  -
+   3    6.7129e+01   4.665e-09      4    1.97e-16           -    1.00  -
+
+Converged after 3 iterations
+Final loss:      6.712854e+01
+Relative grad.:  4.665e-09
+SpectralMM (bernoulli); covariance=model; reference=z
+term               estimate    std.error     statistic      p.value        lower        upper
+(Intercept)        -0.0797849     0.209271    -0.381251     0.703017     -0.48995      0.33038
+x1                    0.70347      0.46083      1.52653     0.126878     -0.19974      1.60668
+x2                  0.0122638     0.443908     0.027627      0.97796     -0.85778     0.882308
+x3                   0.511956     0.397851       1.2868     0.198163    -0.267818      1.29173
+
+SpectralMM  Solver: LSQR   Rank: -
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    6.9315e+01   8.532e-01      -           -           -       -  -
+   1    6.7132e+01   3.250e-02      4    2.87e-16           -    1.00  -
+   2    6.7129e+01   1.662e-04      4    3.80e-15           -    1.00  -
+   3    6.7129e+01   4.665e-09      4    1.22e-12           -    1.00  -
+
+Converged after 3 iterations
+Final loss:      6.712854e+01
+Relative grad.:  4.665e-09
+SpectralMM (bernoulli); covariance=model; reference=z
+term               estimate    std.error     statistic      p.value        lower        upper
+(Intercept)        -0.0797849     0.209271    -0.381251     0.703017     -0.48995      0.33038
+x1                    0.70347      0.46083      1.52653     0.126878     -0.19974      1.60668
+x2                  0.0122638     0.443908     0.027627      0.97796     -0.85778     0.882308
+x3                   0.511956     0.397851       1.2868     0.198163    -0.267818      1.29173
+
+SpectralMM  Solver: LSMR   Rank: -
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    6.9315e+01   8.532e-01      -           -           -       -  -
+   1    6.7132e+01   3.250e-02      4    1.10e-16           -    1.00  -
+   2    6.7129e+01   1.662e-04      4    4.22e-15           -    1.00  -
+   3    6.7129e+01   4.665e-09      4    1.28e-12           -    1.00  -
+
+Converged after 3 iterations
+Final loss:      6.712854e+01
+Relative grad.:  4.665e-09
+SpectralMM (bernoulli); covariance=model; reference=z
+term               estimate    std.error     statistic      p.value        lower        upper
+(Intercept)        -0.0797849     0.209271    -0.381251     0.703017     -0.48995      0.33038
+x1                    0.70347      0.46083      1.52653     0.126878     -0.19974      1.60668
+x2                  0.0122638     0.443908     0.027627      0.97796     -0.85778     0.882308
+x3                   0.511956     0.397851       1.2868     0.198163    -0.267818      1.29173

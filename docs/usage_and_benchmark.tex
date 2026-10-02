@@ -1,0 +1,329 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[margin=20mm]{geometry}
+\usepackage{booktabs,amsmath,listings,xcolor,hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+\lstset{basicstyle=\ttfamily\small,breaklines=true,columns=fullflexible,
+  keepspaces=true,showstringspaces=false,frame=single,rulecolor=\color{gray!35},
+  backgroundcolor=\color{gray!4},aboveskip=8pt,belowskip=8pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\setlength{\emergencystretch}{2em}
+\title{SpectralMM: Python/R Usage and Benchmark Reproduction}
+\author{}
+\date{September 29, 2026}
+\begin{document}
+% R installation is independent of the standalone CMake build.
+
+\maketitle
+\vspace{-1.5em}
+This guide covers the shared C++ core and Python/R interfaces. Fitting in Python
+or R does not require Julia. Julia is needed to reproduce comparisons using data
+shared with the original Julia algorithm. Run all commands from the repository root.
+
+\section*{Automatic Python and Julia installation}
+From a local checkout, run \texttt{python -m pip install .}; subsequent Python
+sessions use \texttt{import spectralmm}. The wheel contains the shared library.
+In Julia, use \texttt{Pkg.develop(path="/path/to/SpectralMM")} and then
+\texttt{using SpectralMM}. Call \texttt{SpectralMM.fit(X, y; family=:bernoulli, backend=:cpp)}
+for the C++ implementation. Omitting \texttt{backend} selects pure Julia.
+Both backends support GLM and non-GLM models through the same matrix API.
+The returned model exposes \texttt{model.backend}. On first C++ use, the package builds the core automatically and reuses
+its cached library across sessions. All fourteen families are supported.
+Existing positional-family Julia methods and \texttt{glm} retain their original
+implementation. The manual CMake instructions below are for standalone development.
+See \texttt{docs/Automatic\_Installation.md} for details.
+
+\section*{Automatic R package installation}
+The repository root is a standard R package. After the updated source is
+published, install it with \texttt{remotes::install\_github("Xunjian-Li/SpectralMM")}.
+For a local checkout use \texttt{remotes::install\_local("/path/to/SpectralMM")}.
+Installation compiles the shared C++ core automatically using R's build system,
+RcppEigen and R's configured BLAS. Subsequent sessions only need
+\texttt{library(SpectralMM)}. A C++17 toolchain is required for source installation;
+R users do not need the standalone CMake commands below. Formula support is not
+introduced by packaging. See \texttt{docs/R\_Package.md} for the complete workflow.
+
+\section{Files and archived results}
+\begin{tabular}{ll}
+\toprule
+Path & Purpose \\
+\midrule
+\path{src/} & Original Julia implementation \\
+\path{cpp/} & C++ core, C interface and build configuration \\
+\path{bindings/python/} & NumPy/SciPy interface \\
+\path{R/}, \path{src/} & Standard R package and shared core \\
+\path{bindings/julia/} & Native Julia wrapper (Gaussian/Logistic) \\
+\path{benchmark/native/} & Data generation, timing and report scripts \\
+\path{build/native/} & Local native build, reproducible from source \\
+\bottomrule
+\end{tabular}
+
+Final results are in \path{benchmark/native/results/family-performance/}.
+The \path{report.md} file summarizes findings; CSV files retain per-method results
+and individual timings. Configuration and environment records are also retained.
+The \path{latex/} directory contains \path{python_tables.tex} and \path{R_tables.tex},
+each with four tables covering GLM/non-GLM and dense/sparse cases.
+\path{julia_baseline_tables.tex} provides supplementary Julia results.
+\path{performance_tables.tex} is a standalone Python/R table document.
+
+Temporary optimization experiments, snapshots and regenerable binary inputs were
+removed. Regenerate inputs before rerunning the benchmark (Section~\ref{sec:benchmark}).
+The original Julia results in \path{benchmark/scaling_results.csv} and
+\path{benchmark/scaling_sparse_results.csv} are also retained.
+
+\section{Dependencies and C++ build}
+Building requires a C++17 compiler, CMake and Eigen 3.4 headers. Replace the Eigen
+path below with a directory containing \path{Eigen/Core}.
+
+\begin{lstlisting}[language=bash]
+export EIGEN3_INCLUDE_DIR=/path/to/eigen-3.4.0
+cmake -S cpp -B build/native \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DEIGEN3_INCLUDE_DIR="$EIGEN3_INCLUDE_DIR" \
+  -DSPECTRALMM_USE_BLAS=ON
+cmake --build build/native -j2
+\end{lstlisting}
+
+The retained binary works on the current machine. Rebuild after changing machines
+or source code. This command enables BLAS; the current macOS binary links Apple Accelerate.
+Use \texttt{-DSPECTRALMM\_USE\_BLAS=OFF} for an Eigen-only build.
+Restart language sessions after replacing a loaded library.
+
+Python requires NumPy; sparse matrices and inference require SciPy. The full
+benchmark additionally requires statsmodels and threadpoolctl.
+
+\begin{lstlisting}[language=bash]
+python3 -m pip install .
+# Optional benchmark dependencies:
+python3 -m pip install statsmodels threadpoolctl
+\end{lstlisting}
+
+R package installation resolves Rcpp and RcppEigen automatically. Sparse inputs
+use Matrix. Standalone benchmarks additionally use jsonlite and MASS.
+\begin{lstlisting}[language=R]
+install.packages("remotes")
+remotes::install_github("Xunjian-Li/SpectralMM")
+\end{lstlisting}
+
+The installed Python package loads its bundled library; Julia automatically
+builds and reuses a library in its scratch cache. Neither requires a manual path.
+Set \texttt{SPECTRALMM\_LIBRARY} to select another standalone build.
+The installed R package loads its own registered library automatically.
+Filenames are \texttt{libspectralmm.dylib} on macOS, \texttt{libspectralmm.so}
+on Linux and \texttt{spectralmm.dll} on Windows.
+
+\section{Python usage}
+An intercept is fitted by default. This example supplies six feature columns.
+For an existing complete design matrix, set \texttt{fit\_intercept=False} in
+Python or \texttt{intercept=FALSE} in R.
+
+\begin{lstlisting}[language=Python]
+import numpy as np
+from scipy.special import expit
+from spectralmm import fit
+
+rng = np.random.default_rng(3124)
+Z = rng.normal(size=(200, 6))
+X = Z
+beta = np.array([0.5, 0.2, -0.3, 0.1, 0.2, -0.1, 0.15])
+y = (rng.random(200) < expit(beta[0] + X @ beta[1:])).astype(float)
+
+model = fit(X, y, family="bernoulli", solver="spectral",
+            rank=5, floor=1e-6)
+print(model.coef)
+print(model.info)
+probability = model.predict(X)
+\end{lstlisting}
+
+\texttt{solver="spectral"} uses spectrally preconditioned CG. The alias \texttt{pcg} selects the same method.
+Use \texttt{mm} for spectral MM with a quadratic line search, or
+\texttt{cho}/\texttt{cholesky} for a direct weighted least-squares solve.
+Cholesky forms a full curvature matrix. Other choices are
+\texttt{cg}, \texttt{cgls}, \texttt{crls}, \texttt{lsqr} and \texttt{lsmr}.
+SciPy CSC matrices can be passed directly, for example
+\texttt{fit(scipy.sparse.csc\_matrix(X), y, ...)}.
+
+Non-GLM models use the same interface, with parameters in \texttt{family\_options}:
+
+\begin{lstlisting}[language=Python]
+y_cont = beta[0] + X @ beta[1:] + rng.standard_t(4, size=200)
+robust = fit(X, y_cont, family="student_t",
+             family_options={"nu": 4, "sigma": 1},
+             solver="spectral", floor=1e-6)
+fitted = robust.predict(X)
+
+quantile = fit(X, y_cont, family="smooth_quantile",
+               family_options={"tau": 0.25, "smoothing": 0.1})
+\end{lstlisting}
+
+\section{R usage}
+The package installs and registers its native library automatically. Load it once
+with \texttt{library(SpectralMM)} before fitting models.
+
+\begin{lstlisting}[language=R]
+library(SpectralMM)
+
+set.seed(3124)
+Z <- matrix(rnorm(200 * 6), nrow=200)
+X <- Z
+beta <- c(0.5, 0.2, -0.3, 0.1, 0.2, -0.1, 0.15)
+y <- rbinom(200, 1, plogis(as.vector(beta[1] + X %*% beta[-1])))
+
+model <- spectralmm_fit(X, y, family="bernoulli",
+                        solver="spectral", rank=5, floor=1e-6)
+coef(model)
+model$info
+probability <- predict(model, X)
+\end{lstlisting}
+
+Non-GLM and sparse-input examples:
+
+\begin{lstlisting}[language=R]
+y_cont <- as.vector(beta[1] + X %*% beta[-1]) + rt(200, df=4)
+robust <- spectralmm_fit(
+  X, y_cont, family="student_t",
+  family_options=list(nu=4, sigma=1), solver="spectral")
+fitted <- predict(robust, X)
+
+library(Matrix)
+Xs <- as(Matrix(X, sparse=TRUE), "dgCMatrix")
+sparse_model <- spectralmm_fit(Xs, y, family="bernoulli")
+\end{lstlisting}
+
+Python and R share one core, but these independent random examples do not generate
+identical data. Use the shared binary inputs below when comparing interfaces.
+
+\section{Model names and parameters}
+\begin{tabular}{lll}
+\toprule
+\texttt{family} & Model & Default \texttt{family\_options} \\
+\midrule
+\texttt{gaussian} & Gaussian identity & None \\
+\texttt{bernoulli} & Bernoulli logit & None \\
+\texttt{probit} & Bernoulli probit & None \\
+\texttt{poisson} & Poisson log & None \\
+\texttt{gamma} & Gamma log & None \\
+\texttt{negative\_binomial} & Negative-binomial log & \texttt{theta=1} \\
+\texttt{smooth\_quantile} & Smooth quantile & \texttt{tau=0.5, smoothing=0.1} \\
+\texttt{expectile} & Expectile & \texttt{tau=0.5} \\
+\texttt{pseudo\_huber} & Pseudo-Huber & \texttt{delta=1.345} \\
+\texttt{student\_t} & Student-$t$ & \texttt{nu=4, sigma=1} \\
+\texttt{gaussian\_log} & Gaussian log & None \\
+\texttt{gamma\_inverse} & Gamma inverse & None \\
+\texttt{tweedie} & Tweedie log & \texttt{power=1.5} \\
+\texttt{binomial} & Binomial logit & \texttt{trials=1} \\
+\bottomrule
+\end{tabular}
+
+\texttt{smoothing} corresponds to Julia's \texttt{epsilon}; \texttt{trials}
+can be a scalar or a length-$n$ vector. Binomial predictions return expected counts;
+pass \texttt{trials} to \texttt{predict} when new observations have different trial
+counts. GLMs return response means; non-GLM models return fitted locations,
+quantiles or expectiles. Student-$t$ fitting retains Julia's positive MM surrogate
+weights rather than using the exact loss Hessian.
+
+\texttt{floor} is the algorithm's $\rho$, defaulting to $10^{-6}$.
+\texttt{ridge} defaults to zero; a nonzero penalty excludes the automatic intercept
+unless \texttt{penalize\_intercept} is enabled. Prediction uses the same feature
+columns as training. \texttt{beta0} supplies initial coefficients, with the
+intercept first when enabled. Benchmarks share initial values across languages.
+
+\section{Optional inference}
+By default, inference is attempted for at most 50 coefficients, including the
+intercept. Larger models require \texttt{inference=True} in Python or
+\texttt{inference=TRUE} in R. False disables inference. The threshold can be
+changed with \texttt{inference\_max\_p}. Outputs include standard errors,
+t/z statistics, p-values, Wald chi-square statistics and confidence intervals.
+GLMs default to model-based covariance; the four residual models default to HC1
+sandwich covariance. The optimizer remains matrix-free, but inference forms full
+statistical matrices. Numerical and statistical eligibility checks still apply
+when inference is explicitly enabled. See \path{docs/README.md} or the complete
+\path{SpectralMM_User_Guide.tex} manual for assumptions and accessor examples.
+
+\section{Benchmark reproduction}\label{sec:benchmark}
+The archived study covers six GLMs and four non-GLM models with $n=2000$ and
+$p=1001$, including the intercept. Four other supported GLM families were not timed.
+These commands write to \path{build/family-benchmark/} and preserve archived results.
+Ensure \texttt{julia}, \texttt{python3} and \texttt{Rscript} are on PATH.
+
+\begin{lstlisting}[language=bash]
+julia --project=. -e 'using Pkg; Pkg.instantiate()'
+BENCH_OUT=build/family-benchmark
+
+julia --compiled-modules=existing --project=. \
+  benchmark/native/family_performance.jl 1000 "$BENCH_OUT"
+\end{lstlisting}
+
+This generates shared data and initial values using the original Julia benchmark
+procedure, then warms up and times Julia Spectral-MM. The argument 1000 is the
+feature count before adding the intercept; sample size is twice that count.
+Run the six native solvers and applicable GLM comparators:
+
+\begin{lstlisting}[language=bash]
+python3 benchmark/native/family_performance.py \
+  --size 1000 --output "$BENCH_OUT" --language both
+\end{lstlisting}
+
+Replace \texttt{both} with \texttt{python} or \texttt{R} to run one interface.
+The complete report requires both. GLM allows up to 1000 iterations; nonconverged
+Gamma cases can take a long time. Repeat native timings in shuffled order to
+reduce execution-order bias:
+
+\begin{lstlisting}[language=bash]
+python3 benchmark/native/repeat_family_native.py \
+  --output "$BENCH_OUT" --language both
+\end{lstlisting}
+
+Generate the Markdown report and LaTeX tables:
+
+\begin{lstlisting}[language=bash]
+python3 benchmark/native/report_family_performance.py \
+  --output "$BENCH_OUT"
+python3 benchmark/native/export_latex.py \
+  --results "$BENCH_OUT"
+
+cd "$BENCH_OUT/latex"
+pdflatex -interaction=nonstopmode -halt-on-error performance_tables.tex
+\end{lstlisting}
+
+Table fragments require \texttt{booktabs}; the standalone document also uses
+\texttt{geometry}. Insert \texttt{python\_tables.tex} or \texttt{R\_tables.tex}
+into an article. To use the article's final scale, $n=10000$, $p=5001$, replace
+1000 with 5000 in both data-generation and Python benchmark commands. That scale
+requires more time and memory and differs from the archived run.
+
+\section{Timing and convergence criteria}
+Initial runs warm up each method, then report the median of three timings.
+Native repeats use five rounds, shuffling six methods each round and batching
+short calls. Timings include fitting, wrapper conversion and model construction;
+they exclude imports, compilation, input generation and result scoring.
+Sparse GLM inputs are densified, with conversion included in GLM timing.
+Post-fit inference is disabled for native benchmarks.
+
+Native methods use $\rho=10^{-6}$, no ridge penalty, retained rank $k=5$, initial
+Lanczos dimension 12, at most 1000 outer and 200 inner iterations,
+\texttt{eta\_max}=0.6, \texttt{correction\_tol}=0.05 and
+\texttt{resid\_tol}=0.5, with outer Nesterov acceleration enabled.
+Default inner Krylov tolerances are \texttt{rtol}=$10^{-4}$ and
+\texttt{atol}=$10^{-8}$. Python/R GLM uses internal tolerance $10^{-12}$;
+all results are assessed using the same final gradient criterion.
+For gradient $g_0$ at the shared initial coefficients, the strict criterion is
+\[
+\lVert g\rVert\leq10^{-6}\quad\text{or}\quad
+\frac{\lVert g\rVert}{1+\lVert g_0\rVert}\leq10^{-8}.
+\]
+Default stopping also permits small steps or stagnation. Inspect both
+\texttt{converged} and \texttt{gradient\_converged}; solver-declared convergence
+alone does not support equal-accuracy speed rankings. A dagger marks declared
+convergence without passing the gradient criterion; a double dagger marks binary
+separation or perfect prediction.
+
+Archived Logistic/Probit cases exhibit separation, while Gamma GLM reaches the
+iteration limit without meeting the criterion. These records are retained;
+failures and early stopping are not interpreted as successful-solve speedups.
+Main native tables use five-round repeats; GLM and Julia use initial three-run
+measurements from different periods. Initial timings showed substantial machine
+speed variation, so cross-period differences do not establish language superiority.
+
+\end{document}

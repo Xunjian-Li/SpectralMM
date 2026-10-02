@@ -81,8 +81,6 @@ function irls_cholesky(
             F=cholesky!(Symmetric(Atry,:U);check=false)
 
             if issuccess(F)
-                verbose && attempt>1 &&
-                    @printf("          Cholesky succeeded with jitter %.3e\n",jitter)
                 return F,true
             end
         end
@@ -90,12 +88,28 @@ function irls_cholesky(
         return nothing,false
     end
 
+    logger=verbose ? IterationLog(X,y,family,ridge,penalize_intercept,w_floor,:cho) : nothing
+    logger===nothing || log_point!(logger,0,beta_base,Xbeta_base)
+    termination_reason="maximum iterations reached"
+
     function finish(iter,nsteps,ok)
         resize!(losses,iter)
         resize!(gradnorms,iter)
         resize!(relgradnorms,iter)
         resize!(stepsizes,nsteps)
 
+        # Preserve the initial scale and append the returned endpoint when it
+        # differs from the most recent evaluation point (e.g. iteration limit).
+        if beta_base != beta_eval
+            grad_weights_xb!(family,g,mu,w,grad_resid,X,Xbeta_base,y,beta_base;
+                ridge=ridge,penalize_intercept=penalize_intercept,w_floor=w_floor)
+            push!(losses,logloss_xb(family,Xbeta_base,y,beta_base;ridge=ridge,penalize_intercept=penalize_intercept))
+            push!(gradnorms,norm(g))
+            push!(relgradnorms,norm(g)/grad_scale)
+        end
+        # A final accepted step may meet tolerance exactly at the iteration limit.
+        ok = ok || last(gradnorms)<=gtol || last(relgradnorms)<=relgtol
+        logger===nothing || finish_log!(logger,nsteps,beta_base,Xbeta_base,gtol,relgtol,termination_reason,ok)
         IRLSCholeskyResult(
             copy(beta_base),losses,gradnorms,
             relgradnorms,stepsizes,nsteps,ok)
@@ -113,7 +127,7 @@ function irls_cholesky(
             copyto!(Xbeta,Xbeta_base)
         end
 
-        f0=logloss_xb(family,Xbeta,y,beta_eval;ridge=ridge)
+        f0=logloss_xb(family,Xbeta,y,beta_eval;ridge=ridge, penalize_intercept=penalize_intercept)
 
         if iter==1
             base_loss=f0
@@ -127,7 +141,7 @@ function irls_cholesky(
 
         grad_weights_xb!(
             family,g,mu,w,grad_resid,X,Xbeta,y,beta_eval;
-            ridge=ridge,w_floor=w_floor)
+            ridge=ridge, penalize_intercept=penalize_intercept,w_floor=w_floor)
 
         gnorm=norm(g)
         iter==1 && (grad_scale=one(T)+gnorm)
@@ -148,7 +162,10 @@ function irls_cholesky(
 
         # Recompute and refactorize X'WX at every IRLS iteration.
         F,solved=factorize_gram!()
-        solved || return finish(iter,iter-1,false)
+        if !solved
+            termination_reason="factorization failed"
+            return finish(iter,iter-1,false)
+        end
 
         @inbounds @simd for i in 1:m
             wz[i]=w[i]*z[i]
@@ -158,11 +175,20 @@ function irls_cholesky(
         copyto!(beta_new,b)
         ldiv!(F,beta_new)
 
-        finite_all(beta_new) || return finish(iter,iter-1,false)
+        if !finite_all(beta_new)
+            termination_reason="nonfinite step"
+            return finish(iter,iter-1,false)
+        end
 
         @. s=beta_new-beta_eval
         mul!(Xs,X,s)
 
+        inner_residual=NaN
+        if logger!==nothing
+            mul!(logger.g,Symmetric(A,:U),s)
+            logger.g .+= g
+            inner_residual=norm(logger.g)/max(gnorm,floatmin(T))
+        end
         gd=dot(g,s)
         alpha=one(T)
         fnew=T(Inf)
@@ -178,15 +204,15 @@ function irls_cholesky(
                 end
 
                 fnew=logloss_xb(
-                    family,Xbeta_new,y,beta_trial;ridge=ridge)
+                    family,Xbeta_new,y,beta_trial;ridge=ridge, penalize_intercept=penalize_intercept)
 
                 if !isfinite(fnew)
                     alpha*=backtrack_factor
                     continue
                 end
 
-                if (gd<zero(T) && fnew<=f0+c_armijo*alpha*gd) ||
-                   (gd>=zero(T) && fnew<=f0)
+                if (gd<zero(T) && fnew<=f0+c_armijo*alpha*gd+objective_roundoff(f0)) ||
+                   (gd>=zero(T) && fnew<=f0+objective_roundoff(f0))
                     break
                 end
 
@@ -194,6 +220,7 @@ function irls_cholesky(
             end
 
             if alpha<alpha_min
+                termination_reason="line search failed"
                 if outer_nesterov &&
                    restart_outer_on_line_search_failed &&
                    iter>1
@@ -207,21 +234,17 @@ function irls_cholesky(
             copyto!(beta_trial,beta_new)
             @. Xbeta_new=Xbeta+Xs
             fnew=logloss_xb(
-                family,Xbeta_new,y,beta_trial;ridge=ridge)
+                family,Xbeta_new,y,beta_trial;ridge=ridge, penalize_intercept=penalize_intercept)
         end
 
         stepsizes[iter]=alpha
         step_norm=abs(alpha)*norm(s)
 
-        if verbose
-            @printf(
-                "outer=%4d  loss=%.6e  |g|=%.3e  rel|g|=%.3e",
-                iter,f0,gnorm,relgnorm)
-            outer_reset && @printf("  reset=true")
-            println()
-        end
+        logger===nothing || log_point!(logger,iter,beta_trial,Xbeta_new;
+            inner=1,residual=inner_residual,step=alpha)
 
         if step_norm<=T(1e-12)*(one(T)+norm(beta_eval))
+            termination_reason="negligible step"
             copyto!(beta_base,beta_trial)
             copyto!(Xbeta_base,Xbeta_new)
             return finish(iter,iter,true)
@@ -241,5 +264,6 @@ function irls_cholesky(
         end
     end
 
+    termination_reason="maximum iterations reached"
     return finish(maxiter,maxiter,converged)
 end

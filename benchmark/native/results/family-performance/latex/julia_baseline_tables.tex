@@ -1,0 +1,205 @@
+% Requires \usepackage{booktabs}.
+
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{
+Computational comparison for generalized linear models using the original Julia implementation with a dense design matrix,
+$n=2{,}000$ and $p=1{,}001$ (including the intercept).
+Runtime is reported in seconds. ``Iteration\textquotedblright{} denotes the number of outer iterations,
+``Rel.\ grad.\textquotedblright{} denotes the relative gradient norm at termination, and
+``Converged\textquotedblright{} reports whether the solver declared convergence.}
+\label{tab:julia-glm-comparison-dense}
+\begin{tabular}{llrrrc}
+\toprule
+Model & Method & Time (s) & Iteration & Rel.\ grad. & Converged \\
+\midrule
+
+Gaussian-identity
+& Spectral-MM & 0.347 & 24 & $1.86\times10^{-8}$ & Yes$^{\dagger}$ \\
+\midrule
+
+Bernoulli-logit$^{\ddagger}$
+& Spectral-MM & 1.741 & 54 & $5.65\times10^{-9}$ & Yes \\
+\midrule
+
+Bernoulli-probit$^{\ddagger}$
+& Spectral-MM & 0.900 & 41 & $8.73\times10^{-9}$ & Yes \\
+\midrule
+
+Poisson-log
+& Spectral-MM & 0.856 & 32 & $1.13\times10^{-8}$ & Yes$^{\dagger}$ \\
+\midrule
+
+Gamma-log
+& Spectral-MM & 0.135 & 59 & $3.45\times10^{-8}$ & Yes$^{\dagger}$ \\
+\midrule
+
+Negative-binomial-log
+& Spectral-MM & 0.164 & 71 & $3.93\times10^{-8}$ & Yes$^{\dagger}$ \\
+
+\bottomrule
+\end{tabular}
+\par\smallskip
+\begin{minipage}{\linewidth}
+\footnotesize
+$^{\dagger}$The solver declared convergence, but neither $\|g\|\leq 10^{-6}$ nor
+$\|g\|/(1+\|g_0\|)\leq 10^{-8}$ was satisfied.
+$^{\ddagger}$These data exhibit separation/perfect prediction; a small gradient does not establish a finite maximum-likelihood estimate.
+Timings are medians of three measured runs after warm-up.
+The negative-binomial shape parameter is fixed at $\theta=4$.
+All native/Julia fits use $\rho=10^{-6}$ and no ridge penalty.
+\end{minipage}
+\end{table}
+
+\clearpage
+
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{
+Computational comparison for generalized linear models using the original Julia implementation with a sparse design matrix,
+$n=2{,}000$ and $p=1{,}001$ (including the intercept).
+The non-intercept design has approximately 20 nonzeros per row (about $2\%$ density).
+Runtime is reported in seconds. ``Iteration\textquotedblright{} denotes the number of outer iterations,
+``Rel.\ grad.\textquotedblright{} denotes the relative gradient norm at termination, and
+``Converged\textquotedblright{} reports whether the solver declared convergence.}
+\label{tab:julia-glm-comparison-sparse}
+\begin{tabular}{llrrrc}
+\toprule
+Model & Method & Time (s) & Iteration & Rel.\ grad. & Converged \\
+\midrule
+
+Gaussian-identity
+& Spectral-MM & 0.019 & 26 & $1.18\times10^{-8}$ & Yes$^{\dagger}$ \\
+\midrule
+
+Bernoulli-logit$^{\ddagger}$
+& Spectral-MM & 0.363 & 74 & $8.51\times10^{-9}$ & Yes \\
+\midrule
+
+Bernoulli-probit$^{\ddagger}$
+& Spectral-MM & 0.175 & 67 & $6.18\times10^{-9}$ & Yes \\
+\midrule
+
+Poisson-log
+& Spectral-MM & 0.029 & 28 & $2.91\times10^{-8}$ & Yes$^{\dagger}$ \\
+\midrule
+
+Gamma-log
+& Spectral-MM & 0.015 & 75 & $6.57\times10^{-8}$ & Yes$^{\dagger}$ \\
+\midrule
+
+Negative-binomial-log
+& Spectral-MM & 0.008 & 30 & $2.51\times10^{-8}$ & Yes$^{\dagger}$ \\
+
+\bottomrule
+\end{tabular}
+\par\smallskip
+\begin{minipage}{\linewidth}
+\footnotesize
+$^{\dagger}$The solver declared convergence, but neither $\|g\|\leq 10^{-6}$ nor
+$\|g\|/(1+\|g_0\|)\leq 10^{-8}$ was satisfied.
+$^{\ddagger}$These data exhibit separation/perfect prediction; a small gradient does not establish a finite maximum-likelihood estimate.
+Timings are medians of three measured runs after warm-up.
+The negative-binomial shape parameter is fixed at $\theta=4$.
+All native/Julia fits use $\rho=10^{-6}$ and no ridge penalty.
+\end{minipage}
+\end{table}
+
+\clearpage
+
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{
+Computational comparison for non-GLM models using the original Julia implementation with a dense design matrix,
+$n=2{,}000$ and $p=1{,}001$ (including the intercept).
+Runtime is reported in seconds. ``Iteration\textquotedblright{} denotes the number of outer iterations,
+``Rel.\ grad.\textquotedblright{} denotes the relative gradient norm at termination, and
+``Converged\textquotedblright{} reports whether the solver declared convergence.}
+\label{tab:julia-nonglm-comparison-dense}
+\begin{tabular}{llrrrc}
+\toprule
+Model & Method & Time (s) & Iteration & Rel.\ grad. & Converged \\
+\midrule
+
+Smooth quantile
+& Spectral-MM & 0.367 & 42 & $1.06\times10^{-8}$ & Yes$^{\dagger}$ \\
+\midrule
+
+Expectile
+& Spectral-MM & 0.098 & 29 & $5.55\times10^{-9}$ & Yes \\
+\midrule
+
+Pseudo-Huber
+& Spectral-MM & 0.102 & 31 & $5.20\times10^{-9}$ & Yes \\
+\midrule
+
+Student-$t$
+& Spectral-MM & 0.110 & 40 & $6.21\times10^{-8}$ & Yes$^{\dagger}$ \\
+
+\bottomrule
+\end{tabular}
+\par\smallskip
+\begin{minipage}{\linewidth}
+\footnotesize
+$^{\dagger}$The solver declared convergence, but neither $\|g\|\leq 10^{-6}$ nor
+$\|g\|/(1+\|g_0\|)\leq 10^{-8}$ was satisfied.
+Timings are medians of three measured runs after warm-up.
+Parameters: smooth quantile $(\tau,\epsilon)=(0.25,0.1)$; expectile $\tau=0.25$;
+pseudo-Huber $\delta=1$; Student-$t$ $(\nu,\sigma)=(4,1)$.
+All native/Julia fits use $\rho=10^{-6}$ and no ridge penalty.
+\end{minipage}
+\end{table}
+
+\clearpage
+
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{
+Computational comparison for non-GLM models using the original Julia implementation with a sparse design matrix,
+$n=2{,}000$ and $p=1{,}001$ (including the intercept).
+The non-intercept design has approximately 20 nonzeros per row (about $2\%$ density).
+Runtime is reported in seconds. ``Iteration\textquotedblright{} denotes the number of outer iterations,
+``Rel.\ grad.\textquotedblright{} denotes the relative gradient norm at termination, and
+``Converged\textquotedblright{} reports whether the solver declared convergence.}
+\label{tab:julia-nonglm-comparison-sparse}
+\begin{tabular}{llrrrc}
+\toprule
+Model & Method & Time (s) & Iteration & Rel.\ grad. & Converged \\
+\midrule
+
+Smooth quantile
+& Spectral-MM & 0.022 & 40 & $9.06\times10^{-9}$ & Yes \\
+\midrule
+
+Expectile
+& Spectral-MM & 0.007 & 26 & $5.04\times10^{-9}$ & Yes \\
+\midrule
+
+Pseudo-Huber
+& Spectral-MM & 0.008 & 27 & $9.46\times10^{-9}$ & Yes \\
+\midrule
+
+Student-$t$
+& Spectral-MM & 0.010 & 42 & $5.69\times10^{-9}$ & Yes \\
+
+\bottomrule
+\end{tabular}
+\par\smallskip
+\begin{minipage}{\linewidth}
+\footnotesize
+$^{\dagger}$The solver declared convergence, but neither $\|g\|\leq 10^{-6}$ nor
+$\|g\|/(1+\|g_0\|)\leq 10^{-8}$ was satisfied.
+Timings are medians of three measured runs after warm-up.
+Parameters: smooth quantile $(\tau,\epsilon)=(0.25,0.1)$; expectile $\tau=0.25$;
+pseudo-Huber $\delta=1$; Student-$t$ $(\nu,\sigma)=(4,1)$.
+All native/Julia fits use $\rho=10^{-6}$ and no ridge penalty.
+\end{minipage}
+\end{table}

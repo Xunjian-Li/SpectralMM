@@ -1,0 +1,20 @@
+Package: SpectralMM
+Type: Package
+Title: Spectral Majorization for Statistical Estimation
+Version: 0.1.0
+Authors@R: person("Xun-Jian", "Li", email = "xunjianli@ucla.edu", role = c("aut", "cre"))
+Description: Fits generalized linear, asymmetric and robust regression models
+    using spectral majorization and iterative quadratic subproblem solvers.
+    A shared C++ computational core supports dense and sparse designs, automatic
+    intercepts, optional Wald inference and detailed iteration diagnostics.
+    Native code is compiled automatically during package installation.
+License: GPL-3
+Encoding: UTF-8
+Depends: R (>= 4.0.0)
+Imports: Rcpp, stats
+LinkingTo: Rcpp, RcppEigen
+Suggests: Matrix
+SystemRequirements: C++17
+NeedsCompilation: yes
+URL: https://github.com/Xunjian-Li/SpectralMM
+BugReports: https://github.com/Xunjian-Li/SpectralMM/issues

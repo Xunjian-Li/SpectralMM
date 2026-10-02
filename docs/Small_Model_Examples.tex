@@ -1,0 +1,589 @@
+\documentclass[11pt]{article}
+\usepackage[margin=0.8in]{geometry}
+\usepackage{booktabs,longtable,hyperref,listings}
+\lstset{basicstyle=\ttfamily\scriptsize,breaklines=true,columns=fullflexible}
+\title{SpectralMM: Small-Data Model Examples}
+\author{}
+\date{}
+\begin{document}\maketitle
+These examples use the same saved data in all three languages: 100 observations and three feature columns. The default intercept gives four coefficients, with the intercept first. The data generator uses NumPy seed 20260930, independent normal features with standard deviation 0.5, and predictor 0.2 + 0.4 x1 - 0.3 x2 + 0.2 x3, except for the positive Gamma-inverse predictor described below.
+
+All models use PCG, rank 3, at most 500 outer iterations, absolute gradient tolerance 1e-6 and relative tolerance 1e-8. Stalled-step acceptance is disabled. Initial coefficients are zero, except Gamma inverse, which starts at (2, 0, 0, 0). Rank 3 spans all but one of the four coefficient directions; these small examples illustrate usage and results, not large-scale performance.
+
+Python and R call the shared C++ core. Julia uses the original Julia implementation. Negative binomial, Tweedie and grouped binomial use Julia's low-level API with an explicit intercept column; this API does not attach inference. Their inference is available in the Python/R results. All other examples use high-level APIs with automatic inference (the default cutoff is 50 parameters including the intercept).
+
+On this saved data, Python and R meet the gradient criterion for all 14 models. Original Julia Probit reaches the 500-iteration limit (relative gradient approximately 1.51e-7), so its inference is unavailable at these tolerances. This exception is retained rather than classified as convergence.
+
+The displayed coefficient tables are the Python results. The CSV files contain full-precision results for each language, including Wald chi-square statistics and their p-values. Standard errors, reference statistics and confidence intervals follow the model's inference convention. A t-reference coefficient p-value can differ from the asymptotic chi-square Wald p-value. Estimated coefficients need not equal the generating coefficients in a sample of 100 observations. Loss values should not be compared across different model families.
+\section{Reproduce}
+\begin{lstlisting}
+# From the repository root; build the native library first (cpp/README.md).
+python3 examples/run_python.py
+Rscript examples/run_R.R
+julia --project=. examples/run_julia.jl
+python3 examples/render_results.py
+\end{lstlisting}
+Build the native library and install the dependencies using the repository guides. Run Python first to generate the shared data. This document is self-contained and can be uploaded directly to Overleaf.
+\section{Cross-language results}
+\scriptsize
+\begin{longtable}{llrrrll}
+\toprule Model & Language & Iter. & Rel. grad. & Max diff. & Conv. & Inference \\ \midrule\endhead
+Gaussian identity & python & 1 & 1.94752e-08 & 0.00e+00 & true & ok \\
+Gaussian identity & R & 1 & 1.94752e-08 & 4.44e-16 & true & ok \\
+Gaussian identity & Julia & 1 & 1.94752e-08 & 3.89e-16 & true & ok \\
+Bernoulli logit & python & 3 & 4.06673e-08 & 0.00e+00 & true & ok \\
+Bernoulli logit & R & 3 & 4.06673e-08 & 2.22e-16 & true & ok \\
+Bernoulli logit & Julia & 3 & 4.06673e-08 & 1.11e-16 & true & ok \\
+Bernoulli probit & python & 8 & 4.57894e-08 & 0.00e+00 & true & ok \\
+Bernoulli probit & R & 8 & 4.57894e-08 & 5.00e-16 & true & ok \\
+Bernoulli probit & Julia & 500 & 1.50643e-07 & 9.66e-08 & false & unavailable \\
+Poisson log & python & 4 & 3.58652e-09 & 0.00e+00 & true & ok \\
+Poisson log & R & 4 & 3.58652e-09 & 4.44e-16 & true & ok \\
+Poisson log & Julia & 4 & 3.58652e-09 & 5.55e-17 & true & ok \\
+Gamma log & python & 8 & 9.40979e-09 & 0.00e+00 & true & ok \\
+Gamma log & R & 8 & 9.40979e-09 & 3.89e-16 & true & ok \\
+Gamma log & Julia & 8 & 9.40979e-09 & 5.55e-17 & true & ok \\
+Negative binomial log & python & 7 & 3.43429e-08 & 0.00e+00 & true & ok \\
+Negative binomial log & R & 7 & 3.43429e-08 & 4.44e-16 & true & ok \\
+Negative binomial log & Julia & 7 & 3.43429e-08 & 5.55e-17 & true & low\_level \\
+Gaussian log & python & 6 & 1.71976e-08 & 0.00e+00 & true & ok \\
+Gaussian log & R & 6 & 1.71976e-08 & 5.00e-16 & true & ok \\
+Gaussian log & Julia & 6 & 1.71976e-08 & 1.11e-16 & true & ok \\
+Gamma inverse & python & 4 & 1.60599e-08 & 0.00e+00 & true & ok \\
+Gamma inverse & R & 4 & 1.60599e-08 & 8.88e-16 & true & ok \\
+Gamma inverse & Julia & 4 & 1.60599e-08 & 4.44e-16 & true & ok \\
+Tweedie log & python & 8 & 5.74469e-09 & 0.00e+00 & true & ok \\
+Tweedie log & R & 8 & 5.74469e-09 & 4.72e-16 & true & ok \\
+Tweedie log & Julia & 8 & 5.74469e-09 & 1.11e-16 & true & low\_level \\
+Binomial logit & python & 3 & 2.83872e-09 & 0.00e+00 & true & ok \\
+Binomial logit & R & 3 & 2.83872e-09 & 4.44e-16 & true & ok \\
+Binomial logit & Julia & 3 & 2.83872e-09 & 1.11e-16 & true & low\_level \\
+Smooth quantile & python & 6 & 1.74971e-08 & 0.00e+00 & true & ok \\
+Smooth quantile & R & 6 & 1.74971e-08 & 1.67e-16 & true & ok \\
+Smooth quantile & Julia & 6 & 1.74971e-08 & 5.55e-17 & true & ok \\
+Expectile & python & 3 & 1.08293e-10 & 0.00e+00 & true & ok \\
+Expectile & R & 3 & 1.08293e-10 & 3.33e-16 & true & ok \\
+Expectile & Julia & 3 & 1.08293e-10 & 1.11e-16 & true & ok \\
+Pseudo-Huber & python & 4 & 2.74657e-09 & 0.00e+00 & true & ok \\
+Pseudo-Huber & R & 4 & 2.74657e-09 & 5.00e-16 & true & ok \\
+Pseudo-Huber & Julia & 4 & 2.74657e-09 & 2.78e-17 & true & ok \\
+Student-t & python & 13 & 5.58333e-09 & 0.00e+00 & true & ok \\
+Student-t & R & 13 & 5.58333e-09 & 4.72e-16 & true & ok \\
+Student-t & Julia & 13 & 5.58333e-09 & 5.55e-17 & true & ok \\
+\bottomrule\end{longtable}\normalsize
+\section{Gaussian identity}
+Normal errors with standard deviation 0.5. Family identifier: gaussian. Fixed options: defaults.
+
+Converged in 1 iterations; loss 12.9148; relative gradient 1.94752e-08; inference ok.
+\begin{center}\small\begin{tabular}{lrrrrl}\toprule
+Term & Estimate & SE & Statistic & p-value & 95\% CI \\ \midrule
+(Intercept) & 0.178739 & 0.0532126 & 3.35895 & 0.0011233 & [0.0731125, 0.284365] \\
+x1 & 0.287177 & 0.114305 & 2.51237 & 0.0136599 & [0.0602829, 0.514072] \\
+x2 & -0.167445 & 0.112773 & -1.48479 & 0.140875 & [-0.391298, 0.0564082] \\
+x3 & 0.267741 & 0.0987282 & 2.7119 & 0.00792779 & [0.0717669, 0.463715] \\
+\bottomrule\end{tabular}\end{center}
+\section{Bernoulli logit}
+Binary responses with logistic probabilities. Family identifier: bernoulli. Fixed options: defaults.
+
+Converged in 3 iterations; loss 67.1285; relative gradient 4.06673e-08; inference ok.
+\begin{center}\small\begin{tabular}{lrrrrl}\toprule
+Term & Estimate & SE & Statistic & p-value & 95\% CI \\ \midrule
+(Intercept) & -0.079785 & 0.209271 & -0.381251 & 0.703017 & [-0.48995, 0.33038] \\
+x1 & 0.70347 & 0.46083 & 1.52653 & 0.126878 & [-0.19974, 1.60668] \\
+x2 & 0.0122638 & 0.443908 & 0.0276269 & 0.97796 & [-0.85778, 0.882308] \\
+x3 & 0.511956 & 0.397851 & 1.2868 & 0.198163 & [-0.267818, 1.29173] \\
+\bottomrule\end{tabular}\end{center}
+\section{Bernoulli probit}
+Binary responses with normal-CDF probabilities. Family identifier: probit. Fixed options: defaults.
+
+Converged in 8 iterations; loss 63.7016; relative gradient 4.57894e-08; inference ok.
+\begin{center}\small\begin{tabular}{lrrrrl}\toprule
+Term & Estimate & SE & Statistic & p-value & 95\% CI \\ \midrule
+(Intercept) & 0.345697 & 0.13406 & 2.57868 & 0.00991779 & [0.0829452, 0.60845] \\
+x1 & 0.494629 & 0.292264 & 1.6924 & 0.0905689 & [-0.078198, 1.06746] \\
+x2 & -0.20541 & 0.283849 & -0.72366 & 0.469274 & [-0.761745, 0.350924] \\
+x3 & 0.392686 & 0.248272 & 1.58168 & 0.113724 & [-0.0939187, 0.879291] \\
+\bottomrule\end{tabular}\end{center}
+\section{Poisson log}
+Poisson counts with mean exp(eta). Family identifier: poisson. Fixed options: defaults.
+
+Converged in 4 iterations; loss 94.1795; relative gradient 3.58652e-09; inference ok.
+\begin{center}\small\begin{tabular}{lrrrrl}\toprule
+Term & Estimate & SE & Statistic & p-value & 95\% CI \\ \midrule
+(Intercept) & 0.26438 & 0.08958 & 2.95133 & 0.0031641 & [0.0888065, 0.439954] \\
+x1 & 0.235614 & 0.191292 & 1.2317 & 0.218063 & [-0.139312, 0.61054] \\
+x2 & 0.00710371 & 0.191269 & 0.0371398 & 0.970374 & [-0.367777, 0.381984] \\
+x3 & 0.267079 & 0.173804 & 1.53666 & 0.124376 & [-0.0735719, 0.607729] \\
+\bottomrule\end{tabular}\end{center}
+\section{Gamma log}
+Gamma responses with shape 5 and mean exp(eta). Family identifier: gamma. Fixed options: defaults.
+
+Converged in 8 iterations; loss 121.225; relative gradient 9.40979e-09; inference ok.
+\begin{center}\small\begin{tabular}{lrrrrl}\toprule
+Term & Estimate & SE & Statistic & p-value & 95\% CI \\ \midrule
+(Intercept) & 0.208606 & 0.0461532 & 4.51986 & 1.76535e-05 & [0.116992, 0.300219] \\
+x1 & 0.321096 & 0.0991411 & 3.23877 & 0.00164929 & [0.124302, 0.517889] \\
+x2 & -0.282199 & 0.0978122 & -2.88511 & 0.00483161 & [-0.476355, -0.0880435] \\
+x3 & 0.156231 & 0.0856304 & 1.82448 & 0.0711903 & [-0.0137442, 0.326206] \\
+\bottomrule\end{tabular}\end{center}
+\section{Negative binomial log}
+Negative-binomial counts with fixed theta=4. Family identifier: negative\_binomial. Fixed options: {'theta': 4.0}.
+
+Converged in 7 iterations; loss 830.861; relative gradient 3.43429e-08; inference ok.
+\begin{center}\small\begin{tabular}{lrrrrl}\toprule
+Term & Estimate & SE & Statistic & p-value & 95\% CI \\ \midrule
+(Intercept) & 0.12349 & 0.111084 & 1.11168 & 0.266276 & [-0.0942308, 0.341211] \\
+x1 & 0.28687 & 0.231154 & 1.24103 & 0.214594 & [-0.166184, 0.739925] \\
+x2 & -0.501731 & 0.224874 & -2.23116 & 0.0256704 & [-0.942477, -0.0609855] \\
+x3 & 0.140232 & 0.200141 & 0.700666 & 0.483512 & [-0.252038, 0.532502] \\
+\bottomrule\end{tabular}\end{center}
+\section{Gaussian log}
+Mean exp(eta), normal errors with standard deviation 0.2. Family identifier: gaussian\_log. Fixed options: defaults.
+
+Converged in 6 iterations; loss 3.0969; relative gradient 1.71976e-08; inference ok.
+\begin{center}\small\begin{tabular}{lrrrrl}\toprule
+Term & Estimate & SE & Statistic & p-value & 95\% CI \\ \midrule
+(Intercept) & 0.194512 & 0.0222958 & 8.72415 & 8.15936e-14 & [0.150255, 0.238768] \\
+x1 & 0.369816 & 0.043714 & 8.4599 & 2.99404e-13 & [0.283044, 0.456587] \\
+x2 & -0.276474 & 0.0418762 & -6.60217 & 2.23539e-09 & [-0.359597, -0.19335] \\
+x3 & 0.204954 & 0.0394911 & 5.18989 & 1.17318e-06 & [0.126565, 0.283344] \\
+\bottomrule\end{tabular}\end{center}
+\section{Gamma inverse}
+Gamma shape 5, mean 1/(2 + X beta); positive initial predictor. Family identifier: gamma\_inverse. Fixed options: defaults.
+
+Converged in 4 iterations; loss 35.2116; relative gradient 1.60599e-08; inference ok.
+\begin{center}\small\begin{tabular}{lrrrrl}\toprule
+Term & Estimate & SE & Statistic & p-value & 95\% CI \\ \midrule
+(Intercept) & 1.90717 & 0.0954474 & 19.9813 & 5.65824e-36 & [1.71771, 2.09663] \\
+x1 & 0.311016 & 0.201324 & 1.54485 & 0.125673 & [-0.0886102, 0.710642] \\
+x2 & -0.606075 & 0.198053 & -3.06016 & 0.00286822 & [-0.999208, -0.212942] \\
+x3 & 0.0849748 & 0.176731 & 0.480813 & 0.631743 & [-0.265834, 0.435784] \\
+\bottomrule\end{tabular}\end{center}
+\section{Tweedie log}
+Compound Poisson-Gamma responses, power=1.5 and dispersion=1. Family identifier: tweedie. Fixed options: {'power': 1.5}.
+
+Converged in 8 iterations; loss 443.215; relative gradient 5.74469e-09; inference ok.
+\begin{center}\small\begin{tabular}{lrrrrl}\toprule
+Term & Estimate & SE & Statistic & p-value & 95\% CI \\ \midrule
+(Intercept) & 0.169866 & 0.0956993 & 1.775 & 0.079067 & [-0.0200951, 0.359828] \\
+x1 & 0.56849 & 0.201697 & 2.81854 & 0.00585901 & [0.168125, 0.968855] \\
+x2 & -0.413849 & 0.197253 & -2.09806 & 0.0385262 & [-0.805393, -0.0223042] \\
+x3 & 0.206462 & 0.175411 & 1.17702 & 0.242099 & [-0.141727, 0.55465] \\
+\bottomrule\end{tabular}\end{center}
+\section{Binomial logit}
+Grouped counts with four trials per row. Family identifier: binomial. Fixed options: {'trials': 4.0}.
+
+Converged in 3 iterations; loss 271.331; relative gradient 2.83872e-09; inference ok.
+\begin{center}\small\begin{tabular}{lrrrrl}\toprule
+Term & Estimate & SE & Statistic & p-value & 95\% CI \\ \midrule
+(Intercept) & 0.203769 & 0.104199 & 1.95557 & 0.0505156 & [-0.000457616, 0.407995] \\
+x1 & 0.560934 & 0.226702 & 2.47433 & 0.0133487 & [0.116607, 1.00526] \\
+x2 & -0.246536 & 0.221863 & -1.11121 & 0.266479 & [-0.68138, 0.188308] \\
+x3 & 0.192511 & 0.193306 & 0.995889 & 0.319304 & [-0.186362, 0.571385] \\
+\bottomrule\end{tabular}\end{center}
+\section{Smooth quantile}
+Normal errors shifted to target the 0.25 quantile before smoothing. Family identifier: smooth\_quantile. Fixed options: {'tau': 0.25, 'smoothing': 0.1}.
+
+Converged in 6 iterations; loss 15.7187; relative gradient 1.74971e-08; inference ok.
+\begin{center}\small\begin{tabular}{lrrrrl}\toprule
+Term & Estimate & SE & Statistic & p-value & 95\% CI \\ \midrule
+(Intercept) & 0.172345 & 0.0481474 & 3.57954 & 0.000344202 & [0.0779783, 0.266713] \\
+x1 & 0.478121 & 0.160722 & 2.97484 & 0.00293141 & [0.163113, 0.79313] \\
+x2 & -0.284327 & 0.113768 & -2.49918 & 0.0124481 & [-0.507309, -0.0613456] \\
+x3 & 0.381988 & 0.0788194 & 4.84638 & 1.25735e-06 & [0.227505, 0.536472] \\
+\bottomrule\end{tabular}\end{center}
+\section{Expectile}
+Normal errors shifted to target the 0.25 expectile. Family identifier: expectile. Fixed options: {'tau': 0.25}.
+
+Converged in 3 iterations; loss 4.52245; relative gradient 1.08293e-10; inference ok.
+\begin{center}\small\begin{tabular}{lrrrrl}\toprule
+Term & Estimate & SE & Statistic & p-value & 95\% CI \\ \midrule
+(Intercept) & 0.214702 & 0.0531807 & 4.03722 & 5.40877e-05 & [0.11047, 0.318935] \\
+x1 & 0.368848 & 0.111904 & 3.2961 & 0.000980357 & [0.14952, 0.588177] \\
+x2 & -0.309377 & 0.109039 & -2.83729 & 0.00454978 & [-0.52309, -0.0956635] \\
+x3 & 0.076899 & 0.0901609 & 0.852908 & 0.39371 & [-0.0998132, 0.253611] \\
+\bottomrule\end{tabular}\end{center}
+\section{Pseudo-Huber}
+Heavy-tailed errors: 0.5 times a Student-t(4) variate. Family identifier: pseudo\_huber. Fixed options: {'delta': 1.0}.
+
+Converged in 4 iterations; loss 18.2178; relative gradient 2.74657e-09; inference ok.
+\begin{center}\small\begin{tabular}{lrrrrl}\toprule
+Term & Estimate & SE & Statistic & p-value & 95\% CI \\ \midrule
+(Intercept) & 0.324575 & 0.0713007 & 4.5522 & 5.30873e-06 & [0.184828, 0.464322] \\
+x1 & 0.409854 & 0.161259 & 2.54158 & 0.0110351 & [0.0937916, 0.725916] \\
+x2 & -0.0768441 & 0.181104 & -0.42431 & 0.671339 & [-0.431801, 0.278112] \\
+x3 & 0.108016 & 0.116685 & 0.925704 & 0.3546 & [-0.120682, 0.336714] \\
+\bottomrule\end{tabular}\end{center}
+\section{Student-t}
+Student-t(4) location errors with fixed scale 0.5. Family identifier: student\_t. Fixed options: {'nu': 4.0, 'sigma': 0.5}.
+
+Converged in 13 iterations; loss 66.0073; relative gradient 5.58333e-09; inference ok.
+\begin{center}\small\begin{tabular}{lrrrrl}\toprule
+Term & Estimate & SE & Statistic & p-value & 95\% CI \\ \midrule
+(Intercept) & 0.217022 & 0.0596063 & 3.64092 & 0.000271665 & [0.100196, 0.333848] \\
+x1 & 0.304619 & 0.114365 & 2.66357 & 0.00773156 & [0.0804682, 0.52877] \\
+x2 & -0.355121 & 0.10166 & -3.49322 & 0.00047723 & [-0.554371, -0.155871] \\
+x3 & 0.165891 & 0.135066 & 1.22822 & 0.219363 & [-0.0988329, 0.430615] \\
+\bottomrule\end{tabular}\end{center}
+\section{Eight solvers on the same Logistic data}
+All solvers use the same input and zero initial coefficients. Krylov relative/absolute tolerances are 1e-8/1e-12. These are numerical demonstrations, not timing comparisons.
+\begin{center}\begin{tabular}{lrrr}\toprule Solver & Iterations & Loss & Rel. gradient \\ \midrule
+pcg & 3 & 67.1285 & 4.06673e-08 \\
+mm & 3 & 67.1285 & 4.06673e-08 \\
+cg & 3 & 67.1285 & 4.66513e-09 \\
+cho & 3 & 67.1285 & 4.66513e-09 \\
+cgls & 3 & 67.1285 & 4.66513e-09 \\
+crls & 3 & 67.1285 & 4.66513e-09 \\
+lsqr & 3 & 67.1285 & 4.66513e-09 \\
+lsmr & 3 & 67.1285 & 4.66513e-09 \\
+\bottomrule\end{tabular}\end{center}
+\appendix\section{Complete Python iteration logs and summaries}
+R and Julia logs are saved separately in examples/results. Row 0 is the initial point; subsequent rows report accepted iterates. The final relative gradient matches the last accepted iterate.
+\begin{lstlisting}
+
+=== Gaussian identity: X.shape=(100, 3), four coefficients including intercept ===
+Normal errors with standard deviation 0.5.
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    1.6229e+01   9.488e-01      -           -    8.67e-16       -  initial
+   1    1.2915e+01   1.948e-08      1    2.05e-08           -    1.00  reuse
+
+Converged after 1 iterations
+Final loss:      1.291484e+01
+Relative grad.:  1.948e-08
+SpectralMM (gaussian); covariance=model; reference=t
+term               estimate    std.error     statistic      p.value        lower        upper
+(Intercept)          0.178739    0.0532126      3.35895    0.0011233    0.0731125     0.284365
+x1                   0.287177     0.114305      2.51237    0.0136599    0.0602829     0.514072
+x2                  -0.167445     0.112773     -1.48479     0.140875    -0.391298    0.0564082
+x3                   0.267741    0.0987282       2.7119   0.00792779    0.0717669     0.463715
+First five fitted values: [0.40392715 0.1356244  0.07090975 0.14545406 0.32450422]
+
+=== Bernoulli logit: X.shape=(100, 3), four coefficients including intercept ===
+Binary responses with logistic probabilities.
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    6.9315e+01   8.532e-01      -           -    8.67e-16       -  initial
+   1    6.7132e+01   3.250e-02      1    7.77e-08    8.38e-16    1.00  correct
+   2    6.7129e+01   1.662e-04      1    7.70e-08           -    1.00  reuse
+   3    6.7129e+01   4.067e-08      1    2.45e-04           -    1.00  reuse
+
+Converged after 3 iterations
+Final loss:      6.712854e+01
+Relative grad.:  4.067e-08
+SpectralMM (bernoulli); covariance=model; reference=z
+term               estimate    std.error     statistic      p.value        lower        upper
+(Intercept)         -0.079785     0.209271    -0.381251     0.703017     -0.48995      0.33038
+x1                    0.70347      0.46083      1.52653     0.126878     -0.19974      1.60668
+x2                  0.0122638     0.443908    0.0276269      0.97796     -0.85778     0.882308
+x3                   0.511956     0.397851       1.2868     0.198163    -0.267818      1.29173
+First five fitted values: [0.5488999  0.41842236 0.50166545 0.47906905 0.53363205]
+
+=== Bernoulli probit: X.shape=(100, 3), four coefficients including intercept ===
+Binary responses with normal-CDF probabilities.
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    6.9315e+01   9.537e-01      -           -    3.44e-16       -  initial
+   1    6.3740e+01   6.308e-02      1    2.80e-08    6.81e-16    1.00  correct
+   2    6.3702e+01   2.986e-03      1    3.92e-08    1.45e-15    1.00  correct
+   3    6.3702e+01   1.084e-04      1    3.39e-08           -    1.00  reuse
+   4    6.3702e+01   4.180e-06      1    2.17e-04           -    1.00  reuse
+   5    6.3702e+01   1.529e-07      1    2.70e-04           -    1.00  reuse
+   6    6.3702e+01   1.162e-07      1    2.15e-04           -    0.25  reuse
+   7    6.3702e+01   6.029e-08      1    2.15e-04           -    0.50  reuse
+   8    6.3702e+01   4.579e-08      1    2.16e-04           -    0.25  reuse
+
+Converged after 8 iterations
+Final loss:      6.370159e+01
+Relative grad.:  4.579e-08
+SpectralMM (probit); covariance=model; reference=z
+term               estimate    std.error     statistic      p.value        lower        upper
+(Intercept)          0.345697      0.13406      2.57868   0.00991779    0.0829452      0.60845
+x1                   0.494629     0.292264       1.6924    0.0905689    -0.078198      1.06746
+x2                   -0.20541     0.283849     -0.72366     0.469274    -0.761745     0.350924
+x3                   0.392686     0.248272      1.58168     0.113724   -0.0939187     0.879291
+First five fitted values: [0.75007655 0.59390017 0.59676173 0.62788703 0.71265319]
+
+=== Poisson log: X.shape=(100, 3), four coefficients including intercept ===
+Poisson counts with mean exp(eta).
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    1.0000e+02   9.682e-01      -           -    8.67e-16       -  initial
+   1    9.4593e+01   2.823e-01      1    1.44e-08    4.15e-16    1.00  correct
+   2    9.4181e+01   1.394e-02      1    9.71e-09    6.36e-16    1.00  correct
+   3    9.4179e+01   4.451e-05      1    1.31e-08           -    1.00  reuse
+   4    9.4179e+01   3.587e-09      1    8.20e-05           -    1.00  reuse
+
+Converged after 4 iterations
+Final loss:      9.417949e+01
+Relative grad.:  3.587e-09
+SpectralMM (poisson); covariance=model; reference=z
+term               estimate    std.error     statistic      p.value        lower        upper
+(Intercept)           0.26438      0.08958      2.95133    0.0031641    0.0888065     0.439954
+x1                   0.235614     0.191292       1.2317     0.218063    -0.139312      0.61054
+x2                 0.00710371     0.191269    0.0371398     0.970374    -0.367777     0.381984
+x3                   0.267079     0.173804      1.53666     0.124376   -0.0735719     0.607729
+First five fitted values: [1.44213033 1.21316881 1.29312498 1.23259408 1.42403654]
+
+=== Gamma log: X.shape=(100, 3), four coefficients including intercept ===
+Gamma responses with shape 5 and mean exp(eta).
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    1.2636e+02   9.669e-01      -           -    8.67e-16       -  initial
+   1    1.2163e+02   1.929e-01      1    2.10e-08           -    1.00  reuse
+   2    1.2123e+02   1.399e-02      1    2.53e-08           -    1.00  reuse
+   3    1.2122e+02   4.201e-04      1    1.29e-08           -    1.00  reuse
+   4    1.2122e+02   4.669e-05      1    6.65e-09           -    1.00  reuse
+   5    1.2122e+02   5.611e-06      1    5.33e-09           -    1.00  reuse
+   6    1.2122e+02   6.571e-07      1    6.36e-09           -    1.00  reuse
+   7    1.2122e+02   7.924e-08      1    5.58e-09           -    1.00  reuse
+   8    1.2122e+02   9.410e-09      1    5.92e-09           -    1.00  reuse
+
+Converged after 8 iterations
+Final loss:      1.212247e+02
+Relative grad.:  9.410e-09
+SpectralMM (gamma); covariance=model; reference=t
+term               estimate    std.error     statistic      p.value        lower        upper
+(Intercept)          0.208606    0.0461532      4.51986  1.76535e-05     0.116992     0.300219
+x1                   0.321096    0.0991411      3.23877   0.00164929     0.124302     0.517889
+x2                  -0.282199    0.0978122     -2.88511   0.00483161    -0.476355   -0.0880435
+x3                   0.156231    0.0856304      1.82448    0.0711903   -0.0137442     0.326206
+First five fitted values: [1.65189632 1.18335258 1.0828614  1.28773256 1.44837597]
+
+=== Negative binomial log: X.shape=(100, 3), four coefficients including intercept ===
+Negative-binomial counts with fixed theta=4.
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    8.3530e+02   9.501e-01      -           -    4.11e-16       -  initial
+   1    8.3110e+02   2.965e-01      1    3.13e-08    2.62e-16    1.00  correct
+   2    8.3086e+02   1.645e-02      1    1.39e-08    6.48e-16    1.00  correct
+   3    8.3086e+02   9.166e-04      1    2.34e-08           -    1.00  reuse
+   4    8.3086e+02   7.231e-05      1    5.97e-03           -    1.00  reuse
+   5    8.3086e+02   5.645e-06      1    6.31e-03           -    1.00  reuse
+   6    8.3086e+02   4.402e-07      1    6.38e-03           -    1.00  reuse
+   7    8.3086e+02   3.434e-08      1    6.36e-03           -    1.00  reuse
+
+Converged after 7 iterations
+Final loss:      8.308615e+02
+Relative grad.:  3.434e-08
+SpectralMM (negative_binomial); covariance=model; reference=z
+term               estimate    std.error     statistic      p.value        lower        upper
+(Intercept)           0.12349     0.111084      1.11168     0.266276   -0.0942308     0.341211
+x1                    0.28687     0.231154      1.24103     0.214594    -0.166184     0.739925
+x2                  -0.501731     0.224874     -2.23116    0.0256704    -0.942477   -0.0609855
+x3                   0.140232     0.200141     0.700666     0.483512    -0.252038     0.532502
+First five fitted values: [1.71355957 1.17445104 0.84783451 1.17914872 1.39982586]
+
+=== Gaussian log: X.shape=(100, 3), four coefficients including intercept ===
+Mean exp(eta), normal errors with standard deviation 0.2.
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    1.0353e+01   9.652e-01      -           -    8.67e-16       -  initial
+   1    4.2399e+00   6.857e-01      1    2.25e-08    4.83e-16    1.00  correct
+   2    3.1007e+00   3.727e-02      1    7.04e-09    5.23e-16    1.00  correct
+   3    3.0969e+00   2.856e-04      1    5.75e-09    3.85e-16    1.00  correct
+   4    3.0969e+00   1.100e-05      1    6.80e-09           -    1.00  reuse
+   5    3.0969e+00   4.348e-07      1    5.09e-04           -    1.00  reuse
+   6    3.0969e+00   1.720e-08      1    4.87e-04           -    1.00  reuse
+
+Converged after 6 iterations
+Final loss:      3.096901e+00
+Relative grad.:  1.720e-08
+SpectralMM (gaussian_log); covariance=model; reference=t
+term               estimate    std.error     statistic      p.value        lower        upper
+(Intercept)          0.194512    0.0222958      8.72415  8.15936e-14     0.150255     0.238768
+x1                   0.369816     0.043714       8.4599  2.99404e-13     0.283044     0.456587
+x2                  -0.276474    0.0418762     -6.60217  2.23539e-09    -0.359597     -0.19335
+x3                   0.204954    0.0394911      5.18989  1.17318e-06     0.126565     0.283344
+First five fitted values: [1.65781816 1.14728044 1.07203528 1.25984951 1.45118994]
+
+=== Gamma inverse: X.shape=(100, 3), four coefficients including intercept ===
+Gamma shape 5, mean 1/(2 + X beta); positive initial predictor.
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    3.6711e+01   8.270e-01      -           -    8.67e-16       -  initial
+   1    3.5312e+01   3.992e-01      1    8.87e-08    4.93e-16    1.00  correct
+   2    3.5212e+01   2.520e-02      1    2.98e-08    3.98e-16    1.00  correct
+   3    3.5212e+01   1.584e-04      1    6.55e-08           -    1.00  reuse
+   4    3.5212e+01   1.606e-08      1    1.00e-04           -    1.00  reuse
+
+Converged after 4 iterations
+Final loss:      3.521161e+01
+Relative grad.:  1.606e-08
+SpectralMM (gamma_inverse); covariance=model; reference=t
+term               estimate    std.error     statistic      p.value        lower        upper
+(Intercept)           1.90717    0.0954474      19.9813  5.65824e-36      1.71771      2.09663
+x1                   0.311016     0.201324      1.54485     0.125673   -0.0886102     0.710642
+x2                  -0.606075     0.198053     -3.06016   0.00286822    -0.999208    -0.212942
+x3                  0.0849748     0.176731     0.480813     0.631743    -0.265834     0.435784
+First five fitted values: [0.4188588  0.51111457 0.63365107 0.50244282 0.4668069 ]
+
+=== Tweedie log: X.shape=(100, 3), four coefficients including intercept ===
+Compound Poisson-Gamma responses, power=1.5 and dispersion=1.
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    4.5178e+02   9.691e-01      -           -    8.67e-16       -  initial
+   1    4.4396e+02   3.391e-01      1    2.48e-08    5.45e-16    1.00  correct
+   2    4.4322e+02   2.650e-02      1    1.20e-08    3.25e-16    1.00  correct
+   3    4.4322e+02   1.232e-03      1    2.05e-08           -    1.00  reuse
+   4    4.4322e+02   1.037e-04      1    8.74e-03           -    1.00  reuse
+   5    4.4322e+02   9.030e-06      1    1.01e-02           -    1.00  reuse
+   6    4.4322e+02   7.714e-07      1    9.80e-03           -    1.00  reuse
+   7    4.4322e+02   6.712e-08      1    1.01e-02           -    1.00  reuse
+   8    4.4322e+02   5.745e-09      1    9.83e-03           -    1.00  reuse
+
+Converged after 8 iterations
+Final loss:      4.432151e+02
+Relative grad.:  5.745e-09
+SpectralMM (tweedie); covariance=model; reference=t
+term               estimate    std.error     statistic      p.value        lower        upper
+(Intercept)          0.169866    0.0956993        1.775     0.079067   -0.0200951     0.359828
+x1                    0.56849     0.201697      2.81854   0.00585901     0.168125     0.968855
+x2                  -0.413849     0.197253     -2.09806    0.0385262    -0.805393   -0.0223042
+x3                   0.206462     0.175411      1.17702     0.242099    -0.141727      0.55465
+First five fitted values: [1.87470222 1.06577256 1.02950523 1.3325207  1.52151834]
+
+=== Binomial logit: X.shape=(100, 3), four coefficients including intercept ===
+Grouped counts with four trials per row.
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    2.7726e+02   9.593e-01      -           -    8.67e-16       -  initial
+   1    2.7134e+02   2.332e-02      1    2.39e-08    5.58e-16    1.00  correct
+   2    2.7133e+02   5.148e-05      1    2.65e-08           -    1.00  reuse
+   3    2.7133e+02   2.839e-09      1    5.67e-05           -    1.00  reuse
+
+Converged after 3 iterations
+Final loss:      2.713315e+02
+Relative grad.:  2.839e-09
+SpectralMM (binomial); covariance=model; reference=z
+term               estimate    std.error     statistic      p.value        lower        upper
+(Intercept)          0.203769     0.104199      1.95557    0.0505156 -0.000457616     0.407995
+x1                   0.560934     0.226702      2.47433    0.0133487     0.116607      1.00526
+x2                  -0.246536     0.221863     -1.11121     0.266479     -0.68138     0.188308
+x3                   0.192511     0.193306     0.995889     0.319304    -0.186362     0.571385
+First five fitted values: [2.54192002 2.05000363 2.18102978 2.32154963 2.39858725]
+
+=== Smooth quantile: X.shape=(100, 3), four coefficients including intercept ===
+Normal errors shifted to target the 0.25 quantile before smoothing.
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    1.9343e+01   8.997e-01      -           -    5.96e-16       -  initial
+   1    1.6563e+01   5.833e-01      1    7.33e-08    7.63e-16    0.50  correct
+   2    1.5976e+01   2.851e-01      1    5.67e-08    5.75e-16    1.00  correct
+   3    1.5735e+01   7.013e-02      1    2.67e-08    1.28e-15    1.00  correct
+   4    1.5719e+01   9.112e-03      1    1.57e-01    1.42e-15    1.00  correct
+   5    1.5719e+01   1.031e-04      1    3.73e-08    1.05e-15    1.00  correct
+   6    1.5719e+01   1.750e-08      1    3.12e-08           -    1.00  reuse
+
+Converged after 6 iterations
+Final loss:      1.571871e+01
+Relative grad.:  1.750e-08
+SpectralMM (smooth_quantile); covariance=sandwich; reference=z
+term               estimate    std.error     statistic      p.value        lower        upper
+(Intercept)          0.172345    0.0481474      3.57954  0.000344202    0.0779783     0.266713
+x1                   0.478121     0.160722      2.97484   0.00293141     0.163113      0.79313
+x2                  -0.284327     0.113768     -2.49918    0.0124481    -0.507309   -0.0613456
+x3                   0.381988    0.0788194      4.84638  1.25735e-06     0.227505     0.536472
+First five fitted values: [0.54323575 0.09332754 0.0145545  0.15292799 0.40448204]
+
+=== Expectile: X.shape=(100, 3), four coefficients including intercept ===
+Normal errors shifted to target the 0.25 expectile.
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    6.2666e+00   9.001e-01      -           -    2.15e-16       -  initial
+   1    4.5596e+00   1.557e-01      1    6.46e-08    3.71e-16    1.00  correct
+   2    4.5225e+00   2.267e-03      1    3.43e-08    8.30e-16    1.00  correct
+   3    4.5225e+00   1.083e-10      1    4.78e-08           -    1.00  reuse
+
+Converged after 3 iterations
+Final loss:      4.522450e+00
+Relative grad.:  1.083e-10
+SpectralMM (expectile); covariance=sandwich; reference=z
+term               estimate    std.error     statistic      p.value        lower        upper
+(Intercept)          0.214702    0.0531807      4.03722  5.40877e-05      0.11047     0.318935
+x1                   0.368848     0.111904       3.2961  0.000980357      0.14952     0.588177
+x2                  -0.309377     0.109039     -2.83729   0.00454978     -0.52309   -0.0956635
+x3                   0.076899    0.0901609     0.852908      0.39371   -0.0998132     0.253611
+First five fitted values: [0.53063655 0.14986938 0.11791276 0.32325932 0.37716839]
+
+=== Pseudo-Huber: X.shape=(100, 3), four coefficients including intercept ===
+Heavy-tailed errors: 0.5 times a Student-t(4) variate.
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    2.2839e+01   9.570e-01      -           -    3.24e-16       -  initial
+   1    1.8255e+01   6.330e-02      1    2.53e-08    4.45e-16    1.00  correct
+   2    1.8218e+01   2.303e-04      1    3.59e-08           -    1.00  reuse
+   3    1.8218e+01   7.597e-07      1    3.28e-03           -    1.00  reuse
+   4    1.8218e+01   2.747e-09      1    3.62e-03           -    1.00  reuse
+
+Converged after 4 iterations
+Final loss:      1.821779e+01
+Relative grad.:  2.747e-09
+SpectralMM (pseudo_huber); covariance=sandwich; reference=z
+term               estimate    std.error     statistic      p.value        lower        upper
+(Intercept)          0.324575    0.0713007       4.5522  5.30873e-06     0.184828     0.464322
+x1                   0.409854     0.161259      2.54158    0.0110351    0.0937916     0.725916
+x2                 -0.0768441     0.181104     -0.42431     0.671339    -0.431801     0.278112
+x3                   0.108016     0.116685     0.925704       0.3546    -0.120682     0.336714
+First five fitted values: [0.51469686 0.17741125 0.39302665 0.43021848 0.43649747]
+
+=== Student-t: X.shape=(100, 3), four coefficients including intercept ===
+Student-t(4) location errors with fixed scale 0.5.
+
+SpectralMM  Solver: PCG   Rank: 3
+
+Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+   0    8.0192e+01   9.847e-01      -           -    2.37e-16       -  initial
+   1    6.6980e+01   3.026e-01      1    5.85e-09    8.23e-16    1.00  correct
+   2    6.6018e+01   3.722e-02      1    3.93e-03           -    1.00  reuse
+   3    6.6008e+01   1.136e-02      1    4.27e-03           -    1.00  reuse
+   4    6.6007e+01   1.670e-03      1    4.25e-03           -    1.00  reuse
+   5    6.6007e+01   5.342e-04      1    4.37e-03           -    1.00  reuse
+   6    6.6007e+01   8.850e-05      1    4.79e-03           -    1.00  reuse
+   7    6.6007e+01   2.493e-05      1    4.34e-03           -    1.00  reuse
+   8    6.6007e+01   7.788e-06      1    4.34e-03           -    1.00  reuse
+   9    6.6007e+01   1.216e-06      1    4.56e-03           -    1.00  reuse
+  10    6.6007e+01   3.871e-07      1    4.44e-03           -    1.00  reuse
+  11    6.6007e+01   1.185e-07      1    4.40e-03           -    1.00  reuse
+  12    6.6007e+01   1.746e-08      1    4.44e-03           -    1.00  reuse
+  13    6.6007e+01   5.583e-09      1    4.51e-03           -    1.00  reuse
+
+Converged after 13 iterations
+Final loss:      6.600726e+01
+Relative grad.:  5.583e-09
+SpectralMM (student_t); covariance=sandwich; reference=z
+term               estimate    std.error     statistic      p.value        lower        upper
+(Intercept)          0.217022    0.0596063      3.64092  0.000271665     0.100196     0.333848
+x1                   0.304619     0.114365      2.66357   0.00773156    0.0804682      0.52877
+x2                  -0.355121      0.10166     -3.49322   0.00047723    -0.554371    -0.155871
+x3                   0.165891     0.135066      1.22822     0.219363   -0.0988329     0.430615
+First five fitted values: [0.55090431 0.20691558 0.02695811 0.24980184 0.39776027]
+
+\end{lstlisting}
+\end{document}

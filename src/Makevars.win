@@ -1,0 +1,4 @@
+CXX_STD = CXX17
+PKG_CPPFLAGS = -Inative/include -DEIGEN_USE_BLAS
+PKG_LIBS = $(BLAS_LIBS) $(FLIBS)
+OBJECTS = RcppExports.o r_bridge.o smm_core.o smm_c_api.o
