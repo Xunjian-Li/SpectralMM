@@ -45,7 +45,12 @@ function ensure_library()
             cmake = CMake_jll.cmake()
             blas = get(ENV, "SPECTRALMM_BUILD_BLAS", "AUTO")
             blas in ("ON", "OFF", "AUTO") || error("SPECTRALMM_BUILD_BLAS must be ON, OFF or AUTO")
-            run(`$cmake -S $(joinpath(ROOT,"cpp")) -B $build -DCMAKE_BUILD_TYPE=Release -DEIGEN3_INCLUDE_DIR=$eigen -DSPECTRALMM_USE_BLAS=$blas -DCMAKE_INSTALL_PREFIX=$stage`)
+            # Julia exports its library search path to child processes. On Linux,
+            # unconstrained discovery can select libblastrampoline, whose LP64
+            # entry points are not necessarily configured by Julia's ILP64 BLAS.
+            # Prefer a real LP64 OpenBLAS; AUTO falls back to Eigen if absent.
+            blas_args = Sys.islinux() ? ["-DBLA_VENDOR=OpenBLAS", "-DBLA_SIZEOF_INTEGER=4"] : String[]
+            run(`$cmake -S $(joinpath(ROOT,"cpp")) -B $build -DCMAKE_BUILD_TYPE=Release -DEIGEN3_INCLUDE_DIR=$eigen -DSPECTRALMM_USE_BLAS=$blas $blas_args -DCMAKE_INSTALL_PREFIX=$stage`)
             run(`$cmake --build $build --config Release --parallel 2`)
             run(`$cmake --install $build --config Release`)
             built = joinpath(stage, Sys.iswindows() ? "bin" : "lib", library_name())
