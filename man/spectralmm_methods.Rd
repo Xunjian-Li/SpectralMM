@@ -20,7 +20,7 @@
 \description{Coefficient, prediction, covariance, confidence interval and summary methods for fitted SpectralMM models.}
 \usage{
 \method{predict}{spectralmm}(object, newdata = NULL, type = NULL,
-  trials = NULL, ...)
+  trials = NULL, offset = NULL, ...)
 \method{fitted}{spectralmm}(object, ...)
 \method{residuals}{spectralmm}(object, type = "response", ...)
 \method{nobs}{spectralmm}(object, ...)
@@ -44,6 +44,7 @@
 \item{type}{Prediction: link or response; NULL defaults to link for spectralmm_glm and response for legacy spectralmm_fit. Residuals: only response is supported.}
 \item{newdata}{NULL for training predictions, a data frame for formula fits, or a numeric or sparse matrix with the same feature columns and ordering as training data, without an automatically fitted intercept column.}
 \item{trials}{Grouped binomial prediction trial counts, a positive scalar or vector. Defaults to the fitting value. Supply new counts for new rows when needed.}
+\item{offset}{Not implemented; a non-NULL value raises an error.}
 \item{parm}{Optional coefficient indices or names.}
 \item{level}{Confidence level between zero and one.}
 \item{digits}{Number of significant digits to print.}

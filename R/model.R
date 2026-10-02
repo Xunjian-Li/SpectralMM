@@ -155,7 +155,8 @@ logLik.spectralmm <- function(object,...) {
   if(is.na(object$loglikelihood)) stop("normalized likelihood is not available for this model/scale")
   structure(object$loglikelihood,class="logLik",df=object$nparams+as.integer(object$estimated_scale),nobs=object$nobs)
 }
-predict.spectralmm <- function(object,newdata=NULL,type=NULL,trials=NULL,...) {
+predict.spectralmm <- function(object,newdata=NULL,type=NULL,trials=NULL,offset=NULL,...) {
+  if(!is.null(offset)) stop("offset is not implemented by the numerical core")
   if(is.null(type)) type<-if(is.null(object$prediction_default)) "response" else object$prediction_default
   type<-match.arg(type,c("link","response"))
   if(is.null(newdata)) return(if(type=="link") object$linear.predictors else object$fitted.values)
