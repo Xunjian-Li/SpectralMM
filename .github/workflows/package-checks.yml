@@ -59,7 +59,8 @@ jobs:
       - uses: r-lib/actions/check-r-package@v2
         with:
           working-directory: dist/R/SpectralMM
-          error-on: 'warning'
+          error-on: '"warning"'
+          upload-results: 'true'
   julia:
     strategy:
       fail-fast: false
