@@ -224,7 +224,7 @@ Rebuild the library before using the new solver IDs.
 | `negative_binomial` | NegativeBinomialLog | `theta=1` | nonnegative |
 | `smooth_quantile` | SmoothQuantile | `tau=0.5, smoothing=0.1` | finite real |
 | `expectile` | Expectile | `tau=0.5` | finite real |
-| `pseudo_huber` | PseudoHuber | `delta=1.345` | finite real |
+| `pseudo_huber` | PseudoHuber | `delta=1.0` | finite real |
 | `student_t` | StudentT | `nu=4, sigma=1` | finite real |
 | `gaussian_log` | GaussianLog | none | positive |
 | `gamma_inverse` | GammaInverse | none | positive |

@@ -63,7 +63,7 @@ struct PseudoHuber{T<:Real} <: RobustFamily
     delta::T
 end
 
-function PseudoHuber(delta=1.345)
+function PseudoHuber(delta=1.0)
     δ = float(delta)
     δ > zero(δ) || throw(ArgumentError("delta must be positive"))
     return PseudoHuber{typeof(δ)}(δ)

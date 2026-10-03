@@ -29,7 +29,7 @@ function _named_family(name::Symbol, options, n::Int)
     elseif name === :expectile
         return Expectile(get(params,:tau,.5)), nothing, params
     elseif name === :pseudo_huber
-        return PseudoHuber(get(params,:delta,1.345)), nothing, params
+        return PseudoHuber(get(params,:delta,1.0)), nothing, params
     elseif name === :student_t
         return StudentT(get(params,:nu,4.),get(params,:sigma,1.)), nothing, params
     end

@@ -12,6 +12,10 @@ for(case in cases) {
  old<-spectralmm_fit(X,y,family=case[[2]],family_options=case[[3]],rank=5,solver='pcg')
  new<-spectralmm_fit(X,y,family=case[[1]],rank=5,solver='pcg')
  form<-spectralmm_fit(y~.,data=dat,family=case[[1]],rank=5,solver='pcg')
+ if(case[[2]]=='pseudo_huber') {
+  bare<-spectralmm_fit(X,y,family='pseudo_huber',rank=5,solver='pcg')
+  stopifnot(identical(coef(bare),coef(new)))
+ }
  for(result in list(new,form)) {
   stopifnot(max(abs(coef(old)-coef(result)))<1e-12,
    max(abs(fitted(old)-fitted(result)))<1e-12,identical(old$objective,result$objective),

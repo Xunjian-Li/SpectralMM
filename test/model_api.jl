@@ -58,3 +58,15 @@ using DataFrames, StatsModels
     @test_throws ArgumentError deviance(f)
     @test_throws ArgumentError SpectralMM.glm(X,data.bernoulli,Bernoulli(),LogitLink();start=zeros(4),beta0=zeros(4))
 end
+
+@testset "Unified PseudoHuber default" begin
+    @test PseudoHuber().delta == 1.0
+    A=randn(MersenneTwister(17),100,3); b=sin.(1:100)
+    for backend in (:julia,:cpp)
+        bare=SpectralMM.fit(A,b;family=:pseudo_huber,backend)
+        explicit=SpectralMM.fit(A,b;family=:pseudo_huber,family_options=(delta=1.,),backend)
+        object=SpectralMM.fit(A,b,PseudoHuber();backend)
+        @test coef(bare)==coef(explicit)==coef(object)
+        @test fitted(bare)==fitted(explicit)==fitted(object)
+    end
+end

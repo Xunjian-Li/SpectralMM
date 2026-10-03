@@ -18,7 +18,7 @@ student_t(nu = 4)
 \item{nu}{Positive finite Student-t degrees of freedom. The residual scale retains its existing default of one.}
 }
 \value{A lightweight object of class spectralmm_family, containing a core family name and its options.}
-\details{Matrix and formula fits normalize these objects to the existing string and family_options representation. The public q maps to the internal tau; epsilon maps to smoothing. Supplying family_options together with an object is an error, even for NULL or an empty list. Existing string specifications remain supported unchanged, including custom Student-t sigma. The constructor pseudo_huber() uses delta=1; the legacy string path retains its existing default delta=1.345 when no option is supplied.}
+\details{Matrix and formula fits normalize these objects to the existing string and family_options representation. The public q maps to the internal tau; epsilon maps to smoothing. Supplying family_options together with an object is an error, even for NULL or an empty list. Existing string specifications remain supported unchanged, including custom Student-t sigma. All interfaces use delta=1 by default, including the legacy string path. To reproduce the earlier development default, explicitly set delta=1.345.}
 \examples{
 set.seed(1)
 dat <- data.frame(y=rnorm(100), x=rnorm(100))

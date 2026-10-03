@@ -1,78 +1,45 @@
-# SpectralMM 0.1.0 submission preparation
+# SpectralMM 0.1.0 release procedure
 
-Status: prepared locally; no registry submission or upload has been made.
+The canonical sources are on `main`. Release the exact commit that passes the
+independent package checks; do not move a published version tag.
 
-## Required before submission
+## Validation and artifacts
 
-1. Commit and push the reviewed canonical sources to the public GitHub repository.
-   Do not commit local research session files or credentials.
-2. Run `.github/workflows/package-checks.yml`. It checks independent source
-   packages on Linux, macOS and Windows. This workflow has not yet run remotely;
-   resolve failures and review notes before publishing.
-3. Rebuild final distributions from the exact release revision. Retain the
-   source manifests and artifact checksums with the release evidence.
-4. Verify name availability and account ownership directly on each platform.
-   Automated web lookups in this session could not establish availability.
-
-## R / CRAN
-
-Upload `dist/R/artifacts/SpectralMM_0.1.0.tar.gz` using the
-[CRAN submission form](https://cran.r-project.org/submit.html).
-Use Xun-Jian Li and xunjianli@ucla.edu as the maintainer. Confirm the submission
-through the email sent to that address. Review and accept the
-[CRAN policy](https://cran.r-project.org/web/packages/policies.html).
-
-Draft submission comments (replace the validation paragraph after remote checks):
-
-> This is the first submission of SpectralMM. It provides spectral majorization
-> solvers for generalized linear, asymmetric and robust regression models, with
-> dense and sparse designs and optional Wald inference. The R source package
-> compiles its included C++ core with R's build system and does not require
-> Julia, Python or a manual CMake build.
->
-> Local checks used R 4.4.2 on macOS arm64. There were no errors or warnings.
-> Three notes concerned missing pandoc, an outdated system HTML validator,
-> and an Apple toolchain temporary file. System-clock and remote incoming checks
-> were disabled in that local run. Cross-platform validation is pending.
-
-Do not describe this draft as a clean cross-platform check. CRAN normally
-requires operation on at least two major R platforms.
+- Julia, R and Python versions must all be 0.1.0; the package license is GPL-3.
+- Run `.github/workflows/package-checks.yml`: all nine platform jobs and the
+  cross-language comparison must pass for the release commit.
+- Build independent packages with `tools/build_packages.py`; retain source
+  manifests and artifact SHA-256 checksums with the GitHub release.
+- Verify clean installation, public and legacy interfaces, formula/matrix
+  equivalence and the shared PseudoHuber default delta=1.
+- The version tag is `v0.1.0`. Registry upload/submission and acceptance are
+  separate events; record actual outcomes on the release, not anticipated ones.
 
 ## Python / PyPI
 
-Build with `python tools/build_packages.py --language Python --build` after
-installing `build` and `twine` into the same environment. Validate:
-
-```sh
-python -m twine check dist/Python/artifacts/*
-```
-
-First test the release workflow against TestPyPI if desired. TestPyPI and PyPI
-accounts and credentials are separate. Once final files and account access are
-ready, the actual production upload command is:
-
-```sh
-python -m twine upload dist/Python/artifacts/*
-```
-
-This command publishes files. Never put an API token in repository files or chat;
-use a secure credential store or trusted publishing. The current local wheel is
-macOS 26 arm64 only. Source distributions need a compiler; CI-generated wheels
-need platform dependency/portability review before redistribution. In particular,
-a plain Linux build is not automatically a portable manylinux wheel.
-See the [official packaging guide](https://packaging.python.org/en/latest/tutorials/packaging-projects/).
+Run the manual `publish-pypi.yml` workflow at the tested tag. It checks that the
+same commit passed package checks, builds a source distribution, validates it
+with twine, and uploads through the configured PyPI Trusted Publisher.
+No API token belongs in this repository. The initial release uploads the source
+distribution only; source installation requires a C++17 compiler. Locally built
+wheels require platform portability review before public redistribution.
 
 ## Julia / General
 
-The repository root is the Julia package. Push the release sources and ensure
-`Project.toml` version and dependency bounds are correct. Install/enable
-[Registrator](https://github.com/JuliaRegistries/Registrator.jl) for the repository.
-Trigger registration with `@JuliaRegistrator register` on the exact release
-commit, then review the resulting General registry pull request and address its
-checks. Do not upload the Julia tarball as a registry submission.
+Trigger the installed Registrator with `@JuliaRegistrator register` on the exact
+release commit. Review the resulting General registry pull request and its
+checks. The root Julia package includes both backends; Julia remains the default.
+Registry submission is not acceptance. Do not upload a Julia source tarball as
+an alternative to registration.
 
-Julia remains pure Julia by default; `backend=:cpp` is explicit. Both backends
-are included in this single Julia package. Check the current
-[General automatic merge guidelines](https://juliaregistries.github.io/RegistryCI.jl/stable/guidelines/)
-before registration. A successful local package test does not establish
-registry acceptance, dependency availability or name approval.
+## R / CRAN
+
+Submit the R CMD build artifact `dist/R/artifacts/SpectralMM_0.1.0.tar.gz` through
+https://cran.r-project.org/submit.html. Maintainer: Xun-Jian Li,
+xunjianli@ucla.edu. Report actual R CMD check results and relevant notes.
+The maintainer must confirm the submission through CRAN's confirmation email.
+A submitted or confirmed package is not yet a CRAN-accepted package.
+
+The R package compiles its bundled C++ core using R's build system and requires
+neither Julia nor Python nor a manual CMake build. Describe it as a first
+submission and provide the cross-platform checks for the tagged commit.

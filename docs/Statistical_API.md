@@ -146,9 +146,9 @@ For example, `rank=5` requires at least six total coefficients.
 The old string plus `family_options` API remains supported without deprecation.
 Do not supply `family_options` with an object, including an empty mapping/list
 or `None`/`NULL`; that raises an error. StudentT uses the existing unit residual
-scale; custom `sigma` remains available through the string API. The new
-PseudoHuber constructor defaults to `delta=1`; the old string path retains its
-existing default `delta=1.345` when omitted. No Julia API or solver default changes.
+scale; custom `sigma` remains available through the string API. PseudoHuber defaults to `delta=1` in every interface, including Julia and the
+legacy string path. To reproduce the earlier development default, explicitly
+set `delta=1.345`. Solver algorithms and optimization tolerances are unchanged.
 
 Use the generic `fit` / `spectralmm_fit` interface for SmoothQuantile, Expectile,
 PseudoHuber and StudentT residual models. Formula input is supported there too,

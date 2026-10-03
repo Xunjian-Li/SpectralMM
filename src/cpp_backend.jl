@@ -132,7 +132,7 @@ function fit(X::AbstractMatrix{<:Real}, y::AbstractVector{<:Real};
         parameters[:trials] = copy(trials)
     end
     fp = FamilyOptions(get(parameters,:theta,1.),get(parameters,:tau,.5),get(parameters,:smoothing,.1),
-        get(parameters,:delta,1.345),get(parameters,:nu,4.),get(parameters,:sigma,1.),
+        get(parameters,:delta,1.0),get(parameters,:nu,4.),get(parameters,:sigma,1.),
         get(parameters,:power,1.5),isempty(trials) ? C_NULL : pointer(trials),length(trials))
     n, d = size(X)
     p = d + intercept

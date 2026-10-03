@@ -71,7 +71,7 @@ int32_t smm_fit_extended(const smm_matrix *X, const double *y, const double *bet
 }
 
 void smm_default_family_options(smm_family_options *f) {
-    if(f) *f={1.,.5,.1,1.345,4.,1.,1.5,nullptr,0};
+    if(f) *f={1.,.5,.1,1.0,4.,1.,1.5,nullptr,0};
 }
 int32_t smm_fit_family(const smm_matrix *X, const double *y, const double *beta0,
     const smm_options *o, const smm_family_options *family,

@@ -21,6 +21,9 @@ class FamilyObjectTest(unittest.TestCase):
                 old = sm.fit(X, y, family=name, family_options=options, rank=5, solver='pcg')
                 new = sm.fit(X, y, family=spec, rank=5, solver='pcg')
                 form = sm.fit(formula, data=data, family=spec, rank=5, solver='pcg')
+                if name == 'pseudo_huber':
+                    bare = sm.fit(X, y, family=name, rank=5, solver='pcg')
+                    np.testing.assert_array_equal(bare.params, new.params)
                 for result in (new, form):
                     np.testing.assert_allclose(old.params, result.params, rtol=1e-12, atol=1e-12)
                     np.testing.assert_allclose(old.fittedvalues, result.fittedvalues, rtol=1e-12, atol=1e-12)
