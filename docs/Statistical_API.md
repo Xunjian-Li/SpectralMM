@@ -5,8 +5,9 @@ share the same numerical fitting path. The API layer constructs the design,
 retains metadata and reports statistical results; it does not replace the
 existing MM/IRLS, Lanczos, PCG or Krylov algorithms.
 
-This interface is currently on the `codex/statistical-api` development branch.
-The registry releases remain paused. See [the validation report](API_Refactor_Validation.md)
+This interface is available from the repository's `main` branch, including the
+R/Python loss constructors below. Registry releases remain paused.
+See [the validation report](API_Refactor_Validation.md)
 for the implementation scope, test coverage and known limitations.
 
 ## Julia
