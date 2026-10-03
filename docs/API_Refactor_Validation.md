@@ -1,6 +1,7 @@
 # Statistical API refactor: implementation and validation
 
-Publication remains paused. Changes are on `codex/statistical-api`, not `main`.
+The statistical API and R/Python non-GLM loss constructors are on `main`.
+Registry publication is a separate release step.
 
 ## Scope and public interfaces
 
@@ -43,7 +44,8 @@ control objects; direct options remain available.
 
 ## Validation
 
-Local macOS validation:
+Recorded local macOS validation of the API refactor (before the subsequent
+R/Python loss-constructor additions):
 
 - Julia: all 512 assertions passed, including the existing 322 and 190 new
   statistical API assertions, exercised with both Julia and C++ backends.
@@ -73,8 +75,8 @@ SpectralMM. Outputs were finite and matched an independent contraction within
 3.34e-16; tests passed. No warning filter or numerical workaround was added.
 
 Platform CI runs Julia, R and Python on Ubuntu, macOS and Windows, followed by
-an aggregate comparison of exported Linux results. Its result must be checked
-before treating this development branch as ready for integration.
+an aggregate comparison of exported Linux results. Run the full CI matrix before
+release; individual run results apply only to the tested commit.
 
 ## Explicit limitations
 

@@ -4,7 +4,7 @@
 
 The main computational goal is to avoid repeatedly forming and factorizing dense curvature matrices. Operations are expressed primarily through matrix-vector products and low-rank updates, so the same implementation can work with both dense and sparse design matrices.
 
-## Statistical interfaces (development version)
+## Statistical interfaces
 
 Use the native statistical conventions of each language. These calls assume
 `X` contains three feature columns and `dat` contains `y`, `x1`, `x2`, `x3`.
@@ -43,7 +43,7 @@ available for residual models and legacy aliases. Automatic inference retains
 the 50-coefficient cutoff. Observation weights and offsets are explicitly
 unsupported. See [the statistical API guide](docs/Statistical_API.md) for complete
 examples, family/link mapping, prediction defaults and likelihood definitions.
-Registry publication is paused while this interface is reviewed.
+GitHub source installation is documented below; registry publication is a separate release step.
 
 For non-GLM models, use the loss constructors with the generic fitting API:
 
@@ -82,7 +82,7 @@ python -m pip install .
 
 ```python
 import spectralmm
-fit = spectralmm.fit(X, y, family="bernoulli")
+fit = spectralmm.glm(X, y, family="binomial", link="logit")
 ```
 
 ```julia
@@ -107,7 +107,7 @@ Install the updated GitHub source with:
 install.packages("remotes")
 remotes::install_github("Xunjian-Li/SpectralMM")
 library(SpectralMM)
-fit <- spectralmm_fit(X, y, family = "bernoulli")
+fit <- spectralmm_glm(X, y, family = binomial(link = "logit"))
 summary(fit)
 ```
 
@@ -139,7 +139,7 @@ The [standalone English LaTeX source](docs/Small_Model_Examples.tex) is ready fo
 
 ## Installation
 
-From the Julia package manager, the development version can be installed locally with
+From the Julia package manager, a local checkout can be installed with
 
 ```julia
 using Pkg
@@ -207,8 +207,9 @@ model. Native wrappers implement the added column implicitly; the original Julia
 backend constructs a sparse-preserving design matrix.
 
 Julia formulas control the intercept through `y ~ x` (included), `y ~ 0 + x`
-(omitted), or `y ~ 1` (intercept only). Python/R/C++-backed Julia interfaces still accept
-matrices only. Low-level `spectral_mm`, `irls_krylov`, `irls_cholesky` and existing
+(omitted), or `y ~ 1` (intercept only). The high-level Julia (both backends), R,
+and Python statistical interfaces support matrix and formula inputs as documented.
+Low-level `spectral_mm`, `irls_krylov`, `irls_cholesky` and existing
 C ABI entry points keep explicit design-matrix semantics; Julia's low-level
 `penalize_intercept=false` excludes the **first** supplied column (for
 `spectral_mm`, set it in `SpectralOptions`).
@@ -216,6 +217,10 @@ C ABI entry points keep explicit design-matrix semantics; Julia's low-level
 ### Formula interface
 
 `SpectralMM.jl` also supports the `StatsModels.jl` formula interface.
+
+Install `DataFrames` in your application environment to run the DataFrame example
+below. It is not a SpectralMM runtime dependency; `Pkg.test()` installs the test
+dependencies automatically.
 
 ```julia
 using DataFrames

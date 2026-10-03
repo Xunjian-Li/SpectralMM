@@ -6,7 +6,7 @@ The public names are `spectralmm` in Python and `SpectralMM` in Julia. Building
 and locating the C++ library are handled internally. A C++17 toolchain is still
 required when compiling the C++ backend from source; a compatible Python wheel does not require
 local compilation. No published Python index release or Julia registry entry
-is claimed. GitHub installation commands apply after these changes are pushed.
+is claimed. The commands below install the current GitHub source.
 
 ## Python
 
@@ -16,7 +16,7 @@ From a local checkout:
 python -m pip install .
 ```
 
-Or, after publication to GitHub:
+Or install from GitHub:
 
 ```sh
 python -m pip install git+https://github.com/Xunjian-Li/SpectralMM.git
@@ -29,7 +29,7 @@ import spectralmm
 rng = np.random.default_rng(1)
 X = rng.normal(size=(100, 3))
 y = rng.binomial(1, 0.5, size=100)
-fit = spectralmm.fit(X, y, family="bernoulli")
+fit = spectralmm.glm(X, y, family="binomial", link="logit")
 print(fit.summary())
 ```
 
@@ -63,7 +63,7 @@ using Pkg
 Pkg.develop(path="/path/to/SpectralMM")
 ```
 
-Or, after publication to GitHub:
+Or install from GitHub:
 
 ```julia
 using Pkg

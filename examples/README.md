@@ -20,7 +20,7 @@ julia --project=. examples/run_julia.jl
 python3 examples/render_results.py
 ```
 
-Install the standard R package and the Python/Julia dependencies described in the repository guides first. The Python runner creates the common CSV and the Python/solver outputs; the other runners read that CSV. The renderer runs only after all three languages finish.
+Install the standard R package and the Python/Julia dependencies described in the repository guides first. The Julia runner additionally needs CSV and DataFrames in the active example environment; these are not SpectralMM runtime dependencies. The Python runner creates the common CSV and the Python/solver outputs; the other runners read that CSV. The renderer runs only after all three languages finish.
 
 Complete iteration logs and fitted summaries: [Python](results/python.txt), [R](results/R.txt), [Julia](results/Julia.txt), [eight solvers](results/solvers.txt). Standalone Overleaf source: [Small_Model_Examples.tex](../docs/Small_Model_Examples.tex).
 

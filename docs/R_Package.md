@@ -2,7 +2,7 @@
 
 Current modeling interfaces are documented in [Statistical_API.md](Statistical_API.md).
 
-After the updated repository is published to GitHub:
+Install the current GitHub source:
 
 ```r
 install.packages("remotes")
@@ -12,10 +12,10 @@ library(SpectralMM)
 set.seed(1)
 X <- matrix(rnorm(300), 100, 3)
 y <- rbinom(100, 1, plogis(0.2 + X %*% c(0.4, -0.3, 0.2)))
-fit <- spectralmm_fit(X, y, family = "bernoulli")
+fit <- spectralmm_glm(X, y, family = binomial(link = "logit"))
 summary(fit)
 coef(fit)
-predict(fit, X)
+predict(fit, X, type = "response")
 vcov(fit)
 confint(fit)
 ```

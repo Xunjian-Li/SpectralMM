@@ -163,4 +163,4 @@ not a registry submission. Separate language releases do not require three
 independently maintained copies of the numerical implementation.
 
 The current statistical API and its regression checks are described in
-[Statistical_API.md](Statistical_API.md). Registry publication remains paused.
+[Statistical_API.md](Statistical_API.md). Registry publication is a separate release step.
