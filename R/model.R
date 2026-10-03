@@ -85,6 +85,8 @@ spectralmm_fit <- function(X,y=NULL,family="gaussian",data=NULL,start=NULL,beta0
   dots<-list(...)
   if (anyDuplicated(names(dots)) || any(names(dots) %in% names(control))) stop("duplicate direct/control options")
   opts<-c(unclass(control),dots)
+  spec<-.smm_normalize_family(family,opts)
+  family<-spec$family; opts<-spec$options
   terms<-xlevels<-contrasts<-formula<-NULL
   if (inherits(X,"formula")) {
     if (!is.null(y) || is.null(data)) stop("formula input requires data= and no separate y")

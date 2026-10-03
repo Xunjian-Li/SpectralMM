@@ -20,7 +20,7 @@ spectralmm_diagnostics(object)
 \item{X}{A numeric feature matrix, a sparse dgCMatrix, or a formula.}
 \item{y}{Numeric response vector for matrix input.}
 \item{data}{A data frame for formula input. Missing values are rejected.}
-\item{family}{For GLMs, an R family object (gaussian, binomial, poisson or Gamma), or a supported family name. Negative binomial with fixed theta uses the name \code{"negative_binomial"}. For generic fitting, a legacy core family name or residual loss: smooth_quantile, expectile, pseudo_huber or student_t.}
+\item{family}{For GLMs, an R family object (gaussian, binomial, poisson or Gamma), or a supported family name. Negative binomial with fixed theta uses the name \code{"negative_binomial"}. For generic fitting, a constructor such as \code{pseudo_huber(delta=1)}, or a legacy core family name or residual loss: smooth_quantile, expectile, pseudo_huber or student_t.}
 \item{link}{Link name for a named family; specify it within an R family object instead when using one. Supported pairs are Gaussian identity/log, binomial logit/probit, Poisson log, Gamma log/inverse and negative binomial log.}
 \item{start,beta0}{Initial coefficients including an intercept when present. beta0 is a compatibility alias; do not supply both.}
 \item{intercept}{NULL adds an intercept for matrix input. FALSE means a complete design matrix. Formula input controls its own intercept and rejects this argument.}

@@ -125,6 +125,30 @@ available with **success-count** and expected-count semantics. The legacy
 
 ## Non-GLM models
 
+The recommended R/Python non-GLM API uses lightweight loss specifications:
+
+```r
+fit <- spectralmm_fit(y ~ ., data=dat, family=pseudo_huber(delta=1))
+# Also: expectile(q=.25), smooth_quantile(q=.25, epsilon=.1), student_t(nu=4)
+```
+
+```python
+fit = spectralmm.fit(X, y, family=spectralmm.PseudoHuber(delta=1.0))
+# Also: Expectile(q=.25), SmoothQuantile(q=.25, epsilon=.1), StudentT(nu=4)
+# Each class is exported from spectralmm; formula strings work with data= too.
+```
+
+These objects only normalize to existing family names and options. Public `q`
+maps to internal `tau`; `epsilon` maps to `smoothing`. They work with the same
+`rank`, `solver`, control and inference arguments as string specifications.
+For example, `rank=5` requires at least six total coefficients.
+The old string plus `family_options` API remains supported without deprecation.
+Do not supply `family_options` with an object, including an empty mapping/list
+or `None`/`NULL`; that raises an error. StudentT uses the existing unit residual
+scale; custom `sigma` remains available through the string API. The new
+PseudoHuber constructor defaults to `delta=1`; the old string path retains its
+existing default `delta=1.345` when omitted. No Julia API or solver default changes.
+
 Use the generic `fit` / `spectralmm_fit` interface for SmoothQuantile, Expectile,
 PseudoHuber and StudentT residual models. Formula input is supported there too,
 using `family=:pseudo_huber` (Julia) or `family="pseudo_huber"` (R/Python).

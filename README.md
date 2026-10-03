@@ -45,6 +45,22 @@ unsupported. See [the statistical API guide](docs/Statistical_API.md) for comple
 examples, family/link mapping, prediction defaults and likelihood definitions.
 Registry publication is paused while this interface is reviewed.
 
+For non-GLM models, use the loss constructors with the generic fitting API:
+
+```r
+fit <- spectralmm_fit(y ~ ., data=dat, family=pseudo_huber(delta=1))
+```
+
+```python
+fit = spectralmm.fit(X, y, family=spectralmm.PseudoHuber(delta=1.0))
+```
+
+Also available: R `expectile(q)`, `smooth_quantile(q, epsilon)`, `student_t(nu)`;
+Python `spectralmm.Expectile(q)`, `spectralmm.SmoothQuantile(q, epsilon)`,
+`spectralmm.StudentT(nu)`. Matrix and formula inputs share the same fitting path.
+The existing string plus `family_options` interface remains supported; it cannot
+be combined with a constructor object. These losses are not GLM families.
+
 ## Main features
 
 - **Spectral-MM** for iteratively reweighted statistical estimation.

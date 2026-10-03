@@ -6,6 +6,7 @@ import numpy as np
 from scipy.special import xlogy, gammaln, log_ndtr
 from scipy.stats import norm, t
 from . import _api
+from .families import _normalize_family
 
 _GLM = {('gaussian','identity'):'gaussian', ('gaussian','log'):'gaussian_log',
         ('binomial','logit'):'bernoulli', ('binomial','probit'):'probit',
@@ -147,6 +148,7 @@ def fit(X, y=None, family='gaussian', *, data=None, start=None, beta0=None,
         raise NotImplementedError('observation weights and offset are not implemented by the numerical core')
     if start is not None and beta0 is not None: raise TypeError('use start or beta0, not both')
     opts=_options(control,kwargs)
+    family,opts=_normalize_family(family,opts)
     design=None; formula=None
     if isinstance(X,str):
         if y is not None or data is None: raise TypeError('formula input requires data= and no separate y')
