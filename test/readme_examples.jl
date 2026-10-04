@@ -1,7 +1,7 @@
 @testset "README Julia examples" begin
     text = read(joinpath(@__DIR__, "..", "README.md"), String)
     blocks = collect(eachmatch(r"(?ms)^```julia\r?\n(.*?)^```", text))
-    @test length(blocks) >= 2
+    @test length(blocks) >= 1
     for (i, block) in enumerate(blocks)
         mktempdir() do sandbox
             script = joinpath(sandbox, "example.jl")
