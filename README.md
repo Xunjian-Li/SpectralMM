@@ -21,7 +21,6 @@ coefficients, including the intercept.
 ```julia-install
 using Pkg
 Pkg.add(url="https://github.com/Xunjian-Li/SpectralMM", subdir="julia/SpectralMM")
-Pkg.add(["Distributions", "GLM", "StatsModels"])
 ```
 
 R and Python source installations require a C++17 compiler. The Julia C++
