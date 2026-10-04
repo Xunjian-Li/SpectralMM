@@ -76,10 +76,14 @@ jobs:
           name: api-r
           path: ${{ runner.temp }}/api-r.csv
   julia:
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+        version: ['1.10', '1.11', '1.12', '1']
     runs-on: ${{ matrix.os }}
     env:
       JULIA_NUM_THREADS: '1'
@@ -90,19 +94,36 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python tools/build_packages.py --language Julia
+      - run: python tools/sync_julia_package.py --check
       - uses: julia-actions/setup-julia@v2
         with:
-          version: '1.12'
+          version: ${{ matrix.version }}
       - uses: julia-actions/cache@v2
-      - run: julia --project=dist/Julia/SpectralMM -e 'using Pkg; Pkg.instantiate(); Pkg.test()'
+      - run: julia --startup-file=no tools/check_readme_install.jl
+      - run: julia --project=julia/SpectralMM -e 'using Pkg; Pkg.instantiate(); Pkg.test(coverage=true)'
         env:
           SPECTRALMM_API_EXPORT: ${{ runner.temp }}/api-julia.csv
       - uses: actions/upload-artifact@v4
-        if: runner.os == 'Linux'
+        if: runner.os == 'Linux' && matrix.version == '1'
         with:
           name: api-julia
           path: ${{ runner.temp }}/api-julia.csv
+      - uses: julia-actions/julia-processcoverage@v1
+        if: runner.os == 'Linux' && matrix.version == '1'
+        with:
+          directories: julia/SpectralMM/src
+      - uses: actions/upload-artifact@v4
+        if: runner.os == 'Linux' && matrix.version == '1'
+        with:
+          name: julia-coverage
+          path: lcov.info
+      - uses: codecov/codecov-action@v5
+        if: runner.os == 'Linux' && matrix.version == '1'
+        with:
+          files: lcov.info
+          flags: julia
+          fail_ci_if_error: true
+          use_oidc: true
   cross-language:
     needs: [python, r, julia]
     runs-on: ubuntu-latest

@@ -21,3 +21,11 @@ __pycache__/
 
 .RData
 .Rhistory
+
+/docs/build/
+/docs/Manifest.toml
+/julia/SpectralMM/Manifest.toml
+/julia/SpectralMM/docs/build/
+/julia/SpectralMM/docs/Manifest.toml
+*.cov
+/lcov.info

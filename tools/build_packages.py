@@ -78,26 +78,8 @@ avoids compilation on the user's computer. NumPy, SciPy and Patsy are runtime
 dependencies. Run `python -m unittest discover -s tests` after installation.
 This directory is generated; edit canonical sources and regenerate it.
 '''
-    return introduction + '''This is an independently installable Julia package (Julia 1.12 or later).
-From another Julia project, run `using Pkg; Pkg.develop(path="/path/to/this/package")`.
+    return (ROOT / 'README.md').read_text()
 
-```julia
-using SpectralMM, GLM, Distributions, StatsModels
-model = SpectralMM.glm(X, y, Bernoulli(), LogitLink()) # Pure Julia by default
-formula_model = SpectralMM.glm(@formula(y ~ x1 + x2), dat, Bernoulli(), LogitLink())
-cpp_model = SpectralMM.glm(X, y, Bernoulli(), LogitLink(); backend=:cpp)
-model.backend
-coef(model)
-```
-
-Both backends support fourteen families and eight solvers. The first explicit
-C++ call builds and caches the core automatically; it requires a C++17 compiler.
-Pure Julia fitting does not compile C++. Package-managed build tools remain
-declared dependencies. Run `using Pkg; Pkg.test()` in this package's environment.
-The included examples/data.csv is a regression fixture, not generated output.
-This directory is generated; edit canonical sources and regenerate it. General
-registry publication registers a Git repository revision, not a source tarball.
-'''
 
 
 def assemble(output, language, release):
@@ -159,6 +141,9 @@ if __name__ == "__main__":
                 copy_tree(stage, 'deps', {'.jl'})
                 copy_tree(stage, 'test', {'.jl'})
                 copy_file(stage, 'examples/data.csv')
+                for item in ('docs/Project.toml', 'docs/make.jl', 'docs/README.md'):
+                    copy_file(stage, item)
+                copy_tree(stage, 'docs/src', {'.md'})
         if language in ('R', 'Python'):
             tests = ROOT / 'test' / ('R' if language == 'R' else 'python')
             for source in sorted(tests.glob('*')):
