@@ -32,6 +32,9 @@ Julia's nonspectral Krylov tolerances are `krylov_reltol`/`krylov_abstol`, while
 C++ uses `krylov_rtol`/`krylov_atol`. Unsupported solver/backend combinations
 raise errors; they are not silently translated into different algorithms.
 
+See the [Julia API reference](reference.md) for function signatures, keywords,
+return values and links to the implementations.
+
 ## R
 
 ```r

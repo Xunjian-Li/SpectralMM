@@ -33,6 +33,13 @@ include("cpp_backend.jl")
 
 include("backend_api.jl")
 include("model_api.jl")
+"""
+    FittedModel
+
+C++ backend result holding `coef`, `family`, `family_options`, `info`, `intercept`,
+`inference` and optional `trace`. The public statistical interface wraps this
+result in `StatisticalResult`. Obtain it through fitting, not manual construction.
+"""
 const FittedModel = _CppBackend.FittedModel
 StatsAPI.coef(m::FittedModel) = m.coef
 StatsAPI.predict(m::FittedModel, X::AbstractMatrix; kwargs...) = _CppBackend.predict(m, X; kwargs...)

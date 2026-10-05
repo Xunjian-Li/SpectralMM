@@ -37,6 +37,12 @@ BinomialLogit() = BinomialLogit(1.0)
 NegativeBinomialLog() = NegativeBinomialLog(1.0)
 TweedieLog() = TweedieLog(1.5)
 
+"""
+    SmoothQuantile(tau=0.5, epsilon=0.1)
+
+Smoothed quantile residual loss with `0 < tau < 1` and positive smoothing parameter `epsilon`. Inference concerns the smoothed objective.
+Pass the object as `SpectralMM.fit(X, y, loss; kwargs...)`; see [`fit`](@ref).
+"""
 struct SmoothQuantile{T<:Real} <: AsymmetricFamily
     tau::T
     epsilon::T
@@ -49,6 +55,12 @@ function SmoothQuantile(tau=0.5, epsilon=0.1)
     return SmoothQuantile{typeof(τ)}(τ, ε)
 end
 
+"""
+    Expectile(tau=0.5)
+
+Asymmetric squared residual loss at expectile level `0 < tau < 1`.
+Pass the object as `SpectralMM.fit(X, y, loss; kwargs...)`; see [`fit`](@ref).
+"""
 struct Expectile{T<:Real} <: AsymmetricFamily
     tau::T
 end
@@ -59,6 +71,12 @@ function Expectile(tau=0.5)
     return Expectile{typeof(τ)}(τ)
 end
 
+"""
+    PseudoHuber(delta=1.0)
+
+Pseudo-Huber residual loss with positive transition parameter `delta`.
+Pass the object as `SpectralMM.fit(X, y, loss; kwargs...)`; see [`fit`](@ref).
+"""
 struct PseudoHuber{T<:Real} <: RobustFamily
     delta::T
 end
@@ -69,6 +87,12 @@ function PseudoHuber(delta=1.0)
     return PseudoHuber{typeof(δ)}(δ)
 end
 
+"""
+    StudentT(nu=4.0, sigma=1.0)
+
+Student-t residual loss with positive degrees of freedom `nu` and fixed positive residual scale `sigma`. These parameters are supplied, not estimated.
+Pass the object as `SpectralMM.fit(X, y, loss; kwargs...)`; see [`fit`](@ref).
+"""
 struct StudentT{T<:Real} <: RobustFamily
     nu::T
     sigma::T

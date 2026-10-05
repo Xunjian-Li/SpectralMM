@@ -14,3 +14,6 @@ The supported statistical accessors include `coef`, `fitted`, `residuals`,
 `nobs`, `predict`, `vcov`, `stderror`, `confint`, `coeftable`, `deviance`, and
 `loglikelihood`, where applicable. `modelmatrix` is not implemented for
 `StatisticalResult`; retain the input design if it is needed after fitting.
+
+See the [Julia API reference](reference.md) for signatures, keyword options,
+return values and source links.

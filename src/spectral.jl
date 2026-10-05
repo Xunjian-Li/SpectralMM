@@ -1,4 +1,13 @@
 
+"""
+    MMResult
+
+Low-level Julia spectral solver result. `beta` holds final coefficients;
+`losses`, `gradnorms`, `relgradnorms`, `eigresiduals`, `inner_iters`, `inner_stats`,
+`outer_steps`, `restart_flags` and `correction_failed_flags` record diagnostics.
+`restarts`, `iters` and `converged` summarize the solve. No statistical inference
+is computed by this result type. See [`spectral_mm`](@ref).
+"""
 mutable struct MMResult{T}
     beta::Vector{T}
     losses::Vector{T}
@@ -22,6 +31,33 @@ end
 # fitted values are cached to avoid redundant X*v products where possible.
 # Options
 
+"""
+    SpectralOptions{T}(; kwargs...)
+
+Spectral approximation and regularization options for [`spectral_mm`](@ref).
+Use a floating-point type such as `Float64`. Defaults below are low-level
+defaults; high-level fitting may select different values.
+
+| Keyword | Default |
+|---|---|
+| `k` | `5` |
+| `rho` | `T(1e-6)` |
+| `ridge` | `zero(T)` |
+| `penalize_intercept` | `true` |
+| `resid_tol` | `T(5e-1)` |
+| `restart_every` | `0` |
+| `correction_tol` | `T(5e-2)` |
+| `krylovdim` | `12` |
+| `max_krylovdim` | `nothing` |
+| `lanczos_tol` | `T(1e-8)` |
+| `lanczos_retries` | `3` |
+| `nesterov` | `true` |
+
+`k` is retained rank, `rho` is the spectral floor, and `ridge` is the penalty.
+Choose `k < size(X, 2)`; an intercept must already be in the design.
+`krylovdim` controls the Lanczos subspace; correction/restart settings control
+spectrum refresh. `penalize_intercept=true` is the low-level default.
+"""
 Base.@kwdef struct SpectralOptions{T<:Real}
     k::Int = 5
     rho::T = T(1e-6)
@@ -37,6 +73,30 @@ Base.@kwdef struct SpectralOptions{T<:Real}
     nesterov::Bool = true
 end
 
+"""
+    InnerOptions{T}(; kwargs...)
+
+Inner spectral MM/PCG iteration options for [`spectral_mm`](@ref).
+Use a floating-point type such as `Float64`. Defaults below are low-level
+defaults; high-level fitting may select different values.
+
+| Keyword | Default |
+|---|---|
+| `solver` | `:mm` |
+| `maxiter` | `100` |
+| `eta_max` | `T(0.9)` |
+| `forcing_c` | `T(100.0)` |
+| `forcing_alpha` | `T(0.0)` |
+| `abstol` | `T(1e-10)` |
+| `alpha_min` | `T(1e-10)` |
+| `alpha_max` | `T(10)` |
+| `shrink` | `T(0.5)` |
+| `nesterov` | `false` |
+
+`solver` accepts only `:mm` or `:pcg`. The forcing tolerance is bounded by
+`eta_max`, with scaling `forcing_c` and exponent `forcing_alpha`.
+`alpha_min`, `alpha_max` and `shrink` control inner step selection.
+"""
 Base.@kwdef struct InnerOptions{T<:Real}
     solver::Symbol = :mm
     maxiter::Int = 100
@@ -51,6 +111,31 @@ Base.@kwdef struct InnerOptions{T<:Real}
     nesterov::Bool = false
 end
 
+"""
+    OuterOptions{T}(; kwargs...)
+
+Outer iteration and stopping options for [`spectral_mm`](@ref).
+Use a floating-point type such as `Float64`. Defaults below are low-level
+defaults; high-level fitting may select different values.
+
+| Keyword | Default |
+|---|---|
+| `maxiter` | `200` |
+| `gtol` | `T(1e-7)` |
+| `relgtol` | `T(1e-8)` |
+| `w_floor` | `T(1e-12)` |
+| `safeguard` | `true` |
+| `nesterov` | `true` |
+| `restart_on_correction_failure` | `true` |
+| `step_reltol` | `sqrt(eps(T))` |
+| `stalled_relgtol` | `T(1e-4)` |
+| `accept_stalled` | `true` |
+| `verbose` | `true` |
+
+`gtol`/`relgtol` control gradient stopping; `w_floor` bounds working weights.
+`accept_stalled`, `step_reltol` and `stalled_relgtol` control stalled-step
+acceptance. `safeguard` enables the outer objective safeguard.
+"""
 Base.@kwdef struct OuterOptions{T<:Real}
     maxiter::Int = 200
     gtol::T = T(1e-7)
@@ -603,6 +688,23 @@ end
 
 # Main solver
 
+"""
+    spectral_mm(X::AbstractMatrix{T}, y::AbstractVector{T};
+                family=SpectralMM.BernoulliLogit(), beta0=nothing,
+                spectral=SpectralOptions{T}(), inner=InnerOptions{T}(),
+                outer=OuterOptions{T}()) where T<:Real
+
+Run the low-level pure Julia spectral optimizer, returning [`MMResult`](@ref).
+`X` is the complete design matrix: this function does not add an intercept.
+`y` has one value per row and the same element type as `X`. `beta0` supplies an
+initial coefficient vector; `family` is an internal `IRLSFamily` object (exported
+residual-loss objects also qualify). Use [`fit`](@ref) or [`glm`](@ref) for
+ordinary statistical modeling, formulas and post-fit inference.
+
+`spectral`, `inner` and `outer` configure approximation, inner iterations and
+outer stopping. Only `inner.solver=:mm` or `:pcg` is supported here.
+The default rank is 5; adjust it to the design dimension before calling.
+"""
 function spectral_mm(
     X::AbstractMatrix{T},
     y::AbstractVector{T};

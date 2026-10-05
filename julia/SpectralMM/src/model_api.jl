@@ -1,4 +1,30 @@
 # Statistical metadata and interfaces; no numerical algorithm is implemented here.
+"""
+    SpectralMMControl(; kwargs...)
+
+Collect advanced numerical options for [`fit`](@ref) and [`glm`](@ref).
+Pass the result as `control=SpectralMMControl(maxiter=500, gtol=1e-8)`.
+Only supplied settings are stored; omitted settings retain the selected
+backend/solver defaults. Duplicating an option in `control` and direct keywords
+raises `ArgumentError`. Unknown option names are rejected.
+
+# Options
+
+- Iteration limits: `maxiter`, `inner_maxiter`.
+- Spectral approximation: `krylovdim`, `floor`, `eta_max`, `correction_tol`, `resid_tol`.
+- Penalty and convergence: `ridge`, `gtol`, `relgtol`.
+- Iterative solves: `preconditioner` (`:jacobi` or `:none`);
+  Julia uses `krylov_reltol`/`krylov_abstol`, C++ uses `krylov_rtol`/`krylov_atol`.
+- Stopping safeguards: `accept_stalled`, `step_reltol`, `stalled_relgtol`;
+  C++ additionally exposes `accept_negligible`, `negligible_step_tol`.
+- Solver-specific controls: `nesterov`, `line_search`, `alpha_min`,
+  `backtrack_factor`, `c_armijo`, `chol_jitter`, `max_chol_tries`.
+
+Acceptance by this container does not imply support by every solver/backend;
+unsupported options raise an error during fitting. `solver`, `rank`, `backend`,
+initial coefficients and inference settings are direct fitting keywords, not
+control fields. See the fitting docstring for common defaults.
+"""
 struct SpectralMMControl{T<:NamedTuple}
     options::T
 end
@@ -11,6 +37,20 @@ function SpectralMMControl(;kwargs...)
     all(k->k in allowed,keys(kwargs)) || throw(ArgumentError("unknown control option"))
     SpectralMMControl((;kwargs...))
 end
+"""
+    StatisticalResult <: StatsAPI.RegressionModel
+
+Statistical result returned by the public GLM and named-family fitting routes.
+Use [`coef`](@ref), [`predict`](@ref), [`fitted`](@ref), [`residuals`](@ref),
+[`nobs`](@ref), and the inference/statistics accessors below.
+
+Properties include `family`, `link`, `formula`, `coefficient_names`, `intercept`,
+`objective`, `nparams`, and `backend`. `model` holds the backend result;
+[`diagnostics`](@ref) returns optimization metadata. A successful fit does not
+imply available inference: inspect `model.inference.status` and `.reason`.
+`modelmatrix` is not implemented for this result type. Obtain results through
+fitting functions rather than constructing this metadata container manually.
+"""
 struct StatisticalResult{M,F,L,T} <: StatsAPI.RegressionModel
     model::M
     family::F
@@ -33,14 +73,49 @@ function Base.getproperty(m::StatisticalResult,k::Symbol)
 end
 Base.propertynames(m::StatisticalResult,private::Bool=false) =
     (fieldnames(typeof(m))..., :objective, :nparams, propertynames(getfield(m,:model),private)...)
+"""
+    coef(model::StatisticalResult)
+
+Return the coefficient vector in fitted order, including any intercept first.
+"""
 StatsAPI.coef(m::StatisticalResult)=coef(m.model)
+"""
+    nobs(model::StatisticalResult)
+
+Return the number of observations used for fitting.
+"""
 StatsAPI.nobs(m::StatisticalResult)=length(m.y)
 StatsAPI.response(m::StatisticalResult)=m.y
+"""
+    fitted(model::StatisticalResult)
+
+Return a copy of the fitted response means (expected counts for grouped binomial).
+"""
 StatsAPI.fitted(m::StatisticalResult)=copy(m.fittedvalues)
+"""
+    residuals(model::StatisticalResult)
+
+Return response residuals `y - fitted(model)`.
+"""
 StatsAPI.residuals(m::StatisticalResult)=m.y.-m.fittedvalues
 StatsModels.coefnames(m::StatisticalResult)=m.coefficient_names
+"""
+    vcov(model::StatisticalResult)
+
+Return the full post-fit coefficient covariance matrix. Throws an informative error if inference is disabled, skipped or unavailable; does not compute inference on demand.
+"""
 StatsAPI.vcov(m::StatisticalResult)=vcov(m.model)
+"""
+    stderror(model::StatisticalResult)
+
+Return coefficient standard errors from stored post-fit inference. Throws if inference is unavailable; does not compute inference on demand.
+"""
 StatsAPI.stderror(m::StatisticalResult)=stderror(m.model)
+"""
+    confint(model::StatisticalResult; level=0.95)
+
+Return a two-column matrix of lower and upper coefficient confidence limits. Requires available inference and `0 < level < 1`; uses the stored t/normal reference distribution.
+"""
 function StatsAPI.confint(m::StatisticalResult;level=.95)
     0<level<1 || throw(ArgumentError("level must lie in (0,1)"))
     r=_require_inference(m)
@@ -48,21 +123,44 @@ function StatsAPI.confint(m::StatisticalResult;level=.95)
     q=Distributions.cquantile(dist,(1-level)/2)
     hcat(coef(m).-q.*r.std_error,coef(m).+q.*r.std_error)
 end
+"""
+    coeftable(model::StatisticalResult)
+
+Return a `GLM.CoefTable` with estimates, standard errors, t/z statistics and two-sided p-values. Requires available inference.
+"""
 function StatsAPI.coeftable(m::StatisticalResult)
     r=_require_inference(m)
     GLM.CoefTable(hcat(coef(m),r.std_error,r.statistic,r.p_value),
         ["Estimate","Std. Error",r.statistic_type*" value","Pr(>|"*r.statistic_type*"|)"],
         m.coefficient_names,4,3)
 end
+"""
+    deviance(model::StatisticalResult)
+
+Return unscaled GLM deviance, excluding ridge penalties. Throws for residual losses and Tweedie, whose deviance is not implemented in the statistical result layer.
+"""
 function StatsAPI.deviance(m::StatisticalResult)
     m.deviance_value===nothing && throw(ArgumentError("deviance is not implemented for this loss"))
     m.deviance_value
 end
+"""
+    loglikelihood(model::StatisticalResult)
+
+Return normalized log likelihood excluding penalties, where implemented. Gaussian uses RSS/n unless dispersion is supplied; Gamma uses supplied or Pearson dispersion. Throws for unsupported losses, Tweedie, or noninteger discrete responses.
+"""
 function StatsAPI.loglikelihood(m::StatisticalResult)
     m.likelihood_value===nothing && throw(ArgumentError("normalized likelihood is not implemented for this loss"))
     m.likelihood_value
 end
-diagnostics(m::StatisticalResult)=m.optimization
+"""
+    diagnostics(model::StatisticalResult)
+
+Return stored optimization metadata as a named tuple, including the objective,
+absolute/relative gradients, convergence, iterations, solver, rank, backend,
+Krylov dimension and numerical controls. Does not refit or recompute inference.
+An unavailable exact stopping reason is reported explicitly.
+"""
+    diagnostics(m::StatisticalResult)=m.optimization
 
 const _PUBLIC_GLM = Dict(
     :gaussian=>(:gaussian,:identity),:gaussian_log=>(:gaussian,:log),
@@ -165,6 +263,81 @@ function _statistical_fit(X,y,name;data=nothing,backend=:julia,family_options=Na
                      beta0=isnothing(start) ? beta0 : start,settings...)
     _result_metadata(raw,X,y,Symbol(name),family_options,intercept,f,names,settings)
 end
+"""
+    fit(X, y; family=:gaussian, kwargs...)
+    fit(formula, data; family=:gaussian, kwargs...)
+    fit(X, y, loss; kwargs...)
+
+Fit a model from a predictor matrix and response vector, or from a StatsModels
+formula and table. Matrix rows are observations. Dense and sparse real matrices
+are accepted. The exported loss objects are [`PseudoHuber`](@ref),
+[`Expectile`](@ref), [`SmoothQuantile`](@ref), and [`StudentT`](@ref).
+
+# Model specification
+
+- `family=:gaussian`: one of `:gaussian`, `:gaussian_log`, `:bernoulli`, `:probit`,
+  `:poisson`, `:gamma`, `:gamma_inverse`, `:negative_binomial`, `:binomial`,
+  `:tweedie`, `:pseudo_huber`, `:expectile`, `:smooth_quantile`, `:student_t`.
+- `family_options=NamedTuple()`: fixed family parameters. Supported keys/defaults:
+  negative binomial `(theta=1.0,)`; binomial `(trials=1.0,)` (scalar or per-row);
+  Tweedie `(power=1.5,)`, with `1 < power < 2`; Pseudo-Huber `(delta=1.0,)`;
+  expectile `(tau=0.5,)`; smoothed quantile `(tau=0.5, smoothing=0.1)`;
+  Student-t `(nu=4.0, sigma=1.0)`. Binomial responses are success counts.
+  With a positional loss object, specify tuning parameters in its constructor.
+- `backend=:julia`: use `:cpp` for the shared C++ implementation. Its first use
+  builds and caches the library and requires a C++17 compiler.
+- `intercept=true`: prepend an intercept for matrix input. Set `false` for a
+  complete design. Formula input controls its intercept and rejects this keyword.
+- `start=nothing`: initial coefficient vector, including the intercept first.
+  `beta0` is an alias; supplying both raises an error. Omission uses backend
+  initialization. `weights` and `offset` are not implemented and must be `nothing`.
+
+# Numerical options
+
+- `solver=:pcg`: also `:mm`, `:cg`, `:cho`, `:cgls`, `:crls`, `:lsqr`, `:lsmr`;
+  aliases `:spectral` and `:cholesky` select `:pcg` and `:cho`.
+- `rank=nothing`: retained spectral rank; defaults to `p-1` for `p<20`, otherwise
+  10, where `p` includes the intercept. Requires `1 <= rank < p` (`rank=0` for `p=1`).
+- `maxiter=200`, `inner_maxiter=100`: outer and inner iteration limits.
+- `gtol=1e-7`, `relgtol=1e-8`: absolute and relative gradient tolerances.
+- `floor=1e-6`: positive spectral floor; `ridge=0.0`: nonnegative ridge penalty;
+  `penalize_intercept=false`: exclude an automatically fitted intercept from ridge.
+- `verbose=false`: print iteration diagnostics. C++ also supports `trace=false`
+  to retain structured iteration rows.
+- `control=SpectralMMControl()`: additional backend/solver-specific options;
+  supported numerical options may also be passed directly. See [`SpectralMMControl`](@ref).
+
+# Inference options
+
+- `inference=:auto`: attempt inference for at most `inference_max_p=50` total
+  coefficients. `true` bypasses only this size limit; `false` disables inference.
+- `cov_type=:auto`: model-based for GLMs, HC1 sandwich for residual losses.
+  Explicit values are `:model` or `:sandwich`, subject to family restrictions.
+- `level=0.95`: confidence level; `use_t=nothing`: select the reference distribution
+  automatically (`true` requests t, `false` requests normal).
+- `dispersion=nothing`: estimate dispersion where applicable, or provide a
+  positive fixed value for model-based covariance.
+
+Inference is withheld for failed validity checks, including insufficient gradient
+convergence, unidentified coefficients and ridge penalties. It can form dense
+coefficient matrices even when fitting is matrix-free.
+
+# Returns
+
+A [`StatisticalResult`](@ref) for the named families and exported residual losses.
+Use [`diagnostics`](@ref) to inspect convergence, and [`predict`](@ref) for
+response or link predictions. Unsupported combinations raise errors.
+
+# Example
+
+```julia
+using SpectralMM
+X = [sin(i*j) for i in 1:100, j in 1:3]
+y = [cos(i) for i in 1:100]
+m = SpectralMM.fit(X, y, PseudoHuber(); inference=false)
+coef(m)
+```
+"""
 function fit(X::AbstractMatrix,y::AbstractVector;family=:gaussian,kwargs...)
     _statistical_fit(X,y,Symbol(family);kwargs...)
 end
@@ -184,6 +357,40 @@ function _distribution_spec(family,link)
          internal isa PoissonLog ? :poisson : internal isa GammaLog ? :gamma : :gamma_inverse
     name,NamedTuple()
 end
+"""
+    glm(X, y, family, link; kwargs...)
+    glm(formula, data, family, link; kwargs...)
+
+Fit a generalized linear model and return a [`StatisticalResult`](@ref).
+Use distributions from Distributions.jl and links from GLM.jl:
+
+| Distribution | Supported link objects |
+|---|---|
+| `Normal()` | `IdentityLink()`, `LogLink()` |
+| `Bernoulli()` or `Binomial(1, 0.5)` | `LogitLink()`, `ProbitLink()` |
+| `Poisson()` | `LogLink()` |
+| `Gamma()` | `LogLink()`, `InverseLink()` |
+| `NegativeBinomial(theta, 0.5)` | `LogLink()`; fixed positive `theta` |
+
+Binary responses must be numeric 0/1 values. For binomial success counts with
+known trials and Tweedie regression, use the named-family [`fit`](@ref) interface.
+The distribution constructor's probability is not the fitted mean.
+
+All common input, backend, solver, initialization and inference keywords are
+documented under [`fit`](@ref). The distribution/link select the family parameters;
+do not pass a separate `family_options` keyword. Formula fitting requires
+StatsModels; the formula controls the intercept and is retained for prediction.
+
+# Example
+
+```julia
+using SpectralMM, Distributions, GLM
+X = [sin(i*j) for i in 1:100, j in 1:3]
+y = Float64.(isodd.(1:100))
+m = SpectralMM.glm(X, y, Bernoulli(), LogitLink(); solver=:pcg)
+predict(m, X)
+```
+"""
 function glm(X::AbstractMatrix,y::AbstractVector,family::Distribution,link::GLM.Link;kwargs...)
     name,options=_distribution_spec(family,link)
     _statistical_fit(X,y,name;family_options=options,kwargs...)
@@ -204,6 +411,19 @@ function fit(X::AbstractMatrix,y::AbstractVector,family::IRLSFamily;kwargs...)
         name===:negative_binomial ? (theta=family.theta,) : name===:binomial ? (trials=family.n,) : (power=family.p,)
     _statistical_fit(X,y,name;family_options=options,kwargs...)
 end
+"""
+    predict(model::StatisticalResult, newdata=nothing; type=:response, trials=nothing)
+
+Predict response means (`type=:response`, default) or linear predictors
+(`type=:link`). Omitting `newdata` returns a copy of cached training predictions.
+For matrix input use the same feature order as fitting, excluding an automatically
+added intercept. A formula-fitted model also accepts tables and applies its saved
+schema and categorical contrasts. New feature dimensions must match.
+
+`trials` applies only to binomial success-count models; provide a scalar or values
+for the prediction rows when training trials cannot be reused. Response predictions
+for these models are expected counts. Residual-loss predictions are fitted locations.
+"""
 function StatsAPI.predict(m::StatisticalResult,Xnew=nothing;type=:response,trials=nothing)
     type in (:response,:link) || throw(ArgumentError("type must be :response or :link"))
     Xnew===nothing && return copy(type===:response ? m.fittedvalues : m.linear_predictor)

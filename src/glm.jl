@@ -11,6 +11,12 @@ end
 # High-level model interface
 # ============================================================
 
+"""
+    SpectralGLM
+
+Julia-backend GLM result containing coefficients, design, response, distribution/link, solver result and optional inference.
+The public statistical interface wraps this in [`StatisticalResult`](@ref).
+"""
 struct SpectralGLM{T,F,L,R,TX,TY,TF} <: StatsAPI.RegressionModel
     coef::Vector{T}
     family::F
@@ -25,6 +31,12 @@ struct SpectralGLM{T,F,L,R,TX,TY,TF} <: StatsAPI.RegressionModel
     inference::NamedTuple
 end
 
+"""
+    SpectralModel
+
+Julia-backend result for an internal residual or GLM family, containing coefficients, design, response, solver result and optional inference.
+The public statistical interface wraps this in [`StatisticalResult`](@ref).
+"""
 struct SpectralModel{T,F,R,TX,TY} <: StatsAPI.RegressionModel
     coef::Vector{T}
     family::F
