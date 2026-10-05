@@ -1,0 +1,10 @@
+[deps]
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+GLM = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+SpectralMM = "3ead10a5-a636-4c1d-b4eb-bf43a9e33d59"
+
+[compat]
+Documenter = "1"

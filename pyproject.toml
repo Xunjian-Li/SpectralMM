@@ -22,7 +22,7 @@ cmake.build-type = "Release"
 wheel.packages = ["bindings/python/spectralmm"]
 wheel.py-api = "py3"
 sdist.include = ["pyproject.toml", "README.md", "LICENSE", "cpp/CMakeLists.txt", "cpp/THIRD_PARTY_NOTICES.md", "bindings/python/spectralmm/**", "src/native/**"]
-sdist.exclude = ["build/**", "output/**", ".RData", ".Rhistory", "*.ipynb", "Manifest.toml", "benchmark/**", ".git/**"]
+sdist.exclude = ["maintainer/**", "julia/**", "docs/**", "build/**", "output/**", ".RData", ".Rhistory", "*.ipynb", "Manifest.toml", "benchmark/**", ".git/**"]
 
 [tool.scikit-build.cmake.define]
 SPECTRALMM_FETCH_EIGEN = "ON"

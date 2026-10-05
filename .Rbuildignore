@@ -24,3 +24,5 @@
 ^tools$
 ^dist$
 ^\.github$
+^maintainer$
+^julia$
