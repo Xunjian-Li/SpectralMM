@@ -90,7 +90,10 @@ All three interfaces support the following **14 model/link or loss choices**.
 In the call templates below, `X` contains predictors and `y` is the appropriate
 response for that model; do not reuse a binary response for every family.
 
-### GLMs
+### Generalized linear models (GLMs)
+
+Supported families are Gaussian, Bernoulli/binomial, Poisson, Gamma,
+negative binomial (fixed shape), and Tweedie (fixed power).
 
 Use the arguments in each row with `SpectralMM.glm(X, y, ...)` in Julia,
 `spectralmm.glm(X, y, ...)` in Python, or `spectralmm_glm(X, y, ...)` in R.
@@ -100,8 +103,8 @@ The imports in the logistic examples above also cover these calls.
 |---|---|---|---|
 | Gaussian / identity | `Normal(), IdentityLink()` | `family="gaussian", link="identity"` | `family=gaussian("identity")` |
 | Gaussian / log | `Normal(), LogLink()` | `family="gaussian", link="log"` | `family=gaussian("log")` |
-| Binary / logit | `Bernoulli(), LogitLink()` | `family="binomial", link="logit"` | `family=binomial("logit")` |
-| Binary / probit | `Bernoulli(), ProbitLink()` | `family="binomial", link="probit"` | `family=binomial("probit")` |
+| Bernoulli (binary) / logit | `Bernoulli(), LogitLink()` | `family="binomial", link="logit"` | `family=binomial("logit")` |
+| Bernoulli (binary) / probit | `Bernoulli(), ProbitLink()` | `family="binomial", link="probit"` | `family=binomial("probit")` |
 | Poisson / log | `Poisson(), LogLink()` | `family="poisson", link="log"` | `family=poisson("log")` |
 | Gamma / log | `Gamma(), LogLink()` | `family="gamma", link="log"` | `family=Gamma("log")` |
 | Gamma / inverse | `Gamma(), InverseLink()` | `family="gamma", link="inverse"` | `family=Gamma("inverse")` |
@@ -112,10 +115,10 @@ and Gamma requires positive responses. The negative-binomial shape is fixed
 at `theta=4` in the example; Julia's `0.5` is a distribution constructor argument,
 not the fitted mean.
 
-### Count and Tweedie models
-
-Use `SpectralMM.fit(X, y; ...)`, `spectralmm.fit(X, y, ...)`, or
-`spectralmm_fit(X, y, ...)` with the following keywords:
+Binomial success-count and Tweedie regressions are also GLMs. These two
+specifications currently use the generic fitting interface:
+`SpectralMM.fit(X, y; ...)`, `spectralmm.fit(X, y, ...)`, or
+`spectralmm_fit(X, y, ...)`, with the following keywords:
 
 | Model / link | Julia keywords | Python keywords | R keywords |
 |---|---|---|---|
