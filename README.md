@@ -86,19 +86,82 @@ head(predict(model, X, type="response"), 5)
 
 ## Supported models
 
-| GLM family | Supported links |
-|---|---|
-| Gaussian | identity, log |
-| Binomial (binary response) | logit, probit |
-| Poisson | log |
-| Gamma | log, inverse |
-| Negative binomial (fixed shape) | log |
+All three interfaces support the following **14 model/link or loss choices**.
+In the call templates below, `X` contains predictors and `y` is the appropriate
+response for that model; do not reuse a binary response for every family.
 
-The generic fitting interface also supports binomial success counts with known
-trials, Tweedie regression with a log link, and the non-GLM losses **Pseudo-Huber,
-expectile, smoothed quantile, and Student-t**. Use `fit` in Julia/Python or
-`spectralmm_fit` in R for these models. See the manual for response conventions,
-family parameters, and inference availability.
+### GLMs
+
+Use the arguments in each row with `SpectralMM.glm(X, y, ...)` in Julia,
+`spectralmm.glm(X, y, ...)` in Python, or `spectralmm_glm(X, y, ...)` in R.
+The imports in the logistic examples above also cover these calls.
+
+| Model / link | Julia arguments | Python arguments | R arguments |
+|---|---|---|---|
+| Gaussian / identity | `Normal(), IdentityLink()` | `family="gaussian", link="identity"` | `family=gaussian("identity")` |
+| Gaussian / log | `Normal(), LogLink()` | `family="gaussian", link="log"` | `family=gaussian("log")` |
+| Binary / logit | `Bernoulli(), LogitLink()` | `family="binomial", link="logit"` | `family=binomial("logit")` |
+| Binary / probit | `Bernoulli(), ProbitLink()` | `family="binomial", link="probit"` | `family=binomial("probit")` |
+| Poisson / log | `Poisson(), LogLink()` | `family="poisson", link="log"` | `family=poisson("log")` |
+| Gamma / log | `Gamma(), LogLink()` | `family="gamma", link="log"` | `family=Gamma("log")` |
+| Gamma / inverse | `Gamma(), InverseLink()` | `family="gamma", link="inverse"` | `family=Gamma("inverse")` |
+| Negative binomial / log | `NegativeBinomial(4, 0.5), LogLink()` | `family="negative_binomial", link="log", family_options={"theta": 4}` | `family="negative_binomial", link="log", family_options=list(theta=4)` |
+
+Binary GLMs require 0/1 responses; Poisson and negative binomial use counts,
+and Gamma requires positive responses. The negative-binomial shape is fixed
+at `theta=4` in the example; Julia's `0.5` is a distribution constructor argument,
+not the fitted mean.
+
+### Count and Tweedie models
+
+Use `SpectralMM.fit(X, y; ...)`, `spectralmm.fit(X, y, ...)`, or
+`spectralmm_fit(X, y, ...)` with the following keywords:
+
+| Model / link | Julia keywords | Python keywords | R keywords |
+|---|---|---|---|
+| Binomial success counts / logit | `family=:binomial, family_options=(trials=4,)` | `family="binomial", family_options={"trials": 4}` | `family="binomial", family_options=list(trials=4)` |
+| Tweedie / log | `family=:tweedie, family_options=(power=1.5,)` | `family="tweedie", family_options={"power": 1.5}` | `family="tweedie", family_options=list(power=1.5)` |
+
+Binomial `y` contains success counts (0 through 4 here), not proportions;
+prediction returns expected counts. Trials can also be supplied per observation.
+Tweedie uses nonnegative responses and `1 < power < 2`; normalized likelihood
+and deviance accessors are not implemented for it.
+
+### Non-GLM losses
+
+For continuous responses, pass a loss object using
+`SpectralMM.fit(X, y, loss)` in Julia, `spectralmm.fit(X, y, family=loss)` in
+Python, or `spectralmm_fit(X, y, family=loss)` in R:
+
+| Loss | Julia object | Python object | R object |
+|---|---|---|---|
+| Pseudo-Huber | `PseudoHuber(1.0)` | `spectralmm.PseudoHuber(delta=1.0)` | `pseudo_huber(delta=1)` |
+| Expectile | `Expectile(0.25)` | `spectralmm.Expectile(q=0.25)` | `expectile(q=0.25)` |
+| Smoothed quantile | `SmoothQuantile(0.25, 0.1)` | `spectralmm.SmoothQuantile(q=0.25, epsilon=0.1)` | `smooth_quantile(q=0.25, epsilon=0.1)` |
+| Student-t | `StudentT(4.0, 1.0)` | `spectralmm.StudentT(nu=4.0)` | `student_t(nu=4)` |
+
+These are example tuning values, not estimates of the tuning parameters.
+Student-t uses unit residual scale here. Coefficients and predictions are
+accessed as in the logistic examples; inference depends on the model and fit.
+
+### Solvers
+
+All model choices accept `solver`: a symbol in Julia (for example,
+`solver=:cg`) or a string in Python/R (`solver="cg"`). Add this keyword to a
+fitting call; Julia separates keywords with `;`.
+
+| Solver | Method |
+|---|---|
+| `pcg` (default; alias `spectral`) | Spectral-preconditioned conjugate gradient |
+| `mm` | Spectral majorization-minimization |
+| `cg` | Conjugate gradient, with Jacobi scaling by default |
+| `cho` (alias `cholesky`) | Direct Cholesky solve; forms a full curvature matrix |
+| `cgls`, `crls`, `lsqr`, `lsmr` | Alternative iterative least-squares solvers |
+
+For example: `SpectralMM.glm(X, y, Bernoulli(), LogitLink(); solver=:cho)`,
+`spectralmm.glm(X, y, family="binomial", link="logit", solver="cho")`, or
+`spectralmm_glm(X, y, family=binomial("logit"), solver="cho")`.
+See the [solver guide](docs/src/solvers.md) for numerical controls.
 
 ## Documentation
 
