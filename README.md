@@ -17,7 +17,7 @@ C++ backend.
 
 Requires Julia 1.10 or later. Install from GitHub:
 
-```julia-install
+```julia-install id="4sqw23"
 using Pkg
 Pkg.add(url="https://github.com/Xunjian-Li/SpectralMM", subdir="julia")
 Pkg.add(["RDatasets", "Distributions", "GLM"])  # Used by the examples below
@@ -27,7 +27,7 @@ Pkg.add(["RDatasets", "Distributions", "GLM"])  # Used by the examples below
 
 Requires Python 3.9 or later. Install from PyPI:
 
-```sh
+```sh id="dl4q2x"
 python -m pip install SpectralMM
 python -m pip install statsmodels  # Used by the examples below
 ```
@@ -36,7 +36,7 @@ python -m pip install statsmodels  # Used by the examples below
 
 Requires R 4.0 or later. Install from GitHub:
 
-```r
+```r id="87z7f1"
 install.packages("remotes")
 remotes::install_github("Xunjian-Li/SpectralMM", subdir="R")
 ```
@@ -55,7 +55,7 @@ Matrix fitting adds an intercept by default.
 
 ### Julia
 
-```julia
+```julia id="c6zfz4"
 using SpectralMM, RDatasets, Distributions, GLM
 
 birthwt = dataset("MASS", "birthwt")
@@ -71,7 +71,7 @@ predict(model, X; type=:response)
 
 ### Python
 
-```python
+```python id="6h7d07"
 import statsmodels.api as sm
 import spectralmm
 
@@ -89,7 +89,7 @@ print(model.predict(X)[:5])
 
 ### R
 
-```r
+```r id="ammyrc"
 library(SpectralMM)
 data("birthwt", package="MASS")
 
@@ -111,8 +111,10 @@ by default in the formula specification.
 
 #### Julia
 
-```julia
-using GLM
+```julia id="e3px4m"
+using SpectralMM, RDatasets, Distributions, GLM
+
+birthwt = dataset("MASS", "birthwt")
 
 model = SpectralMM.glm(@formula(Low ~ Age + LWt + Smoke), birthwt,
                        Bernoulli(), LogitLink(); verbose=true)
@@ -120,14 +122,14 @@ model = SpectralMM.glm(@formula(Low ~ Age + LWt + Smoke), birthwt,
 
 #### Python
 
-```python
+```python id="u55nr8"
 model = spectralmm.glm("low ~ age + lwt + smoke", data=birthwt,
                        family="binomial", link="logit", verbose=True)
 ```
 
 #### R
 
-```r
+```r id="ybcj1r"
 model <- spectralmm_glm(low ~ age + lwt + smoke, data=birthwt,
                         family=binomial("logit"), verbose=TRUE)
 ```
@@ -140,7 +142,7 @@ weight, horsepower, and displacement.
 
 ### Julia
 
-```julia
+```julia id="0b6szz"
 using SpectralMM, RDatasets
 
 mtcars = dataset("datasets", "mtcars")
@@ -156,7 +158,7 @@ predict(model, X)
 
 ### Python
 
-```python
+```python id="s09iyh"
 import statsmodels.api as sm
 import spectralmm
 
@@ -175,7 +177,7 @@ print(model.predict(X)[:5])
 
 ### R
 
-```r
+```r id="c6ez2v"
 library(SpectralMM)
 data("mtcars", package="datasets")
 
@@ -270,15 +272,15 @@ fitting call; Julia separates keywords with `;`.
 
 For example:
 
-```julia
+```julia id="06k7j7"
 SpectralMM.glm(X, y, Bernoulli(), LogitLink(); solver=:cho)
 ```
 
-```python
+```python id="8n0dm4"
 spectralmm.glm(X, y, family="binomial", link="logit", solver="cho")
 ```
 
-```r
+```r id="8g3j2e"
 spectralmm_glm(X, y, family=binomial("logit"), solver="cho")
 ```
 
