@@ -163,6 +163,34 @@ coef(model)
 head(predict(model, X), 5)
 ```
 
+### Formula interface
+
+The same model can also be specified using a formula. An intercept is included
+by default in the formula specification.
+
+#### Julia
+
+```julia
+model = SpectralMM.glm(@formula(Low ~ Age + LWt + Smoke), birthwt,
+                       Bernoulli(), LogitLink(); verbose=true)
+```
+
+#### Python
+
+```python
+model = spectralmm.glm("low ~ age + lwt + smoke", data=birthwt,
+                       family="binomial", link="logit", verbose=True
+)
+```
+
+#### R
+
+```r
+model <- spectralmm_glm(low ~ age + lwt + smoke, data=birthwt,
+                        family=binomial("logit"), verbose=TRUE
+)
+```
+
 ## Supported models
 
 All three interfaces support the following **14 model/link or loss choices**.
