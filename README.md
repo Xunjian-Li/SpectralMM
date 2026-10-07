@@ -6,9 +6,10 @@
 
 SpectralMM provides **Julia, Python, and R** interfaces for generalized linear
 and robust regression using spectral majorization and iterative linear solvers.
-All three support matrix and formula inputs, prediction, and optional standard
-errors and Wald inference. Julia defaults to a pure Julia backend and can select
-C++ with `backend=:cpp`; Python and R use the shared C++ backend.
+All three interfaces support matrix and formula inputs, prediction, and optional
+standard errors and Wald inference. Julia uses a pure Julia backend by default
+and can select the C++ backend with `backend=:cpp`; Python and R use the shared
+C++ backend.
 
 ## Installation
 
@@ -16,10 +17,10 @@ C++ with `backend=:cpp`; Python and R use the shared C++ backend.
 
 Requires Julia 1.10 or later. Install from GitHub:
 
-```julia-install
+```julia
 using Pkg
 Pkg.add(url="https://github.com/Xunjian-Li/SpectralMM", subdir="julia")
-Pkg.add(["RDatasets", "Distributions", "GLM"]) # Used by the examples below
+Pkg.add(["RDatasets", "Distributions", "GLM"])  # Used by the examples below
 ```
 
 ### Python
@@ -28,13 +29,14 @@ Requires Python 3.9 or later. Install from PyPI:
 
 ```sh
 python -m pip install SpectralMM
+python -m pip install statsmodels  # Used by the examples below
 ```
 
 ### R
 
 Requires R 4.0 or later. Install from GitHub:
 
-```r-install
+```r
 install.packages("remotes")
 remotes::install_github("Xunjian-Li/SpectralMM", subdir="R")
 ```
@@ -46,34 +48,41 @@ CMake and Eigen artifacts are currently installed as dependencies.
 
 ## Logistic regression
 
-The Julia example uses the `birthwt` dataset; the Python and R examples use
-a synthetic 100-by-3 design and binary response. Matrix fitting adds an intercept
-by default. See the manual for formula inputs and intercept controls.
+The following examples fit the same logistic regression to the `birthwt`
+dataset from the R `MASS` package. The binary response is low birth weight,
+and the predictors are maternal age, maternal weight, and smoking status.
+Matrix fitting adds an intercept by default.
 
 ### Julia
 
 ```julia
-using SpectralMM
-using RDatasets
-using Distributions
-using GLM
+using SpectralMM, RDatasets, Distributions, GLM
 
 birthwt = dataset("MASS", "birthwt")
-
 X = Matrix{Float64}(birthwt[:, [:Age, :LWt, :Smoke]])
 y = Float64.(birthwt.Low)
 
-model = SpectralMM.glm(X, y, Bernoulli(), LogitLink(); intercept = true, verbose = true)
+model = SpectralMM.glm(X, y, Bernoulli(), LogitLink();
+                       intercept=true, verbose=true)
+
+coef(model)
+predict(model, X; type=:response)
 ```
 
 ### Python
 
 ```python
-import numpy as np
+import statsmodels.api as sm
 import spectralmm
-X = np.sin(np.arange(1, 101)[:, None] * np.arange(1, 4))
-y = (np.arange(1, 101) % 2 == 1).astype(float)
-model = spectralmm.glm(X, y, family="binomial", link="logit")
+
+birthwt = sm.datasets.get_rdataset("birthwt", "MASS").data
+X = birthwt[["age", "lwt", "smoke"]].to_numpy(dtype=float)
+y = birthwt["low"].to_numpy(dtype=float)
+
+model = spectralmm.glm(
+    X, y, family="binomial", link="logit", intercept=True, verbose=True
+)
+
 print(model.params)
 print(model.predict(X)[:5])
 ```
@@ -82,27 +91,76 @@ print(model.predict(X)[:5])
 
 ```r
 library(SpectralMM)
-X <- outer(1:100, 1:3, function(i, j) sin(i*j))
-y <- as.numeric(1:100 %% 2 == 1)
-model <- spectralmm_glm(X, y, family=binomial("logit"))
+data("birthwt", package="MASS")
+
+X <- as.matrix(birthwt[, c("age", "lwt", "smoke")])
+y <- as.numeric(birthwt$low)
+
+model <- spectralmm_glm(
+  X, y, family=binomial("logit"), intercept=TRUE, verbose=TRUE
+)
+
 coef(model)
 head(predict(model, X, type="response"), 5)
 ```
 
 ## Smoothed quantile regression
 
-This Julia example fits the conditional median of fuel economy using `mtcars`.
+The following examples fit a smoothed median regression for fuel economy using
+the `mtcars` dataset. The response is miles per gallon, and the predictors are
+weight, horsepower, and displacement.
+
+### Julia
 
 ```julia
-using SpectralMM
-using RDatasets
+using SpectralMM, RDatasets
 
 mtcars = dataset("datasets", "mtcars")
-
 X = Matrix{Float64}(mtcars[:, [:WT, :HP, :Disp]])
 y = Float64.(mtcars.MPG)
 
-model = SpectralMM.fit(X, y, SmoothQuantile(0.5, 0.1); intercept = true, verbose = true)
+model = SpectralMM.fit(X, y, SmoothQuantile(0.5, 0.1);
+                       intercept=true, verbose=true)
+
+coef(model)
+predict(model, X)
+```
+
+### Python
+
+```python
+import statsmodels.api as sm
+import spectralmm
+
+mtcars = sm.datasets.get_rdataset("mtcars", "datasets").data
+X = mtcars[["wt", "hp", "disp"]].to_numpy(dtype=float)
+y = mtcars["mpg"].to_numpy(dtype=float)
+
+model = spectralmm.fit(
+    X, y, family=spectralmm.SmoothQuantile(q=0.5, epsilon=0.1),
+    intercept=True, verbose=True
+)
+
+print(model.params)
+print(model.predict(X)[:5])
+```
+
+### R
+
+```r
+library(SpectralMM)
+data("mtcars", package="datasets")
+
+X <- as.matrix(mtcars[, c("wt", "hp", "disp")])
+y <- as.numeric(mtcars$mpg)
+
+model <- spectralmm_fit(
+  X, y, family=smooth_quantile(q=0.5, epsilon=0.1),
+  intercept=TRUE, verbose=TRUE
+)
+
+coef(model)
+head(predict(model, X), 5)
 ```
 
 ## Supported models
@@ -133,8 +191,8 @@ The imports in the logistic examples above also cover these calls.
 
 Binary GLMs require 0/1 responses; Poisson and negative binomial use counts,
 and Gamma requires positive responses. The negative-binomial shape is fixed
-at `theta=4` in the example; Julia's `0.5` is a distribution constructor argument,
-not the fitted mean.
+at `theta=4` in the example; Julia's `0.5` is a distribution constructor
+argument, not the fitted mean.
 
 Binomial success-count and Tweedie regressions are also GLMs. These two
 specifications currently use the generic fitting interface:
@@ -182,29 +240,41 @@ fitting call; Julia separates keywords with `;`.
 | `cho` (alias `cholesky`) | Direct Cholesky solve; forms a full curvature matrix |
 | `cgls`, `crls`, `lsqr`, `lsmr` | Alternative iterative least-squares solvers |
 
-For example: `SpectralMM.glm(X, y, Bernoulli(), LogitLink(); solver=:cho)`,
-`spectralmm.glm(X, y, family="binomial", link="logit", solver="cho")`, or
-`spectralmm_glm(X, y, family=binomial("logit"), solver="cho")`.
+For example:
+
+```julia
+SpectralMM.glm(X, y, Bernoulli(), LogitLink(); solver=:cho)
+```
+
+```python
+spectralmm.glm(X, y, family="binomial", link="logit", solver="cho")
+```
+
+```r
+spectralmm_glm(X, y, family=binomial("logit"), solver="cho")
+```
+
 See the [solver guide](docs/src/solvers.md) for numerical controls.
 
 ## Repository layout and local installation
 
 Each language package is maintained directly in its own directory:
 
-- `julia/`: Julia source, metadata and tests; install with `Pkg.develop(path="julia")`.
-- `python/`: Python source, metadata and tests; install with `python -m pip install ./python`.
-- `R/`: R source, metadata, help and tests; install with `remotes::install_local("R")`.
+- `julia/`: Julia source, metadata, and tests; install locally with `Pkg.develop(path="julia")`.
+- `python/`: Python source, metadata, and tests; install locally with `python -m pip install ./python`.
+- `R/`: R source, metadata, help, and tests; install locally with `remotes::install_local("R")`.
 - `cpp/`: shared C++ source. Run `python3 tools/sync_package_sources.py` after changes.
-- `docs/`, `examples/` and `benchmark/`: documentation, examples and comparisons.
+- `docs/`, `examples/`, and `benchmark/`: documentation, examples, and comparisons.
 
 Run these commands from the repository root. The bundled C++ copies let each
 language package install independently. CI checks that they match `cpp/`.
 
 ## Documentation
 
-See the [full user manual](docs/src/index.md) for installation details, modeling
-interfaces, solvers, diagnostics, and statistical inference.
+See the [full user manual](docs/src/index.md) for installation details,
+modeling interfaces, solvers, diagnostics, and statistical inference.
 
 ## License
 
-SpectralMM is licensed under the GNU General Public License v3; see [LICENSE](LICENSE).
+SpectralMM is licensed under the GNU General Public License v3; see
+[LICENSE](LICENSE).
