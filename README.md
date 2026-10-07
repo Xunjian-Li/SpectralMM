@@ -17,7 +17,7 @@ C++ backend.
 
 Requires Julia 1.10 or later. Install from GitHub:
 
-```julia
+```julia-install
 using Pkg
 Pkg.add(url="https://github.com/Xunjian-Li/SpectralMM", subdir="julia")
 Pkg.add(["RDatasets", "Distributions", "GLM"])  # Used by the examples below
@@ -104,6 +104,32 @@ coef(model)
 head(predict(model, X, type="response"), 5)
 ```
 
+### Formula interface
+
+The same model can also be specified using a formula. An intercept is included
+by default in the formula specification.
+
+#### Julia
+
+```julia
+model = SpectralMM.glm(@formula(Low ~ Age + LWt + Smoke), birthwt,
+                       Bernoulli(), LogitLink(); verbose=true)
+```
+
+#### Python
+
+```python
+model = spectralmm.glm("low ~ age + lwt + smoke", data=birthwt,
+                       family="binomial", link="logit", verbose=True)
+```
+
+#### R
+
+```r
+model <- spectralmm_glm(low ~ age + lwt + smoke, data=birthwt,
+                        family=binomial("logit"), verbose=TRUE)
+```
+
 ## Smoothed quantile regression
 
 The following examples fit a smoothed median regression for fuel economy using
@@ -161,34 +187,6 @@ model <- spectralmm_fit(
 
 coef(model)
 head(predict(model, X), 5)
-```
-
-### Formula interface
-
-The same model can also be specified using a formula. An intercept is included
-by default in the formula specification.
-
-#### Julia
-
-```julia
-model = SpectralMM.glm(@formula(Low ~ Age + LWt + Smoke), birthwt,
-                       Bernoulli(), LogitLink(); verbose=true)
-```
-
-#### Python
-
-```python
-model = spectralmm.glm("low ~ age + lwt + smoke", data=birthwt,
-                       family="binomial", link="logit", verbose=True
-)
-```
-
-#### R
-
-```r
-model <- spectralmm_glm(low ~ age + lwt + smoke, data=birthwt,
-                        family=binomial("logit"), verbose=TRUE
-)
 ```
 
 ## Supported models
