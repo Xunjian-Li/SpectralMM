@@ -28,7 +28,7 @@
 \method{logLik}{spectralmm}(object, ...)
 \method{summary}{spectralmm}(object, ...)
 \method{print}{spectralmm}(x, ...)
-\method{print}{summary.spectralmm}(x, digits = 5, max_rows = 20L, ...)
+\method{print}{summary.spectralmm}(x, digits = 6, max_rows = 20L, ...)
 
 \method{coef}{spectralmm_native}(object, ...)
 \method{predict}{spectralmm_native}(object, newdata, trials = NULL, ...)

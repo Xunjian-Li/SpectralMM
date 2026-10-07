@@ -158,7 +158,7 @@ print.spectralmm_native <- function(x, ...) { print(summary(x), ...); invisible(
 
 .spectralmm_print_trace <- function(rows, info, solver, rank, family, options, n, p, intercept, gtol, relgtol) {
   label <- if (solver=="spectral") "PCG" else toupper(solver)
-  metric <- if (!is.na(tail(rows$loglikelihood,1))) "LogLik" else "Objective"
+  metric <- if (!is.na(utils::tail(rows$loglikelihood,1))) "LogLik" else "Objective"
   values <- if (metric=="LogLik") rows$loglikelihood else rows$loss
   .smm_print_header(family,options,n,p,intercept,solver,rank); cat("\n")
   cat(sprintf("%4s  %12s  %10s  %10s  %5s  %8s  %s\n",
@@ -170,6 +170,6 @@ print.spectralmm_native <- function(x, ...) { print(summary(x), ...); invisible(
       if (r$inner<0) "-" else as.character(r$inner),
       if (is.finite(r$step)) sprintf("%.2f",r$step) else "-",r$spectrum))
   }
-  .smm_print_terminal(info,metric,tail(values,1),gtol,relgtol)
+  .smm_print_terminal(info,metric,utils::tail(values,1),gtol,relgtol)
   cat(if (metric=="LogLik") "LogLik includes distribution constants and excludes ridge; gradients refer to the optimization objective.\n" else "Objective is the summed model loss plus ridge penalty.\n")
 }

@@ -11,7 +11,7 @@ Description: Fits generalized linear, asymmetric and robust regression models
 License: GPL-3
 Encoding: UTF-8
 Depends: R (>= 4.0.0)
-Imports: Rcpp, stats
+Imports: Rcpp, stats, utils
 LinkingTo: Rcpp, RcppEigen
 Suggests: Matrix
 SystemRequirements: C++17
