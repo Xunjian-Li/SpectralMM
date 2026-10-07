@@ -20,7 +20,7 @@ Requires Julia 1.10 or later. Install from GitHub:
 ```julia-install
 using Pkg
 Pkg.add(url="https://github.com/Xunjian-Li/SpectralMM", subdir="julia")
-Pkg.add(["RDatasets", "Distributions", "GLM"])  # Used by the examples below
+Pkg.add(["RDatasets", "Distributions", "GLM", "StatsModels"])  # Used by the examples below
 ```
 
 ### Python
@@ -56,7 +56,7 @@ Matrix fitting adds an intercept by default.
 ### Julia
 
 ```julia
-using SpectralMM, RDatasets, Distributions, GLM
+using SpectralMM, RDatasets, Distributions, GLM, StatsModels
 
 birthwt = dataset("MASS", "birthwt")
 X = Matrix{Float64}(birthwt[:, [:Age, :LWt, :Smoke]])
