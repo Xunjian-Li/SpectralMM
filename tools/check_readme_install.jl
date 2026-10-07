@@ -12,8 +12,8 @@ mktempdir() do sandbox
     write(joinpath(sandbox, "Project.toml"), "[deps]\n")
     script = joinpath(sandbox, "install_and_examples.jl")
     write(script, install * "\nusing Test\ninclude(" *
-          repr(joinpath(root, "test", "readme_examples.jl")) * ")\n")
-    withenv("JULIA_LOAD_PATH" => join(["@", "@stdlib"], Sys.iswindows() ? ';' : ':')) do
+          repr(joinpath(root, "julia", "test", "readme_examples.jl")) * ")\n")
+    withenv("SPECTRALMM_README" => joinpath(root, "README.md"), "JULIA_LOAD_PATH" => join(["@", "@stdlib"], Sys.iswindows() ? ';' : ':')) do
         run(`$(Base.julia_cmd()) --startup-file=no --project=$sandbox $script`)
     end
 end

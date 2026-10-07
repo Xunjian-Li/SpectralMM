@@ -1,5 +1,5 @@
 using Pkg
-Pkg.activate(joinpath(@__DIR__, ".."))
+Pkg.activate(joinpath(@__DIR__, "..", "julia"))
 
 using SpectralMM, BenchmarkTools, DataFrames, GLM
 using LinearAlgebra, Random, Statistics

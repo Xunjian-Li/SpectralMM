@@ -1,0 +1,4 @@
+^\.git$
+^\.DS_Store$
+^.*\.ipynb$
+^.*\.ipynb_checkpoints$

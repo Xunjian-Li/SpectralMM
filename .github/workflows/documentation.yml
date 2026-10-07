@@ -15,7 +15,7 @@ jobs:
         with:
           version: '1.12'
       - uses: julia-actions/cache@v2
-      - run: julia --project=docs -e 'using Pkg; Pkg.develop(path="julia/SpectralMM"); Pkg.instantiate()'
+      - run: julia --project=docs -e 'using Pkg; Pkg.develop(path="julia"); Pkg.instantiate()'
       - run: julia --project=docs docs/make.jl
       - uses: actions/upload-pages-artifact@v3
         with:

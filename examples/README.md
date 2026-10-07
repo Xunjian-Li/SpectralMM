@@ -16,7 +16,7 @@ The displayed coefficient tables are the Python results. The CSV files contain f
 # From the repository root; build the native library first (cpp/README.md).
 python3 examples/run_python.py
 Rscript examples/run_R.R
-julia --project=. examples/run_julia.jl
+julia --project=julia examples/run_julia.jl
 python3 examples/render_results.py
 ```
 

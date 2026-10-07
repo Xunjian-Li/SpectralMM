@@ -22,9 +22,9 @@ or R does not require Julia. Julia is needed to reproduce comparisons using data
 shared with the original Julia algorithm. Run all commands from the repository root.
 
 \section*{Automatic Python and Julia installation}
-From a local checkout, run \texttt{python -m pip install .}; subsequent Python
+From a local checkout, run \texttt{python -m pip install ./python}; subsequent Python
 sessions use \texttt{import spectralmm}. The wheel contains the shared library.
-In Julia, use \texttt{Pkg.develop(path="/path/to/SpectralMM")} and then
+In Julia, use \texttt{Pkg.develop(path="/path/to/SpectralMM/julia")} and then
 \texttt{using SpectralMM}. Call \texttt{SpectralMM.fit(X, y; family=:bernoulli, backend=:cpp)}
 for the C++ implementation. Omitting \texttt{backend} selects pure Julia.
 Both backends support GLM and non-GLM models through the same matrix API.
@@ -35,9 +35,9 @@ implementation. The manual CMake instructions below are for standalone developme
 See \texttt{docs/Automatic\_Installation.md} for details.
 
 \section*{Automatic R package installation}
-The repository root is a standard R package. After the updated source is
-published, install it with \texttt{remotes::install\_github("Xunjian-Li/SpectralMM")}.
-For a local checkout use \texttt{remotes::install\_local("/path/to/SpectralMM")}.
+The \path{R/} subdirectory is a standard R package. After the updated source is
+published, install it with \texttt{remotes::install\_github("Xunjian-Li/SpectralMM", subdir="R")}.
+For a local checkout use \texttt{remotes::install\_local("/path/to/SpectralMM/R")}.
 Installation compiles the shared C++ core automatically using R's build system,
 RcppEigen and R's configured BLAS. Subsequent sessions only need
 \texttt{library(SpectralMM)}. A C++17 toolchain is required for source installation;
@@ -49,11 +49,11 @@ R users do not need the standalone CMake commands below. Formula and matrix inte
 \toprule
 Path & Purpose \\
 \midrule
-\path{src/} & Original Julia implementation \\
+\path{julia/src/} & Julia implementation \\
 \path{cpp/} & C++ core, C interface and build configuration \\
-\path{bindings/python/} & NumPy/SciPy interface \\
-\path{R/}, \path{src/} & Standard R package and shared core \\
-\path{bindings/julia/} & Native Julia wrapper (Gaussian/Logistic) \\
+\path{python/} & NumPy/SciPy interface \\
+\path{R/} & Standard R package and bundled shared core \\
+\path{julia/src/cpp_backend.jl} & Julia wrapper for the shared C++ core \\
 \path{benchmark/native/} & Data generation, timing and report scripts \\
 \path{build/native/} & Local native build, reproducible from source \\
 \bottomrule
@@ -94,7 +94,7 @@ Python requires NumPy; sparse matrices and inference require SciPy. The full
 benchmark additionally requires statsmodels and threadpoolctl.
 
 \begin{lstlisting}[language=bash]
-python3 -m pip install .
+python3 -m pip install ./python
 # Optional benchmark dependencies:
 python3 -m pip install statsmodels threadpoolctl
 \end{lstlisting}
@@ -103,7 +103,7 @@ R package installation resolves Rcpp and RcppEigen automatically. Sparse inputs
 use Matrix. Standalone benchmarks additionally use jsonlite and MASS.
 \begin{lstlisting}[language=R]
 install.packages("remotes")
-remotes::install_github("Xunjian-Li/SpectralMM")
+remotes::install_github("Xunjian-Li/SpectralMM", subdir="R")
 \end{lstlisting}
 
 The installed Python package loads its bundled library; Julia automatically
@@ -248,10 +248,10 @@ These commands write to \path{build/family-benchmark/} and preserve archived res
 Ensure \texttt{julia}, \texttt{python3} and \texttt{Rscript} are on PATH.
 
 \begin{lstlisting}[language=bash]
-julia --project=. -e 'using Pkg; Pkg.instantiate()'
+julia --project=julia -e 'using Pkg; Pkg.instantiate()'
 BENCH_OUT=build/family-benchmark
 
-julia --compiled-modules=existing --project=. \
+julia --compiled-modules=existing --project=julia \
   benchmark/native/family_performance.jl 1000 "$BENCH_OUT"
 \end{lstlisting}
 

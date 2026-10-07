@@ -44,7 +44,7 @@ C ABI, rather than requiring pybind11 at build time.
 
 ```python
 import sys
-sys.path.insert(0, "bindings/python")  # from the repository root
+sys.path.insert(0, "python")  # from the repository root
 import numpy as np
 from spectralmm import fit
 

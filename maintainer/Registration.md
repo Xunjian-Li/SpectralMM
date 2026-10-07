@@ -1,37 +1,32 @@
-# Julia registration and documentation maintenance
+# Package maintenance and Julia registration
 
-The registered package lives in `julia/SpectralMM`. It is a self-contained
-snapshot of the canonical Julia and shared C++ sources, generated with:
+Maintain each language directly in `R/`, `julia/` and `python/`. Julia sources
+are no longer generated from another source tree. The canonical shared C++
+implementation lives in `cpp/src/native/` and its build configuration in `cpp/`.
+
+After editing shared C++ sources, run:
 
 ```sh
-python3 tools/sync_julia_package.py
-python3 tools/sync_julia_package.py --check
+python3 tools/sync_package_sources.py
+python3 tools/sync_package_sources.py --check
 ```
 
-Edit canonical sources first. Commit the regenerated tree in the same commit.
-CI rejects drift. No symlinks or parent-directory includes are used, so the
-registered subtree installs without the rest of this multilingual repository.
-Internal maintainer notes are excluded from staged R/Python/Julia distributions.
+Commit the synchronized copies together. The script only synchronizes shared
+C++ files, licenses and test fixtures; it never overwrites language source code.
+Each package is independently installable without parent-directory includes.
+`tools/build_packages.py` stages these directories and builds distribution files.
 
-After testing and author review, trigger on the intended commit:
+After checks and author review, request registration on the intended commit:
 
 ```text
-@JuliaRegistrator register subdir=julia/SpectralMM
+@JuliaRegistrator register subdir=julia
 ```
 
-The existing registration must be updated to this subdirectory; generating it
-locally does not update General. Do not rewrite the published v0.1.0 tag or PyPI
-artifact. TagBot uses `SpectralMM-vVERSION` tags for subsequent subpackage
-registrations, avoiding collisions with multilingual release tags.
+Moving the directory locally does not change the General registry. Registrator
+must use the new `julia` subdirectory for the next registration. TagBot uses the
+same subdirectory. Leave existing published tags and artifacts untouched.
 
-Before publishing documentation, select GitHub Actions as the repository's
-Pages source. Enable the repository in Codecov for coverage uploads using
-GitHub Actions OIDC. A badge is not evidence of coverage until an upload succeeds.
-The documentation workflow builds on PRs and deploys only from main.
-
-The README is an assisted draft. The maintainer must personally review and
-rewrite it as needed based on their understanding before responding to the
-registry reviewer. Do not describe automated writing as handwritten work.
-JLL distribution is a future improvement: build SpectralMM_jll through Yggdrasil
-to avoid requiring a local compiler and unconditional CMake/Eigen artifacts.
-No JLL migration is part of this review.
+Documentation builds from root `docs/` against `julia/`. CI checks the shared
+source snapshots, tests each package and uploads Julia coverage. The maintainer
+must review README changes and their examples before responding to reviewers.
+A future SpectralMM_jll package could remove Julia's local C++ compiler requirement.

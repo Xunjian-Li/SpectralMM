@@ -7,15 +7,15 @@ __pycache__/
 .DS_Store
 .ipynb_checkpoints/
 
-/src/*.o
-/src/*.so
-/src/*.dll
-/src/*.dylib
-/src/symbols.rds
+/R/src/*.o
+/R/src/*.so
+/R/src/*.dll
+/R/src/*.dylib
+/R/src/symbols.rds
 /*.Rcheck/
 /SpectralMM_*.tar.gz
 
-/deps/build.log
+/julia/deps/build.log
 *.egg-info/
 /dist/
 
@@ -24,12 +24,18 @@ __pycache__/
 
 /docs/build/
 /docs/Manifest.toml
-/julia/SpectralMM/Manifest.toml
-/julia/SpectralMM/docs/build/
-/julia/SpectralMM/docs/Manifest.toml
+/julia/Manifest.toml
+/julia/docs/build/
+/julia/docs/Manifest.toml
 *.cov
 /lcov.info
 
 # Local scratch notebooks (maintained examples live under examples/).
 /Untitled*.ipynb
 /test*.ipynb
+
+/julia/Manifest.toml
+/python/build/
+/python/dist/
+/R/*.Rcheck/
+/R/SpectralMM_*.tar.gz

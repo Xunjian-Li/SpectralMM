@@ -26,7 +26,7 @@ bounds now admit Julia 1.10 after a successful full-suite run. The published v0.
 
 The author must review and finalize the assisted README draft. Push the reviewed
 changes and run the workflows on GitHub. Pages is configured to use GitHub Actions. Verify successful documentation
-deployment and Codecov/OIDC uploads. Update the registration with `subdir=julia/SpectralMM`; the current General
+deployment and Codecov/OIDC uploads. Update the registration with `subdir=julia`; the current General
 PR is not changed by these local edits. See Registration.md for the commands.
 
 Julia 1.10.12: the complete suite passed all 524 assertions with coverage

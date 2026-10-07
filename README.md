@@ -18,7 +18,7 @@ Requires Julia 1.10 or later. Install from GitHub:
 
 ```julia-install
 using Pkg
-Pkg.add(url="https://github.com/Xunjian-Li/SpectralMM", subdir="julia/SpectralMM")
+Pkg.add(url="https://github.com/Xunjian-Li/SpectralMM", subdir="julia")
 Pkg.add(["RDatasets", "Distributions", "GLM"]) # Used by the examples below
 ```
 
@@ -36,7 +36,7 @@ Requires R 4.0 or later. Install from GitHub:
 
 ```r-install
 install.packages("remotes")
-remotes::install_github("Xunjian-Li/SpectralMM")
+remotes::install_github("Xunjian-Li/SpectralMM", subdir="R")
 ```
 
 R and Python source installations require a C++17 compiler (Rtools for R on
@@ -186,6 +186,19 @@ For example: `SpectralMM.glm(X, y, Bernoulli(), LogitLink(); solver=:cho)`,
 `spectralmm.glm(X, y, family="binomial", link="logit", solver="cho")`, or
 `spectralmm_glm(X, y, family=binomial("logit"), solver="cho")`.
 See the [solver guide](docs/src/solvers.md) for numerical controls.
+
+## Repository layout and local installation
+
+Each language package is maintained directly in its own directory:
+
+- `julia/`: Julia source, metadata and tests; install with `Pkg.develop(path="julia")`.
+- `python/`: Python source, metadata and tests; install with `python -m pip install ./python`.
+- `R/`: R source, metadata, help and tests; install with `remotes::install_local("R")`.
+- `cpp/`: shared C++ source. Run `python3 tools/sync_package_sources.py` after changes.
+- `docs/`, `examples/` and `benchmark/`: documentation, examples and comparisons.
+
+Run these commands from the repository root. The bundled C++ copies let each
+language package install independently. CI checks that they match `cpp/`.
 
 ## Documentation
 

@@ -43,9 +43,9 @@ three-language comparisons, and complete Python iteration logs. The source
 scripts and results are in the repository's \texttt{examples} directory.
 
 \section*{Automatic Python and Julia installation}
-From a local checkout, run \texttt{python -m pip install .}; subsequent Python
+From a local checkout, run \texttt{python -m pip install ./python}; subsequent Python
 sessions use \texttt{import spectralmm}. The wheel contains the shared library.
-In Julia, use \texttt{Pkg.develop(path="/path/to/SpectralMM")} and then
+In Julia, use \texttt{Pkg.develop(path="/path/to/SpectralMM/julia")} and then
 \texttt{using SpectralMM}. Call \texttt{SpectralMM.fit(X, y; family=:bernoulli, backend=:cpp)}
 for the C++ implementation. Omitting \texttt{backend} selects pure Julia.
 Both backends support GLM and non-GLM models through the same matrix API.
@@ -56,9 +56,9 @@ implementation. The manual CMake instructions below are for standalone developme
 See \texttt{docs/Automatic\_Installation.md} for details.
 
 \section*{Automatic R package installation}
-The repository root is a standard R package. After the updated source is
-published, install it with \texttt{remotes::install\_github("Xunjian-Li/SpectralMM")}.
-For a local checkout use \texttt{remotes::install\_local("/path/to/SpectralMM")}.
+The \path{R/} subdirectory is a standard R package. After the updated source is
+published, install it with \texttt{remotes::install\_github("Xunjian-Li/SpectralMM", subdir="R")}.
+For a local checkout use \texttt{remotes::install\_local("/path/to/SpectralMM/R")}.
 Installation compiles the shared C++ core automatically using R's build system,
 RcppEigen and R's configured BLAS. Subsequent sessions only need
 \texttt{library(SpectralMM)}. A C++17 toolchain is required for source installation;
@@ -158,7 +158,7 @@ Rebuild the library after changing the native source or moving to another machin
 NumPy is required for fitting. SciPy is required for statistical inference, sparse input and the examples
 below. The full benchmark additionally uses statsmodels and threadpoolctl.
 \begin{lstlisting}[language=bash]
-python3 -m pip install .
+python3 -m pip install ./python
 # Optional benchmark dependencies:
 python3 -m pip install statsmodels threadpoolctl
 \end{lstlisting}
@@ -168,7 +168,7 @@ Install the standard R package once; Rcpp and RcppEigen are resolved automatical
 Sparse examples use Matrix. The standalone benchmark also uses jsonlite and MASS.
 \begin{lstlisting}[language=R]
 install.packages("remotes")
-remotes::install_github("Xunjian-Li/SpectralMM")
+remotes::install_github("Xunjian-Li/SpectralMM", subdir="R")
 library(SpectralMM)
 \end{lstlisting}
 The installation compiles and registers the native code. No manual loading is
@@ -627,10 +627,10 @@ Julia, Python, and Rscript must be available on PATH. Install the Python/R
 benchmark dependencies and build the native library first.
 The commands below write to a fresh directory rather than overwriting the archive.
 \begin{lstlisting}[language=bash]
-julia --project=. -e 'using Pkg; Pkg.instantiate()'
+julia --project=julia -e 'using Pkg; Pkg.instantiate()'
 BENCH_OUT=build/family-benchmark
 
-julia --compiled-modules=existing --project=. \
+julia --compiled-modules=existing --project=julia \
   benchmark/native/family_performance.jl 1000 "$BENCH_OUT"
 
 python3 benchmark/native/family_performance.py \

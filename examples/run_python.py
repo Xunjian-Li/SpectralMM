@@ -46,7 +46,7 @@ def generate_data():
     y['negative_binomial'] = rng.negative_binomial(4, 4 / (4 + mu)).astype(float)
     y['gaussian_log'] = mu + .2 * rng.normal(size=100)
     y['gamma_inverse'] = rng.gamma(5, 1 / (5 * (2 + eta - .2)))
-    # Compound Poisson-Gamma construction matching src/simulation.jl, phi=1.
+    # Compound Poisson-Gamma construction matching julia/src/simulation.jl, phi=1.
     power = 1.5
     counts = rng.poisson(mu ** (2-power) / (2-power))
     y['tweedie'] = np.zeros(100)

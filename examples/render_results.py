@@ -31,7 +31,7 @@ The displayed coefficient tables are the Python results. The CSV files contain f
 commands = '''# From the repository root; build the native library first (cpp/README.md).
 python3 examples/run_python.py
 Rscript examples/run_R.R
-julia --project=. examples/run_julia.jl
+julia --project=julia examples/run_julia.jl
 python3 examples/render_results.py'''
 md = ['# Small-data model examples', intro, '## Reproduce', '```sh\n' + commands + '\n```',
       'Install the standard R package and the Python/Julia dependencies described in the repository guides first. The Python runner creates the common CSV and the Python/solver outputs; the other runners read that CSV. The renderer runs only after all three languages finish.',

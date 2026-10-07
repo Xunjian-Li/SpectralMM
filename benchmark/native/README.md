@@ -16,7 +16,7 @@ as described in `cpp/README.md`. Julia, Python and Rscript must be on PATH.
 
 ```sh
 BENCH_OUT=build/family-benchmark
-julia --compiled-modules=existing --project=. benchmark/native/family_performance.jl 1000 "$BENCH_OUT"
+julia --compiled-modules=existing --project=julia benchmark/native/family_performance.jl 1000 "$BENCH_OUT"
 python3 benchmark/native/family_performance.py --size 1000 --output "$BENCH_OUT" --language both
 python3 benchmark/native/repeat_family_native.py --output "$BENCH_OUT" --language both
 python3 benchmark/native/report_family_performance.py --output "$BENCH_OUT"
@@ -57,7 +57,7 @@ cost should be measured separately if required.
 
 ## Original Julia versus the native Julia wrapper
 
-Run `julia --project=. benchmark/native/compare_julia_native.jl` from the repository
+Run `julia --project=julia benchmark/native/compare_julia_native.jl` from the repository
 root for warmed, matched-configuration comparisons. See the retained
 [wrapper timing investigation](results/julia-wrapper-timing.md) for measured
 loading overhead, the caching fix, and limitations.

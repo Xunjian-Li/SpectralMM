@@ -5,7 +5,7 @@ makedocs(
     repo=Documenter.Remotes.GitHub("Xunjian-Li", "SpectralMM"),
     checkdocs=:exports,
     checkdocs_ignored_modules=[SpectralMM._CppBackend],
-    format=Documenter.HTML(edit_link=nothing,
+    format=Documenter.HTML(edit_link=nothing, inventory_version=string(Base.pkgversion(SpectralMM)),
         repolink="https://github.com/Xunjian-Li/SpectralMM"),
     pages=["Home"=>"index.md", "Installation"=>"installation.md",
            "Julia examples"=>"examples.md", "Modeling interfaces"=>"api.md",

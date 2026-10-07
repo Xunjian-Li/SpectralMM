@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Assemble independent language packages from canonical sources; optionally build."""
+"""Stage or build the independent R/, python/ and julia/ packages."""
 import argparse
 import hashlib
 import json
@@ -9,80 +9,25 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from sync_package_sources import sync
 
 ROOT = Path(__file__).resolve().parents[1]
-LANGUAGES = ('R', 'Python', 'Julia')
+LANGUAGES = {'R': 'R', 'Python': 'python', 'Julia': 'julia'}
 MARKER = '.spectralmm-generated'
 
 
 def version():
     versions = [re.search(pattern, (ROOT / name).read_text()).group(1)
-                for name, pattern in [('DESCRIPTION', r'(?m)^Version: (\S+)'),
-                                      ('Project.toml', r'(?m)^version = "([^"]+)"'),
-                                      ('pyproject.toml', r'(?m)^version = "([^"]+)"')]]
+                for name, pattern in [('R/DESCRIPTION', r'(?m)^Version: (\S+)'),
+                                      ('julia/Project.toml', r'(?m)^version = "([^"]+)"'),
+                                      ('python/pyproject.toml', r'(?m)^version = "([^"]+)"')]]
     if len(set(versions)) != 1:
         raise RuntimeError('R, Python and Julia versions must match before packaging')
     return versions[0]
 
 
-def copy_file(stage, relative):
-    source = ROOT / relative
-    if source.is_symlink() or not source.is_file():
-        raise RuntimeError(f'Expected a regular source file: {source}')
-    target = stage / relative
-    target.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(source, target)
-
-
-def copy_tree(stage, relative, suffixes):
-    for path in sorted((ROOT / relative).rglob('*')):
-        if path.is_file() and path.suffix in suffixes:
-            copy_file(stage, path.relative_to(ROOT))
-
-
-def readme(language):
-    introduction = '# SpectralMM\n\nSpectral majorization for statistical estimation.\n\n'
-    if language == 'R':
-        return introduction + '''This is an independently installable R source package. It contains the R
-interface and a source snapshot of the shared C++ core. No Julia or Python
-installation is required. Rcpp and RcppEigen must be installed; source builds
-require a C++17 compiler. R compiles the core during installation.
-
-```r
-install.packages(c("Rcpp", "RcppEigen"))
-# Install this source directory with R CMD INSTALL .
-library(SpectralMM)
-fit <- spectralmm_glm(X, y, family = binomial("logit"))
-formula_fit <- spectralmm_glm(y ~ x1 + x2, data = dat, family = binomial("logit"))
-summary(fit)
-```
-
-Use help(package="SpectralMM") for the function reference. This directory is
-generated; edit the canonical repository sources and regenerate it.
-'''
-    if language == 'Python':
-        return introduction + '''This directory builds the Python package and bundles its C++ core. No R or
-Julia installation is required. Use `python -m pip install .` from this directory,
-then:
-
-```python
-import spectralmm
-model = spectralmm.glm(X, y, family="binomial", link="logit")
-formula_model = spectralmm.glm("y ~ x1 + x2", data=dat, family="binomial", link="logit")
-print(model.summary())
-```
-
-Source installation requires a C++17 compiler. The isolated build installs
-CMake and downloads pinned Eigen headers automatically. A compatible wheel
-avoids compilation on the user's computer. NumPy, SciPy and Patsy are runtime
-dependencies. Run `python -m unittest discover -s tests` after installation.
-This directory is generated; edit canonical sources and regenerate it.
-'''
-    return (ROOT / 'README.md').read_text()
-
-
-
 def assemble(output, language, release):
+    sync(check=True)
     container = output / language
     if container.exists() and (container.is_symlink() or not (container / MARKER).is_file()):
         raise RuntimeError(f'Refusing to overwrite an unmarked directory: {container}')
@@ -93,69 +38,12 @@ def assemble(output, language, release):
         raise RuntimeError(f'Refusing to replace a symbolic link: {destination}')
     with tempfile.TemporaryDirectory(prefix='.stage-', dir=container) as work:
         stage = Path(work) / 'SpectralMM'
-        stage.mkdir()
-        copy_tree(stage, 'src/native', {'.cpp', '.hpp', '.h'})
-        if language == 'R':
-            for item in ('DESCRIPTION', 'NAMESPACE', 'src/Makevars', 'src/Makevars.win',
-                         'src/RcppExports.cpp', 'src/r_bridge.cpp', 'src/smm_core.cpp', 'src/smm_c_api.cpp'):
-                copy_file(stage, item)
-            copy_tree(stage, 'R', {'.R'})
-            copy_tree(stage, 'man', {'.Rd'})
-            copy_file(stage, 'inst/THIRD_PARTY_NOTICES')
-            (stage / 'tests').mkdir()
-            (stage / 'tests/smoke.R').write_text('''library(SpectralMM)
-set.seed(71)
-X <- matrix(rnorm(300), 100, 3); y <- rbinom(100, 1, 0.5)
-fit <- spectralmm_fit(X, y, family="probit", accept_stalled=FALSE)
-stopifnot(length(coef(fit))==4, all(is.finite(predict(fit,X))),
-          fit$info$gradient_converged, fit$inference$status=="ok")
-''')
-        else:
-            for item in ('LICENSE', 'cpp/CMakeLists.txt', 'cpp/THIRD_PARTY_NOTICES.md'):
-                copy_file(stage, item)
-            if language == 'Python':
-                copy_file(stage, 'pyproject.toml')
-                copy_tree(stage, 'bindings/python/spectralmm', {'.py'})
-                (stage / 'tests').mkdir()
-                (stage / 'tests/test_smoke.py').write_text('''import unittest
-import numpy as np
-import spectralmm
-
-class InstalledPackageTest(unittest.TestCase):
-    def test_probit(self):
-        rng = np.random.default_rng(71)
-        X = rng.normal(size=(100, 3)); y = rng.binomial(1, .5, 100)
-        m = spectralmm.fit(X, y, family="probit", accept_stalled=False)
-        self.assertEqual(m.coef.size, 4)
-        self.assertTrue(m.info["gradient_converged"])
-        self.assertEqual(m.inference["status"], "ok")
-        self.assertTrue(np.all(np.isfinite(m.predict(X))))
-
-if __name__ == "__main__":
-    unittest.main()
-''')
-            else:
-                copy_file(stage, 'Project.toml')
-                for item in sorted((ROOT / 'src').glob('*.jl')):
-                    copy_file(stage, item.relative_to(ROOT))
-                copy_tree(stage, 'deps', {'.jl'})
-                copy_tree(stage, 'test', {'.jl'})
-                copy_file(stage, 'examples/data.csv')
-                for item in ('docs/Project.toml', 'docs/make.jl', 'docs/README.md'):
-                    copy_file(stage, item)
-                copy_tree(stage, 'docs/src', {'.md'})
-        if language in ('R', 'Python'):
-            tests = ROOT / 'test' / ('R' if language == 'R' else 'python')
-            for source in sorted(tests.glob('*')):
-                if source.suffix in ('.R', '.py'):
-                    shutil.copy2(source, stage / 'tests' / source.name)
-            shutil.copy2(ROOT / 'examples/data.csv', stage / 'tests/data.csv')
-        (stage / 'README.md').write_text(readme(language))
+        shutil.copytree(ROOT / LANGUAGES[language], stage,
+            ignore=shutil.ignore_patterns('Manifest.toml', '__pycache__', '*.pyc',
+                '.DS_Store', '.ipynb_checkpoints', '*.ipynb', 'build', 'dist', '*.egg-info',
+                '*.o', '*.so', '*.dylib', '*.dll', '*.cov', 'build.log', '*.Rcheck', '*.tar.gz'))
         hashes = {str(p.relative_to(stage)): hashlib.sha256(p.read_bytes()).hexdigest()
                   for p in sorted(stage.rglob('*')) if p.is_file()}
-        for name, digest in hashes.items():
-            if name.startswith('src/native/'):
-                assert digest == hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
         if destination.exists():
             shutil.rmtree(destination)
         shutil.move(str(stage), destination)
@@ -182,12 +70,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--language', choices=['all', *LANGUAGES], default='all')
     parser.add_argument('--output', type=Path, default=ROOT / 'dist')
-    parser.add_argument('--build', action='store_true', help='Also build distribution artifacts (requires R or python-build)')
+    parser.add_argument('--build', action='store_true')
     args = parser.parse_args()
-    output = args.output.expanduser().resolve()
-    release = version()
     for language in LANGUAGES if args.language == 'all' else (args.language,):
-        package = assemble(output, language, release)
+        package = assemble(args.output.expanduser().resolve(), language, version())
         if args.build:
             build(package, language)
 
