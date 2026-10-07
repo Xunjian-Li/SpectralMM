@@ -4,7 +4,7 @@ data <- read.csv('examples/data.csv',check.names=FALSE)
 X <- as.matrix(data[c('x1','x2','x3')])
 parameters <- list(gaussian=list(),bernoulli=list(),probit=list(),poisson=list(),gamma=list(),
  negative_binomial=list(theta=4),gaussian_log=list(),gamma_inverse=list(),tweedie=list(power=1.5),
- binomial=list(trials=4),smooth_quantile=list(tau=.25,smoothing=.1),expectile=list(tau=.25),
+ binomial=list(trials=4),smooth_quantile=list(q=.25,smoothing=.1),expectile=list(q=.25),
  pseudo_huber=list(delta=1),student_t=list(nu=4,sigma=.5))
 rows <- list()
 log <- file('examples/results/R.txt',open='wt');sink(log)

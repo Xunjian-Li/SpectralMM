@@ -203,7 +203,7 @@ Converged in 3 iterations; loss 271.331; relative gradient 2.83872e-09; inferenc
 
 ## Smooth quantile
 
-Normal errors shifted to target the 0.25 quantile before smoothing. Family identifier: smooth_quantile. Fixed options: {'tau': 0.25, 'smoothing': 0.1}.
+Normal errors shifted to target the 0.25 quantile before smoothing. Family identifier: smooth_quantile. Fixed options: {'q': 0.25, 'smoothing': 0.1}.
 
 Converged in 6 iterations; loss 15.7187; relative gradient 1.74971e-08; inference ok.
 
@@ -216,7 +216,7 @@ Converged in 6 iterations; loss 15.7187; relative gradient 1.74971e-08; inferenc
 
 ## Expectile
 
-Normal errors shifted to target the 0.25 expectile. Family identifier: expectile. Fixed options: {'tau': 0.25}.
+Normal errors shifted to target the 0.25 expectile. Family identifier: expectile. Fixed options: {'q': 0.25}.
 
 Converged in 3 iterations; loss 4.52245; relative gradient 1.08293e-10; inference ok.
 

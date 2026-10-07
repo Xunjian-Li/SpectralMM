@@ -712,13 +712,15 @@ function spectral_mm(
     beta0::Union{Nothing,AbstractVector{T}}=nothing,
     spectral::SpectralOptions{T}=SpectralOptions{T}(),
     inner::InnerOptions{T}=InnerOptions{T}(),
-    outer::OuterOptions{T}=OuterOptions{T}()
+    outer::OuterOptions{T}=OuterOptions{T}(), dispersion=nothing
 ) where {T<:Real}
 
     spectral.correction_tol >= zero(T) || throw(ArgumentError("correction_tol must be nonnegative"))
     spectral.restart_every >= 0 || throw(ArgumentError("restart_every must be >= 0"))
 
     m, p = size(X)
+    metric=outer.verbose ? iteration_metric(family,y,p,dispersion) : "Objective"
+    display_value(eta,objective)=iteration_value(family,y,eta,p,dispersion,objective)
     k = spectral.k
     length(y) == m || throw(DimensionMismatch("length(y) must equal size(X,1)"))
     ((p == 1 && k == 0) || 1 <= k < p) || throw(ArgumentError("k must satisfy 1 <= k < p"))
@@ -781,7 +783,7 @@ function spectral_mm(
     # ============================================================
     # Outer loop
     # ============================================================
-    outer.verbose && print_trace_header(inner.solver, k)
+    outer.verbose && print_trace_header(inner.solver, k;metric)
 
     for iter in 1:outer.maxiter
         # --------------------------------------------------------
@@ -813,8 +815,8 @@ function spectral_mm(
         push!(relgradnorms, relgrad)
 
         if gnorm <= outer.gtol || relgrad <= outer.relgtol
-            outer.verbose && iter == 1 && print_initial_iteration(fbase, relgrad, T(NaN))
-            outer.verbose && print_convergence(iter - 1, fbase, relgrad)
+            outer.verbose && iter == 1 && print_initial_iteration(fbase, relgrad, T(NaN);gradnorm=gnorm,value=display_value(ws.Xbeta_base,fbase))
+            outer.verbose && print_convergence(iter - 1, display_value(ws.Xbeta_base,fbase), relgrad;metric,gradnorm=gnorm,total_inner=sum(inner_iters),criterion=gnorm<=outer.gtol ? "absolute gradient tolerance" : "relative gradient tolerance")
 
             return MMResult(
                 beta, losses, gradnorms, relgradnorms, eigresiduals,
@@ -879,7 +881,7 @@ function spectral_mm(
             need_restart = false
         end
 
-        outer.verbose && iter == 1 && print_initial_iteration(fbase, relgrad, restart_eigres)
+        outer.verbose && iter == 1 && print_initial_iteration(fbase, relgrad, restart_eigres;gradnorm=relgrad*grad_scale,value=display_value(ws.Xbeta_base,fbase))
 
         push!(eigresiduals, last_eigres)
         push!(restart_flags, restarted)
@@ -940,7 +942,7 @@ function spectral_mm(
         negligible = dnorm <= T(1e-14) * (one(T) + norm(beta))
         if negligible
             outer.verbose &&
-                print_termination("negligible step", iter, fbase, relgrad)
+                print_termination("negligible step", iter, display_value(ws.Xbeta_base,fbase), relgrad;metric,gradnorm=relgrad*grad_scale,total_inner=sum(inner_iters))
 
             return MMResult(
                 beta, losses, gradnorms, relgradnorms, eigresiduals,
@@ -1005,9 +1007,9 @@ function spectral_mm(
             push!(relgradnorms, final_relgrad)
             outer.verbose && print_iteration(iter, fnew, final_relgrad, nit, stat,
                 restarted && iter > 1 ? restart_eigres : T(NaN), alpha,
-                restarted && iter > 1 ? :restart : :reuse)
+                restarted && iter > 1 ? :restart : :reuse;gradnorm=final_gnorm,value=display_value(ws.Xbeta_base,fnew))
             outer.verbose &&
-                print_termination("stalled near tolerance", iter, fnew, final_relgrad)
+                print_termination("stalled near tolerance", iter, display_value(ws.Xbeta_base,fnew), final_relgrad;metric,gradnorm=final_gnorm,total_inner=sum(inner_iters))
 
             return MMResult(
                 beta, losses, gradnorms, relgradnorms, eigresiduals,
@@ -1091,7 +1093,7 @@ function spectral_mm(
         # --------------------------------------------------------
         outer.verbose && print_iteration(
             iter, fnew, new_relgrad, nit, stat,
-            display_eigres, alpha, spectral_status
+            display_eigres, alpha, spectral_status;gradnorm=norm(ws.g),value=display_value(ws.Xbeta_new,fnew)
         )
 
         # --------------------------------------------------------
@@ -1129,9 +1131,9 @@ function spectral_mm(
     gradient_ok = gradnorms[end]<=outer.gtol || relgradnorms[end]<=outer.relgtol
     if outer.verbose
         if gradient_ok
-            print_convergence(outer.maxiter,fbase,relgradnorms[end])
+            print_convergence(outer.maxiter,display_value(ws.Xbeta_base,fbase),relgradnorms[end];metric,gradnorm=gradnorms[end],total_inner=sum(inner_iters),criterion=gradnorms[end]<=outer.gtol ? "absolute gradient tolerance" : "relative gradient tolerance")
         else
-            print_termination("maximum iterations reached",outer.maxiter,fbase,relgradnorms[end])
+            print_termination("maximum iterations reached",outer.maxiter,display_value(ws.Xbeta_base,fbase),relgradnorms[end];metric,gradnorm=gradnorms[end],total_inner=sum(inner_iters))
         end
     end
 

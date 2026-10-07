@@ -188,7 +188,7 @@ function irls_krylov(
     outer_nesterov::Bool=false, restart_outer_on_line_search_failed::Bool=true,
     max_line_search_failures::Int=2, step_reltol::T=sqrt(eps(T)),
     stalled_relgtol::T=sqrt(relgtol), accept_stalled_as_converged::Bool=true,
-    verbose::Bool=true
+    dispersion=nothing, verbose::Bool=true
 ) where {T<:Real}
 
     solver in (:cg,:cgls,:crls,:lsqr,:lsmr) ||
@@ -223,7 +223,7 @@ function irls_krylov(
     t_outer, grad_scale, base_loss = one(T), one(T), T(Inf)
     line_search_failures, converged = 0, false
 
-    logger=verbose ? IterationLog(X,y,family,ridge,penalize_intercept,w_floor,solver) : nothing
+    logger=verbose ? IterationLog(X,y,family,ridge,penalize_intercept,w_floor,solver;dispersion) : nothing
     logger===nothing || log_point!(logger,0,β_base,Xβ_base)
     termination_reason="maximum iterations reached"
 

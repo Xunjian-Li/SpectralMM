@@ -24,7 +24,7 @@ jobs:
       - run: python -m pip install build twine
       - run: python tools/build_packages.py --language Python --build
       - run: python -m twine check dist/Python/artifacts/*
-      - run: python -m pip install --find-links dist/Python/artifacts SpectralMM==0.1.0 --no-index --no-deps
+      - run: python -m pip install --find-links dist/Python/artifacts SpectralMM==0.2.0 --no-index --no-deps
       - run: python -m pip install numpy scipy patsy
       - run: python -m unittest discover -s dist/Python/SpectralMM/tests
         env:

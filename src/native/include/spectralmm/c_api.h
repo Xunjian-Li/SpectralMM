@@ -102,6 +102,14 @@ int32_t smm_fit_logged(const smm_matrix *X, const double *y, const double *beta0
     double *coef, smm_info *info, smm_trace_detail *trace, int64_t trace_capacity,
     int64_t *trace_size, char *error, size_t error_capacity,
     int32_t intercept, int32_t penalize_intercept);
+/* Optional normalized, unpenalized log likelihood per trace row.
+   likelihood has trace_capacity elements; NaN means unavailable. */
+int32_t smm_fit_logged_stats(const smm_matrix *X, const double *y, const double *beta0,
+    const smm_options *options, const smm_family_options *family_options,
+    const smm_krylov_options *krylov, const smm_stop_options *stop,
+    double *coef, smm_info *info, smm_trace_detail *trace, int64_t trace_capacity,
+    int64_t *trace_size, char *error, size_t error_capacity,
+    int32_t intercept, int32_t penalize_intercept, double *likelihood, double dispersion);
 /* Optional, dense p-by-p post-fit covariance (column major). Fit is unchanged.
    cov_type: 0 auto (GLM=model, residual=sandwich HC1), 1 model, 2 sandwich HC1.
    dispersion=NaN selects family defaults; caller checks fit convergence first.

@@ -22,8 +22,8 @@ CASES = [
     ('gamma_inverse', {}, 'Gamma inverse', 'Gamma shape 5, mean 1/(2 + X beta); positive initial predictor.'),
     ('tweedie', {'power': 1.5}, 'Tweedie log', 'Compound Poisson-Gamma responses, power=1.5 and dispersion=1.'),
     ('binomial', {'trials': 4.}, 'Binomial logit', 'Grouped counts with four trials per row.'),
-    ('smooth_quantile', {'tau': .25, 'smoothing': .1}, 'Smooth quantile', 'Normal errors shifted to target the 0.25 quantile before smoothing.'),
-    ('expectile', {'tau': .25}, 'Expectile', 'Normal errors shifted to target the 0.25 expectile.'),
+    ('smooth_quantile', {'q': .25, 'smoothing': .1}, 'Smooth quantile', 'Normal errors shifted to target the 0.25 quantile before smoothing.'),
+    ('expectile', {'q': .25}, 'Expectile', 'Normal errors shifted to target the 0.25 expectile.'),
     ('pseudo_huber', {'delta': 1.}, 'Pseudo-Huber', 'Heavy-tailed errors: 0.5 times a Student-t(4) variate.'),
     ('student_t', {'nu': 4., 'sigma': .5}, 'Student-t', 'Student-t(4) location errors with fixed scale 0.5.'),
 ]

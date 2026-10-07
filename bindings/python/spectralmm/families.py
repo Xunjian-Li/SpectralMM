@@ -55,9 +55,9 @@ def _normalize_family(family, options):
     if isinstance(family, PseudoHuber):
         name, parameters = 'pseudo_huber', {'delta': family.delta}
     elif isinstance(family, Expectile):
-        name, parameters = 'expectile', {'tau': family.q}
+        name, parameters = 'expectile', {'q': family.q}
     elif isinstance(family, SmoothQuantile):
-        name, parameters = 'smooth_quantile', {'tau': family.q, 'smoothing': family.epsilon}
+        name, parameters = 'smooth_quantile', {'q': family.q, 'smoothing': family.epsilon}
     elif isinstance(family, StudentT):
         name, parameters = 'student_t', {'nu': family.nu}
     else:

@@ -19,7 +19,7 @@ Requires Julia 1.10 or later. Install from GitHub:
 ```julia-install
 using Pkg
 Pkg.add(url="https://github.com/Xunjian-Li/SpectralMM", subdir="julia/SpectralMM")
-Pkg.add(["Distributions", "GLM"]) # Used by the example below
+Pkg.add(["RDatasets", "Distributions", "GLM"]) # Used by the examples below
 ```
 
 ### Python
@@ -46,19 +46,24 @@ CMake and Eigen artifacts are currently installed as dependencies.
 
 ## Logistic regression
 
-These examples use the same 100-by-3 design and binary response. Matrix fitting
-adds an intercept by default; each example returns four coefficients and fitted
-probabilities. See the manual for formula inputs and intercept controls.
+The Julia example uses the `birthwt` dataset; the Python and R examples use
+a synthetic 100-by-3 design and binary response. Matrix fitting adds an intercept
+by default. See the manual for formula inputs and intercept controls.
 
 ### Julia
 
 ```julia
-using SpectralMM, Distributions, GLM
-X = [sin(i*j) for i in 1:100, j in 1:3]
-y = Float64.([isodd(i) for i in 1:100])
-model = SpectralMM.glm(X, y, Bernoulli(), LogitLink())
-coef(model)
-predict(model, X)[1:5]
+using SpectralMM
+using RDatasets
+using Distributions
+using GLM
+
+birthwt = dataset("MASS", "birthwt")
+
+X = Matrix{Float64}(birthwt[:, [:Age, :LWt, :Smoke]])
+y = Float64.(birthwt.Low)
+
+model = SpectralMM.glm(X, y, Bernoulli(), LogitLink(); intercept = true, verbose = true)
 ```
 
 ### Python
@@ -82,6 +87,22 @@ y <- as.numeric(1:100 %% 2 == 1)
 model <- spectralmm_glm(X, y, family=binomial("logit"))
 coef(model)
 head(predict(model, X, type="response"), 5)
+```
+
+## Smoothed quantile regression
+
+This Julia example fits the conditional median of fuel economy using `mtcars`.
+
+```julia
+using SpectralMM
+using RDatasets
+
+mtcars = dataset("datasets", "mtcars")
+
+X = Matrix{Float64}(mtcars[:, [:WT, :HP, :Disp]])
+y = Float64.(mtcars.MPG)
+
+model = SpectralMM.fit(X, y, SmoothQuantile(0.5, 0.1); intercept = true, verbose = true)
 ```
 
 ## Supported models

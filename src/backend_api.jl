@@ -2,6 +2,10 @@
 function _named_family(name::Symbol, options, n::Int)
     name in _CppBackend.FAMILIES || throw(ArgumentError("unsupported family: $name"))
     params = Dict{Symbol,Any}(Symbol(k)=>v for (k,v) in pairs(options))
+    if haskey(params,:q)
+        haskey(params,:tau) && throw(ArgumentError("supply only q, not both q and tau"))
+        params[:tau]=pop!(params,:q)
+    end
     allowed = get(_CppBackend.FAMILY_PARAMS, name, ())
     all(k -> k in allowed, keys(params)) || throw(ArgumentError("unknown parameter for $name"))
     for (key,value) in params

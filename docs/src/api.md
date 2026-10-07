@@ -193,3 +193,67 @@ References: [GLM.jl](https://juliastats.org/GLM.jl/stable/),
 [StatsModels formulas](https://juliastats.org/StatsModels.jl/stable/formula/),
 [R glm](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/glm.html),
 [statsmodels GLMResults](https://www.statsmodels.org/stable/generated/statsmodels.genmod.generalized_linear_model.GLMResults.html).
+
+## Prediction for non-GLM models
+
+All four residual-loss families support prediction on new matrices and, for
+formula fits, new tables. Predictions include the fitted intercept automatically.
+Expectile predicts the fitted conditional expectile; smoothed quantile predicts
+the minimizer of the smoothed quantile loss (not an exact unsmoothed quantile).
+Pseudo-Huber predicts a robust location; Student-t predicts the fitted location.
+These are point predictions, not predictive intervals or simulated observations.
+
+```julia
+m = SpectralMM.fit(X, y, Expectile(0.3))
+yhat = predict(m, Xnew)
+```
+
+```python
+m = spectralmm.fit(X, y, family=spectralmm.Expectile(0.3))
+yhat = m.predict(Xnew)
+```
+
+```r
+m <- spectralmm_fit(X, y, family = expectile(0.3))
+yhat <- predict(m, newdata = Xnew, type = "response")
+```
+
+Replace the loss constructor with Pseudo-Huber, smoothed quantile or Student-t
+using the constructors listed above. Formula fits use the same prediction calls,
+with `Xnew` replaced by a table containing the original predictor names.
+
+For these residual-loss models, response/location and linear predictions coincide:
+Julia's `type=:response` and `type=:link`, R's `type="response"` and `type="link"`,
+and Python's `which="mean"` and `which="linear"` return the same fitted location.
+The Python option name `mean` is retained for compatibility; it does not imply
+that an expectile or smoothed quantile is the conditional mean.
+
+## Unified model output and q
+
+GLM and non-GLM results share the title `SpectralMM Regression Model`, followed by
+family/link, family options, observation/parameter counts, intercept, backend and
+solver. Rank is shown only for PCG/MM. Verbose fitting adds the iteration table;
+ordinary summaries do not repeat it. Termination details precede inference.
+The optional inference block repeats the model and family options, identifies
+model-based or HC1 sandwich covariance, and names the normal or t reference.
+Coefficient columns use `z statistic` or `t statistic` and `p-value` accordingly.
+If inference is disabled, skipped or unavailable, its reason is printed and the
+table contains estimates only. Missing stopping details are never inferred.
+
+Use `q` for expectile and smoothed-quantile levels in `family_options` and public
+constructors. The old `tau` option remains an input alias; supplying both names
+raises an error. Returned option metadata and printed output use `q`. Julia loss
+objects also expose `.q`; their existing `.tau` property remains compatible.
+
+```julia
+m = SpectralMM.fit(X, y; family=:expectile, family_options=(q=0.3,))
+# Equivalent constructor: Expectile(q=0.3)
+```
+
+```python
+m = spectralmm.fit(X, y, family="expectile", family_options={"q": 0.3})
+```
+
+```r
+m <- spectralmm_fit(X, y, family="expectile", family_options=list(q=0.3))
+```

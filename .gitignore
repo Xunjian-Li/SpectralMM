@@ -29,3 +29,7 @@ __pycache__/
 /julia/SpectralMM/docs/Manifest.toml
 *.cov
 /lcov.info
+
+# Local scratch notebooks (maintained examples live under examples/).
+/Untitled*.ipynb
+/test*.ipynb

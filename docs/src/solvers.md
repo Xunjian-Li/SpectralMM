@@ -79,21 +79,28 @@ rows = native.trace
 The common table is:
 
 ```text
-Iter          Loss     RelGrad  Inner    InnerRes      EigRes    Step  Spectrum
+Iter        LogLik    GradNorm     RelGrad  Inner  Stepsize  Spectrum
 ```
 
-- Row 0 shows initial coefficients, with no inner iterations or step. Spectral
-  methods show `initial`; methods without a spectrum show `-`.
-- Subsequent rows show loss and relative gradient at the returned/accepted updated
-  coefficients. The final row and summary use the same relative-gradient value
-  and printed precision. The next convergence check is not another parameter update.
-- `Inner` counts the current subproblem's iterations (one factorization for CHO).
-  `InnerRes` is the relative WLS gradient residual of the unscaled inner step,
-  before the outer line search. It is distinct from the outer `RelGrad`.
-- `Spectrum` reports `correct`, `reuse`, `restart` or correction failures for
-  PCG/MM. CG, CHO and the other Krylov solvers show `-` in `Spectrum` and `EigRes`.
-- The footer distinguishes gradient convergence from small-step/stalled stopping
-  and failure/iteration limits; the model's existing convergence flags remain available.
+`LogLik` is the summed normalized log likelihood, including distribution constants
+and excluding ridge penalties. It increases as likelihood improves. Gaussian uses
+RSS/n for variance unless `dispersion` is supplied. Gamma uses the Pearson estimate
+with n-p degrees of freedom unless `dispersion` is supplied; its displayed likelihood
+is a plug-in likelihood, not a profile maximum over dispersion. These scales are
+recomputed at each displayed point. Student-t uses its fixed `nu` and `sigma`.
+For Pseudo-Huber, expectile, smoothed quantile, Tweedie, or fractional count data,
+the column is `Objective`: summed model loss plus ridge penalty, without division
+by n. Undefined likelihoods at individual points are displayed as `-`.
+
+- Row 0 is the initial point. Later rows report accepted parameter updates.
+- `GradNorm` and `RelGrad` refer to the **optimization objective**, including ridge,
+  not to the displayed normalized likelihood. `RelGrad` uses the initial scale
+  1 + initial gradient norm. The stopping rules and optimization objective are unchanged.
+- `Inner` counts inner iterations (one factorization for CHO).
+- `Stepsize` is the outer line-search multiplier, not the norm of the coefficient update.
+- `Spectrum` reports spectral operations; nonspectral solvers display `-`.
+- Inner and eigen residuals remain in internal diagnostics but are omitted from the table.
+- The footer distinguishes gradient convergence from step-based termination and limits.
 
 Python, R and native Julia additionally support `trace` independently of `verbose`.
 `trace=true` retains structured rows; `verbose=true` prints them. Native logs and

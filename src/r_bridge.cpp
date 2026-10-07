@@ -97,8 +97,9 @@ List smm_fit_bridge(SEXP input, NumericVector y, int family, List options, List 
     if (o.maxiter<=0) stop("maxiter must be positive");
     std::vector<smm_trace_detail> trace(capture_trace ? o.maxiter+1 : 0);
     int64_t trace_size=0;
-    int code=smm_fit_logged(&x,y.begin(),b0,&o,&fp,solver==-1 ? nullptr : &k,&stops,
-        coef.begin(),&info,capture_trace ? trace.data() : nullptr,trace.size(),&trace_size,error,sizeof(error),intercept,penalize_intercept);
+    std::vector<double> likelihood(trace.size());
+    int code=smm_fit_logged_stats(&x,y.begin(),b0,&o,&fp,solver==-1 ? nullptr : &k,&stops,
+        coef.begin(),&info,capture_trace ? trace.data() : nullptr,trace.size(),&trace_size,error,sizeof(error),intercept,penalize_intercept,capture_trace ? likelihood.data() : nullptr,dispersion);
     const char *reasons[]={"gradient","maxiter","line_search_failed","inner_breakdown","negligible_step","stalled_step"};
     if (code) stop("%s",error);
     List result=List::create(_["coef"]=coef, _["family_id"]=family,
@@ -110,18 +111,18 @@ List smm_fit_bridge(SEXP input, NumericVector y, int family, List options, List 
         _["eigresidual"]=info.eigresidual));
     if (capture_trace) {
         NumericVector iteration(trace_size), total_inner(trace_size), restarts(trace_size), corrections(trace_size), inner(trace_size),
-            loss(trace_size), grad(trace_size), relgrad(trace_size), inner_res(trace_size), eigres(trace_size), step(trace_size);
+            ll(trace_size), loss(trace_size), grad(trace_size), relgrad(trace_size), inner_res(trace_size), eigres(trace_size), step(trace_size);
         CharacterVector spectrum(trace_size);
         const char *states[]={"-","initial","reuse","correct","restart","correct-fail","restart+correct","restart+fail"};
         for(int64_t i=0;i<trace_size;++i) {
             const auto &r=trace[i];
             iteration[i]=r.iteration; total_inner[i]=r.inner_iterations; restarts[i]=r.restarts; corrections[i]=r.corrections;
-            inner[i]=r.inner; loss[i]=r.loss; grad[i]=r.gradnorm; relgrad[i]=r.relgradnorm;
+            ll[i]=likelihood[i]; inner[i]=r.inner; loss[i]=r.loss; grad[i]=r.gradnorm; relgrad[i]=r.relgradnorm;
             inner_res[i]=r.inner_residual; eigres[i]=r.eigresidual; step[i]=r.step; spectrum[i]=states[r.spectrum];
         }
         result["trace"]=DataFrame::create(_["iteration"]=iteration,_["inner_iterations"]=total_inner,
             _["restarts"]=restarts,_["corrections"]=corrections,_["inner"]=inner,
-            _["loss"]=loss,_["gradnorm"]=grad,_["relgradnorm"]=relgrad,
+            _["loglikelihood"]=ll,_["loss"]=loss,_["gradnorm"]=grad,_["relgradnorm"]=relgrad,
             _["inner_residual"]=inner_res,_["eigresidual"]=eigres,_["step"]=step,_["spectrum"]=spectrum);
     }
     std::string status="unavailable", reason;

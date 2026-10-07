@@ -163,4 +163,30 @@ int32_t smm_infer(const smm_matrix *X, const double *y, const double *coef,
     }
 }
 
+int32_t smm_fit_logged_stats(const smm_matrix *X, const double *y, const double *beta0,
+    const smm_options *o, const smm_family_options *family,
+    const smm_krylov_options *k, const smm_stop_options *stop,
+    double *coef, smm_info *info, smm_trace_detail *trace, int64_t capacity,
+    int64_t *trace_size, char *error, size_t error_capacity, int32_t intercept, int32_t penalize_intercept, double *likelihood, double dispersion) {
+    if(error && error_capacity) error[0]='\0';
+    if(info) *info={};
+    if(trace_size) *trace_size=0;
+    try {
+        if(!X || !y || !o || !coef || !info) throw std::invalid_argument("null required argument");
+        if ((intercept!=0 && intercept!=1) || (penalize_intercept!=0 && penalize_intercept!=1))
+            throw std::invalid_argument("intercept flags must be boolean");
+        if (!std::isnan(dispersion) && (!(dispersion>0.) || !std::isfinite(dispersion)))
+            throw std::invalid_argument("dispersion must be positive and finite or NaN");
+        smm_stop_options defaults; smm_default_stop_options(&defaults);
+        spectralmm::fit(*X,y,beta0,*o,coef,*info,k,stop ? stop : &defaults,nullptr,capacity,trace_size,family,intercept,penalize_intercept,trace,likelihood,dispersion);
+        return 0;
+    } catch(const std::exception& e) {
+        if(error && error_capacity) std::snprintf(error,error_capacity,"%s",e.what());
+        return 1;
+    } catch(...) {
+        if(error && error_capacity) std::snprintf(error,error_capacity,"unknown native error");
+        return 2;
+    }
 }
+
+} // extern "C"

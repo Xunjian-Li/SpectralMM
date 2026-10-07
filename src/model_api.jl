@@ -131,7 +131,7 @@ Return a `GLM.CoefTable` with estimates, standard errors, t/z statistics and two
 function StatsAPI.coeftable(m::StatisticalResult)
     r=_require_inference(m)
     GLM.CoefTable(hcat(coef(m),r.std_error,r.statistic,r.p_value),
-        ["Estimate","Std. Error",r.statistic_type*" value","Pr(>|"*r.statistic_type*"|)"],
+        ["Estimate","Std. Error",r.statistic_type*" statistic","p-value"],
         m.coefficient_names,4,3)
 end
 """
@@ -146,7 +146,7 @@ end
 """
     loglikelihood(model::StatisticalResult)
 
-Return normalized log likelihood excluding penalties, where implemented. Gaussian uses RSS/n unless dispersion is supplied; Gamma uses supplied or Pearson dispersion. Throws for unsupported losses, Tweedie, or noninteger discrete responses.
+Return normalized log likelihood excluding penalties, where implemented. Gaussian uses RSS/n unless dispersion is supplied; Gamma uses supplied or Pearson dispersion. Student-t includes its fixed-scale normalization constant. Throws for unsupported losses and Tweedie; returns NaN for noninteger discrete responses or unavailable dispersion.
 """
 function StatsAPI.loglikelihood(m::StatisticalResult)
     m.likelihood_value===nothing && throw(ArgumentError("normalized likelihood is not implemented for this loss"))
@@ -194,10 +194,14 @@ function _fit_statistics(name,y,mu,eta,p,options,dispersion)
         theta=get(options,:theta,1.)
         dev=2*sum(_xlog(v,v/m)-(v+theta)*log((v+theta)/(m+theta)) for (v,m) in zip(y,mu))
         ll=all(isinteger,y) ? sum(logpdf(NegativeBinomial(theta,theta/(theta+m)),v) for (m,v) in zip(mu,y)) : NaN
+    elseif name===:student_t
+        nu=get(options,:nu,4.); sigma=get(options,:sigma,1.)
+        dev=nothing
+        ll=sum(logpdf(Distributions.TDist(nu),(v-e)/sigma)-log(sigma) for (v,e) in zip(y,eta))
     else
         return nothing,nothing
     end
-    Float64(dev),Float64(ll)
+    (dev===nothing ? nothing : Float64(dev)),Float64(ll)
 end
 function _result_metadata(raw,X,y,name,options,intercept,formula,names,settings)
     beta=coef(raw)
@@ -227,7 +231,7 @@ function _result_metadata(raw,X,y,name,options,intercept,formula,names,settings)
               outer_iterations=r.iters,inner_iterations=inner,gradient_norm=last(r.gradnorms),
               relative_gradient=last(r.relgradnorms),objective=last(r.losses),backend=:julia)
     end
-    diag=merge(diag,(krylov_dimension=cfg.krylovdim,preconditioner=get(cfg,:preconditioner,nothing),control=cfg))
+    diag=merge(diag,(family_options=_display_options(name,options),krylov_dimension=cfg.krylovdim,preconditioner=get(cfg,:preconditioner,nothing),control=cfg))
     d,ll=_fit_statistics(name,y,mu,eta,p,options,get(settings,:dispersion,nothing))
     family,link=get(_PUBLIC_GLM,name,(name,nothing))
     StatisticalResult(raw,family,link,formula,String.(names),eta,Vector{Float64}(mu),Vector{Float64}(y),diag,d,ll,intercept)
@@ -259,9 +263,12 @@ function _statistical_fit(X,y,name;data=nothing,backend=:julia,family_options=Na
         intercept=isnothing(intercept) ? true : intercept
         names=vcat(intercept ? ["(Intercept)"] : String[],["x$j" for j in 1:size(X,2)])
     end
+    get(settings,:verbose,false) && _print_model_header(stdout,name,_display_options(name,family_options),length(y),size(X,2)+intercept,intercept,backend)
     raw=_fit_backend(X,y;family=name,backend,family_options,intercept,
                      beta0=isnothing(start) ? beta0 : start,settings...)
-    _result_metadata(raw,X,y,Symbol(name),family_options,intercept,f,names,settings)
+    result=_result_metadata(raw,X,y,Symbol(name),family_options,intercept,f,names,settings)
+    get(settings,:verbose,false) && (println(); _print_result_inference(stdout,result))
+    result
 end
 """
     fit(X, y; family=:gaussian, kwargs...)
@@ -281,7 +288,7 @@ are accepted. The exported loss objects are [`PseudoHuber`](@ref),
 - `family_options=NamedTuple()`: fixed family parameters. Supported keys/defaults:
   negative binomial `(theta=1.0,)`; binomial `(trials=1.0,)` (scalar or per-row);
   Tweedie `(power=1.5,)`, with `1 < power < 2`; Pseudo-Huber `(delta=1.0,)`;
-  expectile `(tau=0.5,)`; smoothed quantile `(tau=0.5, smoothing=0.1)`;
+  expectile `(q=0.5,)`; smoothed quantile `(q=0.5, smoothing=0.1)`;
   Student-t `(nu=4.0, sigma=1.0)`. Binomial responses are success counts.
   With a positional loss object, specify tuning parameters in its constructor.
 - `backend=:julia`: use `:cpp` for the shared C++ implementation. Its first use
@@ -405,8 +412,8 @@ function fit(X::AbstractMatrix,y::AbstractVector,family::IRLSFamily;kwargs...)
         family isa NegativeBinomialLog ? :negative_binomial : family isa BinomialLogit ? :binomial :
         family isa TweedieLog ? :tweedie : nothing
     name===nothing && return _fit_julia(X,y,family;kwargs...)
-    options=name===:smooth_quantile ? (tau=family.tau,smoothing=family.epsilon) :
-        name===:expectile ? (tau=family.tau,) : name===:pseudo_huber ? (delta=family.delta,) :
+    options=name===:smooth_quantile ? (q=family.q,smoothing=family.epsilon) :
+        name===:expectile ? (q=family.q,) : name===:pseudo_huber ? (delta=family.delta,) :
         name===:student_t ? (nu=family.nu,sigma=family.sigma,) :
         name===:negative_binomial ? (theta=family.theta,) : name===:binomial ? (trials=family.n,) : (power=family.p,)
     _statistical_fit(X,y,name;family_options=options,kwargs...)
@@ -443,20 +450,42 @@ function StatsAPI.predict(m::StatisticalResult,Xnew=nothing;type=:response,trial
     end
     predict(m.model,Xnew;trials)
 end
-function Base.show(io::IO,::MIME"text/plain",m::StatisticalResult)
-    println(io,m.link===nothing ? "SpectralMM Regression Model" : "SpectralMM Generalized Linear Model")
-    println(io,"Family: ",m.family,"   Link: ",something(m.link,"not applicable"))
-    println(io,"Observations: ",nobs(m),"   Parameters: ",length(coef(m)))
-    println(io,"Coefficients:")
-    _show_inference(io,m)
-    if m.inference.status!="ok"
-        println(io)
-        for j in 1:min(20,length(coef(m))); @printf(io,"%-24s %12.6g\n",m.coefficient_names[j],coef(m)[j]); end
+function _print_result_inference(io,m::StatisticalResult)
+    inf=m.inference; d=diagnostics(m)
+    println(io,"Inference:")
+    _print_family(io,m.family,d.family_options;link=m.link)
+    ok=inf.status=="ok"
+    if ok
+        ref=inf.statistic_type=="t" ? "t (df=$(inf.df_resid))" : "standard normal"
+        println(io,"Covariance: ",inf.cov_type=="sandwich" ? "sandwich HC1" : "model-based","   Reference distribution: ",ref)
+    else
+        println(io,"Status: ",inf.status,"\nReason: ",inf.reason)
     end
-    m.deviance_value===nothing || println(io,"\nDeviance: ",m.deviance_value,"   Log-Likelihood: ",m.likelihood_value)
-    d=diagnostics(m)
-    println(io,"\nSpectralMM optimization:")
-    print(io,"  Backend: ",m.backend===:julia ? "Julia" : "C++","   Solver: ",uppercase(string(d.solver)),
-          "   Rank: ",d.rank,"   Converged: ",d.converged,"   Iterations: ",d.outer_iterations)
+    println(io,"\nCoefficients:")
+    @printf(io,"%-24s %12s","Term","Estimate")
+    ok && @printf(io," %12s %12s %10s","Std. Error",inf.statistic_type*" statistic","p-value")
+    println(io)
+    for j in 1:min(20,length(coef(m)))
+        @printf(io,"%-24s %12.6f",m.coefficient_names[j],coef(m)[j])
+        if ok
+            pv=inf.p_value[j]<.0001 ? "<0.0001" : @sprintf("%.4f",inf.p_value[j])
+            @printf(io," %12.6f %12.4f %10s",inf.std_error[j],inf.statistic[j],pv)
+        end
+        println(io)
+    end
+    length(coef(m))>20 && println(io,"Additional coefficients are available in coef(model).")
+end
+function Base.show(io::IO,::MIME"text/plain",m::StatisticalResult)
+    d=diagnostics(m); cfg=d.control
+    _print_model_header(io,m.family,d.family_options,nobs(m),length(coef(m)),m.intercept,m.backend;link=m.link)
+    println(io,"Solver: ",uppercase(string(d.solver)),d.solver in (:pcg,:mm) ? "   Rank: $(d.rank)" : "")
+    absolute=d.gradient_norm<=cfg.gtol; relative=d.relative_gradient<=cfg.relgtol
+    reason=absolute ? "absolute gradient tolerance" : relative ? "relative gradient tolerance" : d.termination_reason
+    println(io,"\nStatus: ",absolute || relative ? "converged" : "terminated","\nStopping criterion: ",reason)
+    println(io,"Outer iterations: ",d.outer_iterations,"   Total inner iterations: ",something(d.inner_iterations,"not recorded"))
+    ll=m.likelihood_value
+    metric=ll!==nothing && !isnan(ll) ? "LogLik" : "Objective"
+    @printf(io,"\nFinal %s: %.6e\nGradient norm: %.3e\nRelative gradient: %.3e\n",metric,metric=="LogLik" ? ll : m.objective,d.gradient_norm,d.relative_gradient)
+    println(io); _print_result_inference(io,m)
 end
 Base.show(io::IO,m::StatisticalResult)=show(io,MIME"text/plain"(),m)

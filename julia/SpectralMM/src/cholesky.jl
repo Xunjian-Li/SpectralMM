@@ -20,7 +20,7 @@ function irls_cholesky(
     penalize_intercept::Bool=true,
     outer_nesterov::Bool=false,
     restart_outer_on_line_search_failed::Bool=true,
-    verbose::Bool=true,
+    dispersion=nothing, verbose::Bool=true,
 ) where {T<:LinearAlgebra.BlasReal}
 
     m,p=size(X)
@@ -88,7 +88,7 @@ function irls_cholesky(
         return nothing,false
     end
 
-    logger=verbose ? IterationLog(X,y,family,ridge,penalize_intercept,w_floor,:cho) : nothing
+    logger=verbose ? IterationLog(X,y,family,ridge,penalize_intercept,w_floor,:cho;dispersion) : nothing
     logger===nothing || log_point!(logger,0,beta_base,Xbeta_base)
     termination_reason="maximum iterations reached"
 

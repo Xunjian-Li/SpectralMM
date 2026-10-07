@@ -58,6 +58,11 @@ spectralmm_control <- function(...) {
     dev<-2*sum(ifelse(y==0,0,y*log(y/mu))-(y+theta)*log((y+theta)/(mu+theta)))
     ll<-sum(stats::dnbinom(y,size=theta,mu=mu,log=TRUE))
   }
+  if(core=="student_t") {
+    nu<-if(is.null(options$nu)) 4 else options$nu
+    sigma<-if(is.null(options$sigma)) 1 else options$sigma
+    ll<-sum(stats::dt((y-eta)/sigma,df=nu,log=TRUE)-log(sigma))
+  }
   if(core %in% c("bernoulli","probit","binomial","poisson","negative_binomial") && any(y!=floor(y))) ll<-NA_real_
   if(core=="binomial" && any(n!=floor(n))) ll<-NA_real_
   list(deviance=dev,loglikelihood=ll)
@@ -136,6 +141,7 @@ spectralmm_fit <- function(X,y=NULL,family="gaussian",data=NULL,start=NULL,beta0
   raw$estimated_scale<-family %in% c("gaussian","gaussian_log","gamma","gamma_inverse") && is.null(opts$dispersion)
   raw$call<-match.call()
   class(raw)<-c("spectralmm","spectralmm_native")
+  if(isTRUE(opts$verbose)) .smm_print_inference(summary(raw))
   raw
 }
 
@@ -173,28 +179,77 @@ predict.spectralmm <- function(object,newdata=NULL,type=NULL,trials=NULL,offset=
   object$family<-object$core_family
   predict.spectralmm_native(object,newdata,trials=trials)
 }
+# Presentation is shared by ordinary summaries and verbose fitting.
+.smm_display_options <- function(family,options) {
+  defaults<-switch(family,negative_binomial=list(theta=1),binomial=list(trials=1),
+    tweedie=list(power=1.5),expectile=list(q=.5),smooth_quantile=list(q=.5,smoothing=.1),
+    pseudo_huber=list(delta=1),student_t=list(nu=4,sigma=1),list())
+  if("tau" %in% names(options)) { options$q<-options$tau; options$tau<-NULL }
+  utils::modifyList(defaults,options)
+}
+.smm_print_family <- function(family,options,link=NULL) {
+  names<-c(bernoulli="binomial",probit="binomial",gaussian_log="gaussian",gamma_inverse="gamma")
+  links<-c(gaussian="identity",gaussian_log="log",bernoulli="logit",probit="probit",binomial="logit",poisson="log",gamma="log",gamma_inverse="inverse",negative_binomial="log",tweedie="log")
+  name<-if(family %in% names(names)) unname(names[family]) else family
+  if(is.null(link)) link<-if(family %in% names(links)) unname(links[family]) else "not applicable"
+  cat("Family:",name,"  Link:",link,"\n")
+  opts<-.smm_display_options(family,options)
+  if(length(opts)) {
+    fmt<-function(v) if(length(v)==1L) format(v,trim=TRUE) else paste0("<",length(v)," values>")
+    cat("Family options:",paste(paste0(names(opts),"=",vapply(opts,fmt,character(1))),collapse=", "),"\n")
+  }
+}
+.smm_print_header <- function(family,options,n,p,intercept,solver,rank,link=NULL) {
+  cat("SpectralMM Regression Model\n")
+  .smm_print_family(family,options,link)
+  cat("Observations:",n,"  Parameters:",p,"\n")
+  cat("Intercept:",if(intercept) "yes" else "no","  Backend: C++\n")
+  solver<-if(solver=="spectral") "pcg" else if(solver=="cholesky") "cho" else solver
+  cat("Solver:",toupper(solver),if(solver %in% c("pcg","mm")) paste("  Rank:",rank) else "","\n")
+}
+.smm_print_terminal <- function(info,metric,value,gtol=1e-7,relgtol=1e-8) {
+  absolute<-info$gradnorm<=gtol; relative<-info$relgradnorm<=relgtol
+  reason<-if(absolute) "absolute gradient tolerance" else if(relative) "relative gradient tolerance" else gsub("_"," ",info$termination_reason)
+  cat("\nStatus:",if(absolute || relative) "converged" else "terminated","\nStopping criterion:",reason,"\n")
+  cat("Outer iterations:",info$iterations,"  Total inner iterations:",info$inner_iterations,"\n")
+  cat(sprintf("\nFinal %s: %.6e\nGradient norm: %.3e\nRelative gradient: %.3e\n",metric,value,info$gradnorm,info$relgradnorm))
+}
 summary.spectralmm <- function(object,...) {
   inf<-object$inference
   tab<-matrix(coef(object),ncol=1L,dimnames=list(names(coef(object)),"Estimate"))
   if(inf$status=="ok") {
     tab<-cbind(tab,`Std. Error`=inf$std_error,statistic=inf$statistic,p=inf$p_value)
-    colnames(tab)[3:4]<-c(paste(inf$statistic_type,"value"),paste0("Pr(>|",inf$statistic_type,"|)"))
+    colnames(tab)[3:4]<-c(paste(inf$statistic_type,"statistic"),"p-value")
   }
-  structure(list(family=object$family,observations=object$nobs,parameters=object$nparams,
+  structure(list(family=object$family,core_family=object$core_family,family_options=object$family_options,
+    intercept=object$intercept,observations=object$nobs,parameters=object$nparams,
     coefficients=tab,inference=inf,deviance=object$deviance,loglikelihood=object$loglikelihood,
     diagnostics=object$diagnostics),class="summary.spectralmm")
 }
-print.summary.spectralmm <- function(x,digits=5,max_rows=20L,...) {
-  cat(if(is.null(x$family$link)) "SpectralMM Regression Model\n" else "SpectralMM Generalized Linear Model\n")
-  cat("Family:",x$family$family," Link:",if(is.null(x$family$link)) "not applicable" else x$family$link,"\n")
-  cat("Observations:",x$observations," Parameters:",x$parameters,"\nCoefficients:\n")
-  print(x$coefficients[seq_len(min(nrow(x$coefficients),max_rows)),,drop=FALSE],digits=digits)
+.smm_print_inference <- function(x,max_rows=20L,digits=6L) {
+  inf<-x$inference; ok<-inf$status=="ok"
+  cat("\nInference:\n"); .smm_print_family(x$core_family,x$family_options,x$family$link)
+  if(ok) {
+    ref<-if(inf$statistic_type=="t") paste0("t (df=",inf$df_resid,")") else "standard normal"
+    cat("Covariance:",if(inf$cov_type=="sandwich") "sandwich HC1" else "model-based","  Reference distribution:",ref,"\n")
+  } else cat("Status:",inf$status,"\nReason:",inf$reason,"\n")
+  cat("\nCoefficients:\n")
+  cat(sprintf("%-24s %12s","Term","Estimate"))
+  if(ok) cat(sprintf(" %12s %12s %10s","Std. Error",paste(inf$statistic_type,"statistic"),"p-value"))
+  cat("\n")
+  for(i in seq_len(min(nrow(x$coefficients),max_rows))) {
+    cat(sprintf("%-24s %12.*f",rownames(x$coefficients)[i],digits,x$coefficients[i,1L]))
+    if(ok) cat(sprintf(" %12.*f %12.4f %10s",digits,inf$std_error[i],inf$statistic[i],if(inf$p_value[i]<.0001) "<0.0001" else sprintf("%.4f",inf$p_value[i])))
+    cat("\n")
+  }
   if(nrow(x$coefficients)>max_rows) cat("Additional coefficients are available in coef(model).\n")
-  if(x$inference$status!="ok") cat("Inference",x$inference$status,":",x$inference$reason,"\n")
-  if(!is.na(x$deviance)) cat("Deviance:",x$deviance," Log-Likelihood:",x$loglikelihood,"\n")
+}
+print.summary.spectralmm <- function(x,digits=6,max_rows=20L,...) {
   d<-x$diagnostics
-  cat("SpectralMM optimization:\n  Solver:",toupper(d$solver)," Rank:",d$rank,
-      " Converged:",d$converged," Iterations:",d$outer_iterations,"\n")
+  .smm_print_header(x$core_family,x$family_options,x$observations,x$parameters,x$intercept,d$solver,d$rank,x$family$link)
+  metric<-if(!is.na(x$loglikelihood)) "LogLik" else "Objective"
+  .smm_print_terminal(d,metric,if(metric=="LogLik") x$loglikelihood else d$objective,d$control$gtol,d$control$relgtol)
+  .smm_print_inference(x,max_rows,digits)
   invisible(x)
 }
 print.spectralmm <- function(x,...) { print(summary(x),...); invisible(x) }

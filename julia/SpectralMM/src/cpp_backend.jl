@@ -89,7 +89,7 @@ function _library_api()
                 ccall(Libdl.dlsym(handle, :smm_abi_version), Int32, ()) == 1 || error("native ABI mismatch")
                 defaults = Ref{Options}()
                 ccall(Libdl.dlsym(handle, :smm_default_options), Cvoid, (Ref{Options},), defaults)
-                LibraryAPI(handle, Libdl.dlsym(handle, :smm_fit_logged),
+                LibraryAPI(handle, Libdl.dlsym(handle, :smm_fit_logged_stats),
                            Libdl.dlsym(handle, :smm_infer), defaults[])
             catch
                 Libdl.dlclose(handle)
@@ -121,6 +121,10 @@ function fit(X::AbstractMatrix{<:Real}, y::AbstractVector{<:Real};
     family = Symbol(family)
     family in FAMILIES || throw(ArgumentError("unsupported family: $family"))
     parameters = Dict{Symbol,Any}(Symbol(k)=>v for (k,v) in pairs(family_options))
+    if haskey(parameters,:q)
+        haskey(parameters,:tau) && throw(ArgumentError("supply only q, not both q and tau"))
+        parameters[:tau]=pop!(parameters,:q)
+    end
     allowed = get(FAMILY_PARAMS, family, ())
     all(k -> k in allowed, keys(parameters)) || throw(ArgumentError("unknown parameter for $family"))
     trials = Float64[]
@@ -169,13 +173,14 @@ function fit(X::AbstractMatrix{<:Real}, y::AbstractVector{<:Real};
         opts.maxiter>0 || throw(ArgumentError("maxiter must be positive"))
         capture=verbose || trace
         rows=Vector{TraceDetail}(undef,capture ? opts.maxiter+1 : 0)
+        likelihood=Vector{Float64}(undef,length(rows))
         rowcount=Ref{Int64}(0)
-        GC.@preserve values indptr indices yy bb coef errorbuf settings rows trials begin
+        GC.@preserve values indptr indices yy bb coef errorbuf settings rows trials likelihood begin
             desc = MatrixView(n,d,storage==1 ? length(values) : 0,storage,
                               pointer(values),pointer(indptr),pointer(indices))
             status = ccall(api.fit, Int32,
-                (Ref{MatrixView},Ptr{Cdouble},Ptr{Cdouble},Ref{Options},Ref{FamilyOptions},Ptr{Cvoid},Ref{StopOptions},Ptr{Cdouble},Ref{Info},Ptr{Cvoid},Int64,Ptr{Int64},Ptr{UInt8},Csize_t,Int32,Int32),
-                desc, yy, beta0===nothing ? C_NULL : pointer(bb), opts, fp, solver===:pcg ? C_NULL : Base.unsafe_convert(Ptr{SolverOptions},settings), stops, coef, info, capture ? pointer(rows) : C_NULL, length(rows), rowcount, errorbuf, length(errorbuf), intercept, penalize_intercept)
+                (Ref{MatrixView},Ptr{Cdouble},Ptr{Cdouble},Ref{Options},Ref{FamilyOptions},Ptr{Cvoid},Ref{StopOptions},Ptr{Cdouble},Ref{Info},Ptr{Cvoid},Int64,Ptr{Int64},Ptr{UInt8},Csize_t,Int32,Int32,Ptr{Cdouble},Cdouble),
+                desc, yy, beta0===nothing ? C_NULL : pointer(bb), opts, fp, solver===:pcg ? C_NULL : Base.unsafe_convert(Ptr{SolverOptions},settings), stops, coef, info, capture ? pointer(rows) : C_NULL, length(rows), rowcount, errorbuf, length(errorbuf), intercept, penalize_intercept, capture ? pointer(likelihood) : C_NULL, dispersion===nothing ? NaN : dispersion)
             status == 0 || throw(ArgumentError(unsafe_string(pointer(errorbuf))))
         end
         fields = fieldnames(Info)
@@ -186,22 +191,24 @@ function fit(X::AbstractMatrix{<:Real}, y::AbstractVector{<:Real};
         states=(:none,:initial,:reuse,:correct,:restart,:correct_fail,:restart_correct,:restart_fail)
         history=NamedTuple[]
         if capture
-            for row in @view rows[1:rowcount[]]
+            for (idx,row) in enumerate(@view rows[1:rowcount[]])
                 fields_row=NamedTuple{fieldnames(TraceDetail)}(Tuple(getfield(row,k) for k in fieldnames(TraceDetail)))
-                push!(history,merge(fields_row,(spectrum=states[row.spectrum+1],)))
+                push!(history,merge(fields_row,(spectrum=states[row.spectrum+1],loglikelihood=likelihood[idx],)))
             end
         end
         if verbose
             rank=opts.rank==0 ? (p<20 ? p-1 : 10) : opts.rank
-            print_trace_header(solver,solver in (:pcg,:mm) ? rank : nothing)
+            metric=isnan(last(history).loglikelihood) ? "Objective" : "LogLik"
+            value(r)=metric=="LogLik" ? r.loglikelihood : r.loss
+            print_trace_header(solver,solver in (:pcg,:mm) ? rank : nothing; metric)
             for r in history
-                print_iteration(r.iteration,r.loss,r.relgradnorm,r.inner,r.inner_residual,r.eigresidual,r.step,r.spectrum)
+                print_iteration(r.iteration,r.loss,r.relgradnorm,r.inner,r.inner_residual,r.eigresidual,r.step,r.spectrum; gradnorm=r.gradnorm,value=value(r))
             end
             if diagnostics.gradient_converged
-                print_convergence(diagnostics.iterations,diagnostics.loss,diagnostics.relgradnorm)
+                print_convergence(diagnostics.iterations,value(last(history)),diagnostics.relgradnorm; metric,gradnorm=diagnostics.gradnorm,total_inner=diagnostics.inner_iterations,criterion=diagnostics.gradnorm<=opts.gtol ? "absolute gradient tolerance" : "relative gradient tolerance")
             else
                 labels=("gradient","maximum iterations reached","line search failed","inner breakdown","negligible step","stalled near tolerance")
-                print_termination(labels[diagnostics.termination+1],diagnostics.iterations,diagnostics.loss,diagnostics.relgradnorm)
+                print_termination(labels[diagnostics.termination+1],diagnostics.iterations,value(last(history)),diagnostics.relgradnorm; metric,gradnorm=diagnostics.gradnorm,total_inner=diagnostics.inner_iterations)
             end
         end
         gate=_inference_gate(inference,inference_max_p,p,n,opts.ridge,diagnostics.gradient_converged)
@@ -222,6 +229,7 @@ function fit(X::AbstractMatrix{<:Real}, y::AbstractVector{<:Real};
                 end
             end
         end
+        haskey(parameters,:tau) && (parameters[:q]=pop!(parameters,:tau))
         return FittedModel(coef,family,parameters,diagnostics,intercept,_finish_inference(gate,inference),trace ? history : nothing)
     end
 end

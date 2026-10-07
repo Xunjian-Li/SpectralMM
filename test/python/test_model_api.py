@@ -38,7 +38,7 @@ class StatisticalAPITest(unittest.TestCase):
                 self.assertEqual(m.nobs,100); self.assertEqual(m.family,family); self.assertEqual(m.link,link)
                 self.assertTrue(m.info['gradient_converged']); self.assertEqual(m.inference['status'],'ok')
                 self.assertEqual(m.cov_params().shape,(4,4)); self.assertEqual(m.conf_int(alpha=.1).shape,(4,2))
-                self.assertIn('SpectralMM optimization',m.summary())
+                self.assertIn('Stopping criterion:',m.summary())
                 for quantity,values in [('coef',m.params),('eta',m.linear_predictor),('mu',m.fittedvalues),
                                         ('objective',[m.objective]),('deviance',[m.deviance]),('loglikelihood',[m.llf]),
                                         ('converged',[float(m.info['gradient_converged'])])]:

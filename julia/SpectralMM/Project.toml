@@ -1,6 +1,6 @@
 name = "SpectralMM"
 uuid = "3ead10a5-a636-4c1d-b4eb-bf43a9e33d59"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Xun-Jian Li"]
 
 [deps]

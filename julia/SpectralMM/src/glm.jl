@@ -451,6 +451,7 @@ function _glm_julia(
         spectral = spectral,
         inner = inner,
         outer = outer,
+        dispersion = dispersion,
         kwargs...
     )
 
@@ -598,6 +599,7 @@ function _fit_julia(
         spectral = spectral,
         inner = inner,
         outer = outer,
+        dispersion = dispersion,
         kwargs...
     )
 
@@ -649,7 +651,7 @@ function Base.show(io::IO, ::MIME"text/plain", m::SpectralModel)
     println(io, "Outer iterations:   ", r.iters)
 
     if !isempty(r.losses)
-        println(io, "Final loss:         ", @sprintf("%.6e", r.losses[end]))
+        println(io, "Final objective:    ", @sprintf("%.6e", r.losses[end]))
     end
 
     if !isempty(r.relgradnorms)

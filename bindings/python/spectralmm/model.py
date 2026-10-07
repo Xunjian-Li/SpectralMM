@@ -66,6 +66,9 @@ def _statistics(family, y, mu, eta, p, options, dispersion):
         theta=options.get('theta',1.)
         dev=2*np.sum(xlogy(y,y/mu)-(y+theta)*np.log((y+theta)/(mu+theta)))
         ll=np.sum(gammaln(y+theta)-gammaln(theta)-gammaln(y+1)+theta*np.log(theta/(theta+mu))+xlogy(y,mu/(theta+mu)))
+    elif family=="student_t":
+        nu=options.get("nu",4.); sigma=options.get("sigma",1.)
+        return None, float(np.sum(t.logpdf((y-eta)/sigma,df=nu)-np.log(sigma)))
     else: return None, None
     if family in ('bernoulli','probit','binomial','poisson','negative_binomial') and not np.all(np.asarray(y)==np.floor(y)): ll=np.nan
     if family=='binomial' and not np.all(np.asarray(options.get('trials',1.))==np.floor(options.get('trials',1.))): ll=np.nan
@@ -109,6 +112,14 @@ class Results:
         q=t.ppf(1-alpha/2, inf['df_resid']) if inf['statistic_type']=='t' else norm.ppf(1-alpha/2)
         return np.column_stack((self.params-q*self.bse,self.params+q*self.bse))
     def predict(self, X=None, *, which='mean', transform=True, trials=None, offset=None):
+        """Predict on training data, a new feature matrix, or a formula-compatible table.
+
+        For non-GLM losses, ``which='mean'`` returns the fitted location: an
+        expectile, smoothed quantile, or robust location, depending on the loss.
+        It equals ``which='linear'`` for these identity-link models and is not
+        a prediction interval. Formula transformations and the fitted intercept
+        are applied automatically.
+        """
         if offset is not None: raise NotImplementedError('offset is not implemented by the numerical core')
         if which not in ('mean','linear'): raise ValueError("which must be 'mean' or 'linear'")
         if X is None: return (self.fittedvalues if which=='mean' else self.linear_predictor).copy()
@@ -120,22 +131,17 @@ class Results:
         if len(X.shape)!=2 or X.shape[1]!=len(self._raw.coef_): raise ValueError('prediction feature count differs from training')
         if which=='linear': return np.asarray(X @ self._raw.coef_).reshape(-1)+self._raw.intercept_
         return self._raw.predict(X,trials=trials)
+    def _inference_lines(self,max_rows=20):
+        from ._display import inference_lines
+        return inference_lines(self._raw.family,self._raw.family_options,self.link,self.inference,self.param_names,self.params,max_rows)
     def summary(self, max_rows=20):
         if not isinstance(max_rows,int) or isinstance(max_rows,bool) or max_rows<1: raise ValueError('max_rows must be a positive integer')
-        lines=['SpectralMM Generalized Linear Model' if self.link is not None else 'SpectralMM Regression Model',
-               f'Family: {self.family}   Link: {self.link or "not applicable"}',
-               f'Observations: {self.nobs}   Parameters: {self.nparams}', 'Coefficients:']
-        inf=self.inference
-        if inf['status']=='ok':
-            lines.append(f'Term                         Estimate    Std. Error     {inf["statistic_type"]} value     P-value')
-        else: lines.extend([f'Inference {inf["status"]}: {inf["reason"]}', 'Term                         Estimate'])
-        for i in range(min(max_rows,self.nparams)):
-            vals=[self.params[i]]+([self.bse[i],self.tvalues[i],self.pvalues[i]] if inf['status']=='ok' else [])
-            lines.append(f'{self.param_names[i]:<26}'+''.join(f'{v:13.6g}' for v in vals))
-        if self.nparams>max_rows: lines.append('Additional coefficients are available in params.')
-        if self._deviance is not None: lines.append(f'Deviance: {self.deviance:.7g}   Log-Likelihood: {self.llf:.7g}')
+        from ._display import model_lines,terminal_lines,stopping_reason
         d=self.diagnostics
-        lines.extend(['SpectralMM optimization:',f'  Solver: {d["solver"].upper()}   Rank: {d["rank"]}   Converged: {d["converged"]}   Iterations: {d["outer_iterations"]}'])
+        metric='LogLik' if self._llf is not None and not np.isnan(self._llf) else 'Objective'
+        lines=model_lines(self._raw.family,self._raw.family_options,self.nobs,self.nparams,self.fit_intercept,'C++',d['solver'],d['rank'],self.link)
+        lines+=['']+terminal_lines(self.info,self._llf if metric=='LogLik' else self.objective,metric,stopping_reason(self.info,d['control']['gtol'],d['control']['relgtol']))
+        lines+=['']+self._inference_lines(max_rows)
         return '\n'.join(lines)
     def __repr__(self): return self.summary()
 
@@ -177,7 +183,9 @@ def fit(X, y=None, family='gaussian', *, data=None, start=None, beta0=None,
     settings.update({k:getattr(defaults,k) for k,_ in defaults._fields_ if k in _NUMERIC})
     settings.update({k:v for k,v in opts.items() if k in _NUMERIC})
     settings.update(solver={'spectral':'pcg','cholesky':'cho'}.get(solver,solver),rank=rank if rank not in (None,0) else (p-1 if p<20 else 10))
-    return Results(raw,X,y,names,canonical,link,formula,design,fit_intercept,settings,opts.get('dispersion'))
+    result=Results(raw,X,y,names,canonical,link,formula,design,fit_intercept,settings,opts.get('dispersion'))
+    if opts.get("verbose",False): print("\n"+"\n".join(result._inference_lines()))
+    return result
 
 
 def glm(X, y=None, *, data=None, family='gaussian', link=None, **kwargs):

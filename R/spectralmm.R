@@ -54,6 +54,10 @@
       isTRUE(X[1L,j] != 0 && all(X[,j] == X[1L,j])), logical(1)))
     if (isTRUE(constant)) warning("X contains a nonzero constant column; remove it or use intercept=FALSE to avoid a redundant intercept")
   }
+  if ("q" %in% names(family_options)) {
+    if ("tau" %in% names(family_options)) stop("supply only q, not both q and tau")
+    family_options$tau<-family_options$q; family_options$q<-NULL
+  }
   result <- smm_fit_bridge(X, as.double(y), match(family, .spectralmm_families)-1L,
                     list(...), family_options, if (is.null(beta0)) NULL else as.double(beta0),
                     match(solver,c("spectral","cg","cgls","crls","lsqr","lsmr","cho","mm"))-2L,
@@ -66,7 +70,8 @@
     p <- ncol(X)+as.integer(intercept)
     rank <- options$rank
     if (is.null(rank) || rank==0) rank <- if (p<20) p-1 else 10
-    .spectralmm_print_trace(result$trace,result$info,solver,rank)
+    .spectralmm_print_trace(result$trace,result$info,solver,rank,family,family_options,nrow(X),p,intercept,
+      if(is.null(options$gtol)) 1e-7 else options$gtol,if(is.null(options$relgtol)) 1e-8 else options$relgtol)
   }
   if (!trace) result$trace <- NULL
   result$intercept <- intercept
@@ -75,6 +80,7 @@
   if (is.null(labels)) labels <- if (ncol(X)) paste0("x", seq_len(ncol(X))) else character()
   names(result$coef) <- c(if (intercept) "(Intercept)", labels)
   result$family <- family
+  if("tau" %in% names(family_options)) { family_options$q<-family_options$tau; family_options$tau<-NULL }
   result$family_options <- family_options
   if (result$inference$status=="ok") {
     inf <- result$inference
@@ -134,6 +140,7 @@ summary.spectralmm_native <- function(object, ...) {
   result <- list(family=object$family, inference=inf, coefficients=NULL)
   if (inf$status=="ok") result$coefficients <- cbind(Estimate=coef(object),`Std. Error`=inf$std_error,
     Statistic=inf$statistic,`Pr(>|statistic|)`=inf$p_value,inf$conf_int)
+  if(inf$status=="ok") colnames(result$coefficients)[3:4]<-c(paste(inf$statistic_type,"statistic"),"p-value")
   class(result) <- "summary.spectralmm_native"
   result
 }
@@ -149,24 +156,20 @@ print.summary.spectralmm_native <- function(x, digits=5, max_rows=20L, ...) {
 }
 print.spectralmm_native <- function(x, ...) { print(summary(x), ...); invisible(x) }
 
-.spectralmm_print_trace <- function(rows, info, solver, rank) {
+.spectralmm_print_trace <- function(rows, info, solver, rank, family, options, n, p, intercept, gtol, relgtol) {
   label <- if (solver=="spectral") "PCG" else toupper(solver)
-  cat(sprintf("\nSpectralMM  Solver: %s   Rank: %s\n\n", label,
-              if (solver %in% c("spectral","mm")) as.character(rank) else "-"))
-  cat(sprintf("%4s  %12s  %10s  %5s  %10s  %10s  %6s  %s\n",
-      "Iter","Loss","RelGrad","Inner","InnerRes","EigRes","Step","Spectrum"))
-  number <- function(x,fmt) if (is.finite(x)) sprintf(fmt,x) else "-"
+  metric <- if (!is.na(tail(rows$loglikelihood,1))) "LogLik" else "Objective"
+  values <- if (metric=="LogLik") rows$loglikelihood else rows$loss
+  .smm_print_header(family,options,n,p,intercept,solver,rank); cat("\n")
+  cat(sprintf("%4s  %12s  %10s  %10s  %5s  %8s  %s\n",
+      "Iter",metric,"GradNorm","RelGrad","Inner","Stepsize","Spectrum"))
   for (i in seq_len(nrow(rows))) {
     r <- rows[i,]
-    cat(sprintf("%4d  %12.4e  %10.3e  %5s  %10s  %10s  %6s  %s\n",
-      as.integer(r$iteration),r$loss,r$relgradnorm,
-      if (r$inner<0) "-" else as.character(r$inner),number(r$inner_residual,"%.2e"),
-      number(r$eigresidual,"%.2e"),number(r$step,"%.2f"),r$spectrum))
+    cat(sprintf("%4d  %12s  %10.3e  %10.3e  %5s  %8s  %s\n",
+      as.integer(r$iteration),if (is.na(values[i])) "-" else sprintf("%.4e",values[i]),r$gradnorm,r$relgradnorm,
+      if (r$inner<0) "-" else as.character(r$inner),
+      if (is.finite(r$step)) sprintf("%.2f",r$step) else "-",r$spectrum))
   }
-  if (info$gradient_converged) cat(sprintf("\nConverged after %d iterations\n",as.integer(info$iterations)))
-  else {
-    reasons <- c("gradient","maximum iterations reached","line search failed","inner breakdown","negligible step","stalled near tolerance")
-    cat(sprintf("\nTerminated after %d iterations (%s)\n",as.integer(info$iterations),reasons[info$termination+1L]))
-  }
-  cat(sprintf("Final loss:      %.6e\nRelative grad.:  %.3e\n",info$loss,info$relgradnorm))
+  .smm_print_terminal(info,metric,tail(values,1),gtol,relgtol)
+  cat(if (metric=="LogLik") "LogLik includes distribution constants and excludes ridge; gradients refer to the optimization objective.\n" else "Objective is the summed model loss plus ridge penalty.\n")
 }

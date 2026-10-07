@@ -16,12 +16,12 @@ pseudo_huber <- function(delta=1) {
 }
 expectile <- function(q=.5) {
   .smm_validate_parameter("q",q,TRUE)
-  .smm_family("expectile",list(tau=q))
+  .smm_family("expectile",list(q=q))
 }
 smooth_quantile <- function(q=.5,epsilon=.1) {
   .smm_validate_parameter("q",q,TRUE)
   .smm_validate_parameter("epsilon",epsilon)
-  .smm_family("smooth_quantile",list(tau=q,smoothing=epsilon))
+  .smm_family("smooth_quantile",list(q=q,smoothing=epsilon))
 }
 student_t <- function(nu=4) {
   .smm_validate_parameter("nu",nu)

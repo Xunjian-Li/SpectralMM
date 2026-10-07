@@ -51,6 +51,6 @@
 \item{max_rows}{Maximum coefficient rows to print. Full results remain in the summary.}
 \item{...}{Further arguments; the fitted-model print method forwards them to the summary print method.}
 }
-\value{Coefficients (intercept first), response predictions, a covariance matrix, a confidence-interval matrix, or a summary list, depending on the method. Binomial predictions are expected counts. Print methods return their input invisibly. Covariance and confidence interval methods signal an error when inference is unavailable.}
+\value{Coefficients (intercept first), response predictions, a covariance matrix, a confidence-interval matrix, or a summary list, depending on the method. Binomial predictions are expected counts. Non-GLM predictions are fitted locations: conditional expectiles for expectile loss, smoothed quantiles for smoothed quantile loss, and robust locations for Pseudo-Huber and Student-t. These are point predictions, not prediction intervals. Print methods return their input invisibly. Covariance and confidence interval methods signal an error when inference is unavailable.}
 \details{Coefficient tables use a t or z reference. Separate \code{wald_chisq} and \code{wald_p_value} components use an asymptotic chi-square reference; their p-values can differ from t-reference p-values.}
 \seealso{\code{\link{spectralmm_fit}}}

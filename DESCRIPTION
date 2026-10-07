@@ -1,7 +1,7 @@
 Package: SpectralMM
 Type: Package
 Title: Spectral Majorization for Statistical Estimation
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: person("Xun-Jian", "Li", email = "xunjianli@ucla.edu", role = c("aut", "cre"))
 Description: Fits generalized linear, asymmetric and robust regression models
     using spectral majorization and iterative quadratic subproblem solvers.

@@ -122,6 +122,40 @@ double loss(const Vec& eta, const Vec& y, const Vec& b, const ModelOptions& o) {
         value += family_point(eta[i],y[i],o,i).objective;
     return value;
 }
+// Output-only normalized likelihood, excluding ridge. Scale defaults match wrappers.
+double display_loglik(const Vec& eta,const Vec& y,const ModelOptions& o,int64_t p,double dispersion) {
+    const double nan=std::numeric_limits<double>::quiet_NaN();
+    if(o.family==6 || o.family==7 || o.family==8 || o.family==12) return nan;
+    double kernel=0., pearson=0., constant=0.;
+    for(int64_t i=0;i<y.size();++i) {
+        const auto pt=family_point(eta[i],y[i],o,i);
+        kernel+=pt.objective;
+        if(o.family==4 || o.family==11) pearson+=std::pow((y[i]-pt.mu)/pt.mu,2);
+        if(o.family==1 || o.family==2 || o.family==3 || o.family==5 || o.family==13) {
+            if(y[i]!=std::floor(y[i])) return nan;
+        }
+        if(o.family==3) constant-=std::lgamma(y[i]+1.);
+        if(o.family==5) constant+=std::lgamma(y[i]+o.model.theta)-std::lgamma(o.model.theta)-std::lgamma(y[i]+1.)+o.model.theta*std::log(o.model.theta);
+        if(o.family==13) {
+            double n=trials_at(o,i);
+            if(n!=std::floor(n)) return nan;
+            constant+=std::lgamma(n+1.)-std::lgamma(y[i]+1.)-std::lgamma(n-y[i]+1.);
+        }
+    }
+    const double pi=std::acos(-1.);
+    if(o.family==0 || o.family==10) {
+        double scale=std::isnan(dispersion) ? 2.*kernel/y.size() : dispersion;
+        return scale==0. ? INFINITY : -.5*y.size()*std::log(2.*pi*scale)-kernel/scale;
+    }
+    if(o.family==4 || o.family==11) {
+        double scale=std::isnan(dispersion) ? (y.size()>p ? pearson/(y.size()-p) : nan) : dispersion;
+        if(!(scale>0.) || !std::isfinite(scale)) return nan;
+        double shape=1./scale;
+        return -kernel/scale+(shape-1.)*y.array().log().sum()-y.size()*(std::lgamma(shape)+shape*std::log(scale));
+    }
+    if(o.family==9) constant=y.size()*(std::lgamma((o.model.nu+1.)/2.)-std::lgamma(o.model.nu/2.)-.5*std::log(o.model.nu*pi)-std::log(o.model.sigma));
+    return constant-kernel;
+}
 void weights_into(const Vec& eta,const Vec& y,const ModelOptions& o,Vec& w) {
     SMM_SCOPE(7);
     for(Eigen::Index i=0;i<eta.size();++i) w[i]=family_point(eta[i],y[i],o,i).weight;
@@ -315,7 +349,7 @@ void pcg(const Design& X, const Vec& w, const Vec& g, const Spectrum& s,
 
 void fit(const smm_matrix& input, const double *yp, const double *beta0,
          const smm_options& options, double *out, smm_info& info, const smm_krylov_options *krylov, const smm_stop_options *stop,
-         smm_trace_entry *trace, int64_t trace_capacity, int64_t *trace_size, const smm_family_options *family, bool intercept, bool penalize_intercept, smm_trace_detail *detail) {
+         smm_trace_entry *trace, int64_t trace_capacity, int64_t *trace_size, const smm_family_options *family, bool intercept, bool penalize_intercept, smm_trace_detail *detail, double *likelihood, double dispersion) {
     ModelOptions o(options,family);
     SMM_RESET();
     SMM_SCOPE(0);
@@ -385,6 +419,7 @@ void fit(const smm_matrix& input, const double *yp, const double *beta0,
         int64_t slot=*trace_size;
         if (slot && (trace ? trace[slot-1].iteration : detail[slot-1].iteration)==info.iterations) --slot;
         else ++*trace_size;
+        if (likelihood) likelihood[slot]=display_loglik(eta,y,o,p,dispersion);
         if (trace) trace[slot]={info.iterations,info.inner_iterations,info.restarts,info.corrections,
                                f,g.norm(),g.norm()/scale};
         if (detail) detail[slot]={info.iterations,info.inner_iterations,info.restarts,info.corrections,

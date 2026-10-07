@@ -20,7 +20,7 @@
 \newcommand{\code}[1]{\texttt{#1}}
 \title{\pkg: A User Guide for the Python and R Interfaces}
 \author{}
-\date{Version 0.1.0}
+\date{Version 0.2.0}
 \begin{document}
 % R installation is independent of the standalone CMake build.
 
@@ -270,7 +270,7 @@ y_cont = beta[0] + X @ beta[1:] + rng.standard_t(4, size=X.shape[0])
 robust = fit(X, y_cont, family="student_t",
              family_options={"nu": 4, "sigma": 1})
 quantile = fit(X, y_cont, family="smooth_quantile",
-               family_options={"tau": 0.25, "smoothing": 0.1})
+               family_options={"q": 0.25, "smoothing": 0.1})
 \end{lstlisting}
 \begin{lstlisting}[language=R]
 y_cont <- as.vector(beta[1] + X %*% beta[-1]) + rt(nrow(X), df=4)
@@ -278,7 +278,7 @@ robust <- spectralmm_fit(X, y_cont, family="student_t",
                         family_options=list(nu=4, sigma=1))
 quantile <- spectralmm_fit(
   X, y_cont, family="smooth_quantile",
-  family_options=list(tau=0.25, smoothing=0.1))
+  family_options=list(q=0.25, smoothing=0.1))
 \end{lstlisting}
 
 \subsection{Sparse matrices and alternative solvers}
@@ -315,8 +315,8 @@ are rejected. All responses must be finite.
 \code{poisson} & Poisson log & None \\
 \code{gamma} & Gamma log & None \\
 \code{negative\_binomial} & Negative-binomial log & \code{theta=1} \\
-\code{smooth\_quantile} & Smooth quantile & \code{tau=0.5, smoothing=0.1} \\
-\code{expectile} & Expectile & \code{tau=0.5} \\
+\code{smooth\_quantile} & Smooth quantile & \code{q=0.5, smoothing=0.1} \\
+\code{expectile} & Expectile & \code{q=0.5} \\
 \code{pseudo\_huber} & Pseudo-Huber & \code{delta=1.0} \\
 \code{student\_t} & Student-$t$ & \code{nu=4, sigma=1} \\
 \code{gaussian\_log} & Gaussian log & None \\
@@ -327,7 +327,7 @@ are rejected. All responses must be finite.
 \end{tabular}
 \end{center}
 The \code{smoothing} parameter corresponds to Julia's \code{epsilon}.
-Require $0<\tau<1$, positive finite scale/shape/trial-count parameters, and
+Require $0<q<1$, positive finite scale/shape/trial-count parameters, and
 $1\leq\code{power}\leq2$.
 
 Bernoulli responses must be exactly zero or one. Poisson, negative-binomial,
@@ -678,7 +678,7 @@ with an internal tolerance of $10^{-12}$ and are evaluated afterwards using the
 common gradient measure.
 
 Family parameters are fixed at $\theta=4$ for negative binomial,
-$(\tau,\epsilon)=(0.25,0.1)$ for smooth quantile, $\tau=0.25$ for expectile,
+$(q,\epsilon)=(0.25,0.1)$ for smooth quantile, $q=0.25$ for expectile,
 $\delta=1$ for pseudo-Huber, and $(\nu,\sigma)=(4,1)$ for Student-$t$.
 
 \subsection{Reading and exporting results}

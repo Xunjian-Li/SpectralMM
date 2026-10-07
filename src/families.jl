@@ -38,9 +38,9 @@ NegativeBinomialLog() = NegativeBinomialLog(1.0)
 TweedieLog() = TweedieLog(1.5)
 
 """
-    SmoothQuantile(tau=0.5, epsilon=0.1)
+    SmoothQuantile(q=0.5, epsilon=0.1)
 
-Smoothed quantile residual loss with `0 < tau < 1` and positive smoothing parameter `epsilon`. Inference concerns the smoothed objective.
+Smoothed quantile residual loss with `0 < q < 1` and positive smoothing parameter `epsilon`. Inference concerns the smoothed objective.
 Pass the object as `SpectralMM.fit(X, y, loss; kwargs...)`; see [`fit`](@ref).
 """
 struct SmoothQuantile{T<:Real} <: AsymmetricFamily
@@ -48,26 +48,28 @@ struct SmoothQuantile{T<:Real} <: AsymmetricFamily
     epsilon::T
 end
 
-function SmoothQuantile(tau=0.5, epsilon=0.1)
-    τ, ε = promote(float(tau), float(epsilon))
-    zero(τ) < τ < one(τ) || throw(ArgumentError("tau must lie in (0,1)"))
+function SmoothQuantile(q::Real, epsilon::Real=0.1)
+    τ, ε = promote(float(q), float(epsilon))
+    zero(τ) < τ < one(τ) || throw(ArgumentError("q must lie in (0,1)"))
     ε > zero(ε) || throw(ArgumentError("epsilon must be positive"))
     return SmoothQuantile{typeof(τ)}(τ, ε)
 end
 
 """
-    Expectile(tau=0.5)
+    Expectile(q=0.5)
 
-Asymmetric squared residual loss at expectile level `0 < tau < 1`.
+Asymmetric squared residual loss at expectile level `0 < q < 1`.
 Pass the object as `SpectralMM.fit(X, y, loss; kwargs...)`; see [`fit`](@ref).
 """
 struct Expectile{T<:Real} <: AsymmetricFamily
     tau::T
+    # Keep the typed constructor without generating a conflicting Expectile(::Real).
+    Expectile{T}(tau) where {T<:Real} = new{T}(tau)
 end
 
-function Expectile(tau=0.5)
-    τ = float(tau)
-    zero(τ) < τ < one(τ) || throw(ArgumentError("tau must lie in (0,1)"))
+function Expectile(q::Real)
+    τ = float(q)
+    zero(τ) < τ < one(τ) || throw(ArgumentError("q must lie in (0,1)"))
     return Expectile{typeof(τ)}(τ)
 end
 
@@ -864,3 +866,13 @@ end
         return finite_all(eta)
     end
 end
+
+# Public q spelling; tau remains an input/property alias for existing clients.
+function _quantile_level(q,tau)
+    q!==nothing && tau!==nothing && throw(ArgumentError("supply only q, not both q and tau"))
+    return q===nothing ? (tau===nothing ? 0.5 : tau) : q
+end
+Expectile(;q=nothing,tau=nothing)=Expectile(_quantile_level(q,tau))
+SmoothQuantile(;q=nothing,tau=nothing,epsilon=0.1)=SmoothQuantile(_quantile_level(q,tau),epsilon)
+Base.getproperty(f::Union{Expectile,SmoothQuantile},name::Symbol)=getfield(f,name===:q ? :tau : name)
+Base.propertynames(f::Union{Expectile,SmoothQuantile},private::Bool=false)=(fieldnames(typeof(f))...,:q)
