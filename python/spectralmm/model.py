@@ -88,10 +88,11 @@ class Results:
         self.resid_response=np.asarray(y)-self.fittedvalues
         self._deviance,self._llf=_statistics(raw.family,np.asarray(y),self.fittedvalues,self.linear_predictor,
                                            self.nparams,raw.family_options,dispersion)
-        self.objective=raw.info['loss']
+        penalized = raw.coef[1:] if intercept and not settings.get('penalize_intercept',False) else raw.coef
+        self.objective=raw.info['loss']-0.5*settings.get('ridge',0.)*float(penalized @ penalized)
         self.diagnostics=dict(raw.info, solver=settings.get('solver','pcg'),
                               rank=settings['rank'], outer_iterations=raw.info['iterations'],
-                              gradient_norm=raw.info['gradnorm'], objective=self.objective,
+                              gradient_norm=raw.info['gradnorm'], objective=self.objective, optimization_objective=raw.info['loss'],
                               backend='cpp', control=dict(settings))
         self.diagnostics['krylov_dimension']=settings.get('krylovdim') or min(self.nparams,max(3*(settings['rank']+1)+20,settings['rank']+11))
         self.diagnostics['preconditioner']=settings.get('preconditioner','jacobi')
@@ -183,6 +184,7 @@ def fit(X, y=None, family='gaussian', *, data=None, start=None, beta0=None,
     settings.update({k:getattr(defaults,k) for k,_ in defaults._fields_ if k in _NUMERIC})
     settings.update({k:v for k,v in opts.items() if k in _NUMERIC})
     settings.update(solver={'spectral':'pcg','cholesky':'cho'}.get(solver,solver),rank=rank if rank not in (None,0) else (p-1 if p<20 else 10))
+    settings['penalize_intercept']=opts.get('penalize_intercept',False)
     result=Results(raw,X,y,names,canonical,link,formula,design,fit_intercept,settings,opts.get('dispersion'))
     if opts.get("verbose",False): print("\n"+"\n".join(result._inference_lines()))
     return result

@@ -89,7 +89,7 @@ function _library_api()
                 ccall(Libdl.dlsym(handle, :smm_abi_version), Int32, ()) == 1 || error("native ABI mismatch")
                 defaults = Ref{Options}()
                 ccall(Libdl.dlsym(handle, :smm_default_options), Cvoid, (Ref{Options},), defaults)
-                LibraryAPI(handle, Libdl.dlsym(handle, :smm_fit_logged_stats),
+                LibraryAPI(handle, Libdl.dlsym(handle, :smm_fit_logged_metrics),
                            Libdl.dlsym(handle, :smm_infer), defaults[])
             catch
                 Libdl.dlclose(handle)
@@ -174,13 +174,14 @@ function fit(X::AbstractMatrix{<:Real}, y::AbstractVector{<:Real};
         capture=verbose || trace
         rows=Vector{TraceDetail}(undef,capture ? opts.maxiter+1 : 0)
         likelihood=Vector{Float64}(undef,length(rows))
+        objective=Vector{Float64}(undef,length(rows))
         rowcount=Ref{Int64}(0)
-        GC.@preserve values indptr indices yy bb coef errorbuf settings rows trials likelihood begin
+        GC.@preserve values indptr indices yy bb coef errorbuf settings rows trials likelihood objective begin
             desc = MatrixView(n,d,storage==1 ? length(values) : 0,storage,
                               pointer(values),pointer(indptr),pointer(indices))
             status = ccall(api.fit, Int32,
-                (Ref{MatrixView},Ptr{Cdouble},Ptr{Cdouble},Ref{Options},Ref{FamilyOptions},Ptr{Cvoid},Ref{StopOptions},Ptr{Cdouble},Ref{Info},Ptr{Cvoid},Int64,Ptr{Int64},Ptr{UInt8},Csize_t,Int32,Int32,Ptr{Cdouble},Cdouble),
-                desc, yy, beta0===nothing ? C_NULL : pointer(bb), opts, fp, solver===:pcg ? C_NULL : Base.unsafe_convert(Ptr{SolverOptions},settings), stops, coef, info, capture ? pointer(rows) : C_NULL, length(rows), rowcount, errorbuf, length(errorbuf), intercept, penalize_intercept, capture ? pointer(likelihood) : C_NULL, dispersion===nothing ? NaN : dispersion)
+                (Ref{MatrixView},Ptr{Cdouble},Ptr{Cdouble},Ref{Options},Ref{FamilyOptions},Ptr{Cvoid},Ref{StopOptions},Ptr{Cdouble},Ref{Info},Ptr{Cvoid},Int64,Ptr{Int64},Ptr{UInt8},Csize_t,Int32,Int32,Ptr{Cdouble},Cdouble,Ptr{Cdouble}),
+                desc, yy, beta0===nothing ? C_NULL : pointer(bb), opts, fp, solver===:pcg ? C_NULL : Base.unsafe_convert(Ptr{SolverOptions},settings), stops, coef, info, capture ? pointer(rows) : C_NULL, length(rows), rowcount, errorbuf, length(errorbuf), intercept, penalize_intercept, capture ? pointer(likelihood) : C_NULL, dispersion===nothing ? NaN : dispersion, capture ? pointer(objective) : C_NULL)
             status == 0 || throw(ArgumentError(unsafe_string(pointer(errorbuf))))
         end
         fields = fieldnames(Info)
@@ -193,13 +194,13 @@ function fit(X::AbstractMatrix{<:Real}, y::AbstractVector{<:Real};
         if capture
             for (idx,row) in enumerate(@view rows[1:rowcount[]])
                 fields_row=NamedTuple{fieldnames(TraceDetail)}(Tuple(getfield(row,k) for k in fieldnames(TraceDetail)))
-                push!(history,merge(fields_row,(spectrum=states[row.spectrum+1],loglikelihood=likelihood[idx],)))
+                push!(history,merge(fields_row,(spectrum=states[row.spectrum+1],loglikelihood=likelihood[idx],objective=objective[idx],)))
             end
         end
         if verbose
             rank=opts.rank==0 ? (p<20 ? p-1 : 10) : opts.rank
             metric=isnan(last(history).loglikelihood) ? "Objective" : "LogLik"
-            value(r)=metric=="LogLik" ? r.loglikelihood : r.loss
+            value(r)=metric=="LogLik" ? r.loglikelihood : r.objective
             print_trace_header(solver,solver in (:pcg,:mm) ? rank : nothing; metric)
             for r in history
                 print_iteration(r.iteration,r.loss,r.relgradnorm,r.inner,r.inner_residual,r.eigresidual,r.step,r.spectrum; gradnorm=r.gradnorm,value=value(r))

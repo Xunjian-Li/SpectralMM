@@ -26,7 +26,8 @@ class OutputPredictionTest(unittest.TestCase):
                 for label in ('GradNorm','Stepsize'): self.assertIn(label,text)
                 for label in ('InnerRes','EigRes'): self.assertNotIn(label,text)
                 row=logged.trace[-1]
-                self.assertEqual(row['loss'],quiet.objective)
+                self.assertEqual(row['loss'],quiet.info['loss'])
+                self.assertAlmostEqual(row['objective'],quiet.objective,places=8)
                 if family in ('pseudo_huber','expectile','smooth_quantile','tweedie'):
                     self.assertIn('Objective',text); self.assertTrue(np.isnan(row['loglikelihood']))
                 else:
@@ -88,3 +89,26 @@ class OutputPredictionTest(unittest.TestCase):
             self.assertEqual(out.getvalue().count('Family:'),2)
         m=sm.fit(X,y,solver='cho',inference=False)
         self.assertNotIn('Rank:',m.summary()); self.assertIn('Reason:',m.summary())
+
+
+class UnpenalizedOutputTest(unittest.TestCase):
+    def test_ridge_display(self):
+        rng=np.random.default_rng(101); X=rng.normal(size=(60,3)); y=2+X[:,0]+rng.normal(size=60)
+        for intercept,penalize in ((True,False),(True,True),(False,False)):
+            start=np.full(3+intercept,.4)
+            kw=dict(family=sm.Expectile(.3),ridge=2.,fit_intercept=intercept,penalize_intercept=penalize,start=start,inference=False,trace=True)
+            quiet=sm.fit(X,y,**kw)
+            out=io.StringIO()
+            with contextlib.redirect_stdout(out): logged=sm.fit(X,y,verbose=True,**kw)
+            np.testing.assert_array_equal(quiet.params,logged.params)
+            loss=lambda resid: .5*np.sum(np.where(resid>=0,.3,.7)*resid**2)
+            expected=loss(y-quiet.predict(X))
+            self.assertAlmostEqual(quiet.objective,expected,places=9)
+            self.assertAlmostEqual(quiet.trace[-1]['objective'],expected,places=9)
+            eta=X@start[int(intercept):]+(start[0] if intercept else 0)
+            self.assertAlmostEqual(quiet.trace[0]['objective'],loss(y-eta),places=9)
+            b=quiet.params[1:] if intercept and not penalize else quiet.params
+            self.assertAlmostEqual(quiet.info['loss']-expected,float(b@b),places=9)
+            self.assertIn('Objective is the summed model loss excluding ridge penalty.',out.getvalue())
+            self.assertNotIn('(Intercept)',quiet.summary())
+            self.assertAlmostEqual(float(__import__('re').search(r'Final Objective: ([^\n]+)',out.getvalue())[1]),expected,delta=1e-5)

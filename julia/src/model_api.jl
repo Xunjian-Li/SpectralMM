@@ -231,6 +231,8 @@ function _result_metadata(raw,X,y,name,options,intercept,formula,names,settings)
               outer_iterations=r.iters,inner_iterations=inner,gradient_norm=last(r.gradnorms),
               relative_gradient=last(r.relgradnorms),objective=last(r.losses),backend=:julia)
     end
+    penalty=0.5*get(settings,:ridge,0.)*sum(abs2,view(beta,(intercept && !get(settings,:penalize_intercept,false) ? 2 : 1):length(beta)))
+    diag=merge(diag,(optimization_objective=diag.objective,objective=diag.objective-penalty))
     diag=merge(diag,(family_options=_display_options(name,options),krylov_dimension=cfg.krylovdim,preconditioner=get(cfg,:preconditioner,nothing),control=cfg))
     d,ll=_fit_statistics(name,y,mu,eta,p,options,get(settings,:dispersion,nothing))
     family,link=get(_PUBLIC_GLM,name,(name,nothing))
@@ -466,7 +468,7 @@ function _print_result_inference(io,m::StatisticalResult)
     ok && @printf(io," %12s %12s %10s","Std. Error",inf.statistic_type*" statistic","p-value")
     println(io)
     for j in 1:min(20,length(coef(m)))
-        @printf(io,"%-24s %12.6f",m.coefficient_names[j],coef(m)[j])
+        @printf(io,"%-24s %12.6f",m.coefficient_names[j]=="(Intercept)" ? "Intercept" : m.coefficient_names[j],coef(m)[j])
         if ok
             pv=inf.p_value[j]<.0001 ? "<0.0001" : @sprintf("%.4f",inf.p_value[j])
             @printf(io," %12.6f %12.4f %10s",inf.std_error[j],inf.statistic[j],pv)

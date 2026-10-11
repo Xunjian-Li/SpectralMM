@@ -124,7 +124,8 @@ spectralmm_fit <- function(X,y=NULL,family="gaussian",data=NULL,start=NULL,beta0
   if(family %in% c("negative_binomial","binomial")) raw$family$link<-if(family=="binomial") "logit" else "log"
   raw$link<-raw$family$link
   raw$linear.predictors<-eta; raw$fitted.values<-mu; raw$residuals<-y-mu
-  raw$nobs<-length(y); raw$nparams<-length(raw$coef); raw$objective<-raw$info$loss
+  raw$nobs<-length(y); raw$nparams<-length(raw$coef); penalized<-if(intercept && !isTRUE(opts$penalize_intercept)) raw$coef[-1L] else raw$coef
+  raw$objective<-raw$info$loss - 0.5*(if(is.null(opts$ridge)) 0 else opts$ridge)*sum(penalized^2)
   raw$terms<-terms; raw$formula<-formula; raw$xlevels<-xlevels; raw$contrasts<-contrasts
   stat<-.smm_fit_statistics(family,y,mu,eta,raw$nparams,raw$family_options,opts$dispersion)
   raw$deviance<-stat$deviance; raw$loglikelihood<-stat$loglikelihood
@@ -134,7 +135,7 @@ spectralmm_fit <- function(X,y=NULL,family="gaussian",data=NULL,start=NULL,beta0
   settings<-utils::modifyList(default,opts)
   r<-if(is.null(rank) || rank==0) if(raw$nparams<20) raw$nparams-1L else 10L else rank
   raw$diagnostics<-c(raw$info,list(solver=if(solver=="spectral") "pcg" else solver,rank=r,
-    outer_iterations=raw$info$iterations,gradient_norm=raw$info$gradnorm,objective=raw$objective,
+    outer_iterations=raw$info$iterations,gradient_norm=raw$info$gradnorm,objective=raw$objective,optimization_objective=raw$info$loss,
     krylov_dimension=if(settings$krylovdim==0) min(raw$nparams,max(3*(r+1)+20,r+11)) else settings$krylovdim,preconditioner=settings$preconditioner,control=settings,backend="cpp"))
   raw$diagnostics$termination_reason<-c("gradient tolerance reached","maximum iterations reached",
     "line search failed","inner breakdown","negligible step","stalled near tolerance")[raw$info$termination+1L]
@@ -238,7 +239,7 @@ summary.spectralmm <- function(object,...) {
   if(ok) cat(sprintf(" %12s %12s %10s","Std. Error",paste(inf$statistic_type,"statistic"),"p-value"))
   cat("\n")
   for(i in seq_len(min(nrow(x$coefficients),max_rows))) {
-    cat(sprintf("%-24s %12.*f",rownames(x$coefficients)[i],digits,x$coefficients[i,1L]))
+    cat(sprintf("%-24s %12.*f",if(rownames(x$coefficients)[i]=="(Intercept)") "Intercept" else rownames(x$coefficients)[i],digits,x$coefficients[i,1L]))
     if(ok) cat(sprintf(" %12.*f %12.4f %10s",digits,inf$std_error[i],inf$statistic[i],if(inf$p_value[i]<.0001) "<0.0001" else sprintf("%.4f",inf$p_value[i])))
     cat("\n")
   }

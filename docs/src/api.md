@@ -173,8 +173,10 @@ backend and numerical settings separately. C++ stop codes have explicit labels.
 Older Julia solver results do not retain every early-stop label; when the exact
 reason is unavailable it is reported as such, rather than inferred incorrectly.
 
-Deviance is unscaled and excludes ridge penalties. Objective retains the exact
-solver objective, including its normalization and penalty. Likelihood includes
+Deviance is unscaled and excludes ridge penalties. Objective is the summed model loss excluding ridge penalties. The
+`optimization_objective` diagnostic retains the penalized solver objective; raw
+backend `loss` values also retain it. Gradients and stopping rules refer to that
+penalized optimization objective. Likelihood includes
 distribution normalizing constants and excludes the penalty. Gaussian uses
 RSS/n for the likelihood scale unless an explicit dispersion is supplied.
 Gamma uses the supplied or Pearson n-p dispersion: its reported likelihood is

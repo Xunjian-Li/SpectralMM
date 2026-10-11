@@ -35,3 +35,19 @@ for(name in c("gaussian","bernoulli")) {
  txt<-capture.output(print(m)); stat<-if(name=="gaussian") "t statistic" else "z statistic"
  stopifnot(any(grepl(stat,txt)),any(grepl("p-value",txt)),startsWith(txt[1],"SpectralMM Regression Model"))
 }
+
+set.seed(101); X<-matrix(rnorm(180),60,3); y<-2+X[,1]+rnorm(60)
+loss<-function(r) .5*sum(ifelse(r>=0,.3,.7)*r^2)
+for(flags in list(c(TRUE,FALSE),c(TRUE,TRUE),c(FALSE,FALSE))) {
+ intercept<-flags[1]; penalize<-flags[2]
+ args<-list(X=X,y=y,family=expectile(.3),ridge=2,intercept=intercept,penalize_intercept=penalize,start=rep(.4,3+intercept),inference=FALSE,trace=TRUE)
+ quiet<-do.call(spectralmm_fit,args)
+ txt<-capture.output(logged<-do.call(spectralmm_fit,c(args,list(verbose=TRUE))))
+ expected<-loss(y-predict(quiet,X))
+ b<-if(intercept && !penalize) coef(quiet)[-1] else coef(quiet)
+ stopifnot(identical(coef(quiet),coef(logged)),abs(quiet$objective-expected)<1e-8,
+   abs(tail(quiet$trace$objective,1)-expected)<1e-8,
+   abs(quiet$info$loss-expected-sum(b^2))<1e-8,
+   any(grepl("Objective is the summed model loss excluding ridge penalty.",txt,fixed=TRUE)),
+   !any(grepl("(Intercept)",capture.output(print(quiet)),fixed=TRUE)))
+}

@@ -55,7 +55,8 @@ def inference_lines(family,options,link,inf,names,coef,max_rows=20):
     else: lines.extend([f'Status: {inf["status"]}',f'Reason: {inf["reason"]}'])
     lines.extend(['','Coefficients:',f'{"Term":<24} {"Estimate":>12}'+(f' {"Std. Error":>12} {inf["statistic_type"]+" statistic":>12} {"p-value":>10}' if ok else '')])
     for i in range(min(max_rows,len(coef))):
-        line=f'{names[i]:<24} {coef[i]:12.6f}'
+        term='Intercept' if names[i]=='(Intercept)' else names[i]
+        line=f'{term:<24} {coef[i]:12.6f}'
         if ok:
             pv='<0.0001' if inf['p_value'][i]<.0001 else f'{inf["p_value"][i]:.4f}'
             line+=f' {inf["std_error"][i]:12.6f} {inf["statistic"][i]:12.4f} {pv:>10}'

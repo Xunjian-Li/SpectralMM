@@ -98,7 +98,7 @@ function _show_inference(io::IO, m)
     @printf(io,"%-18s %12s %12s %12s %12s\n","Term","Estimate","Std. Error","Statistic","p-value")
     names=StatsModels.coefnames(m)
     for j in 1:min(20,length(m.coef))
-        @printf(io,"%-18s %12.5g %12.5g %12.5g %12.5g\n",names[j],m.coef[j],r.std_error[j],r.statistic[j],r.p_value[j])
+        @printf(io,"%-18s %12.5g %12.5g %12.5g %12.5g\n",names[j]=="(Intercept)" ? "Intercept" : names[j],m.coef[j],r.std_error[j],r.statistic[j],r.p_value[j])
     end
     length(m.coef)>20 && print(io,"Further rows are available through coeftable(model).")
 end

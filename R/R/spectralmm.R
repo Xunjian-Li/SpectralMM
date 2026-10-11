@@ -149,7 +149,9 @@ print.summary.spectralmm_native <- function(x, digits=5, max_rows=20L, ...) {
   if (x$inference$status!="ok") cat("Inference",x$inference$status,":",x$inference$reason,"\n")
   else {
     cat("Covariance:",x$inference$cov_type," Reference:",x$inference$statistic_type,"\n")
-    print(x$coefficients[seq_len(min(nrow(x$coefficients),max_rows)),,drop=FALSE],digits=digits)
+    tab<-x$coefficients[seq_len(min(nrow(x$coefficients),max_rows)),,drop=FALSE]
+    rownames(tab)[rownames(tab)=="(Intercept)"]<-"Intercept"
+    print(tab,digits=digits)
     if (nrow(x$coefficients)>max_rows) cat("Further rows are available in summary(model)$coefficients.\n")
   }
   invisible(x)
@@ -159,7 +161,7 @@ print.spectralmm_native <- function(x, ...) { print(summary(x), ...); invisible(
 .spectralmm_print_trace <- function(rows, info, solver, rank, family, options, n, p, intercept, gtol, relgtol) {
   label <- if (solver=="spectral") "PCG" else toupper(solver)
   metric <- if (!is.na(utils::tail(rows$loglikelihood,1))) "LogLik" else "Objective"
-  values <- if (metric=="LogLik") rows$loglikelihood else rows$loss
+  values <- if (metric=="LogLik") rows$loglikelihood else rows$objective
   .smm_print_header(family,options,n,p,intercept,solver,rank); cat("\n")
   cat(sprintf("%4s  %12s  %10s  %10s  %5s  %8s  %s\n",
       "Iter",metric,"GradNorm","RelGrad","Inner","Stepsize","Spectrum"))
@@ -171,5 +173,5 @@ print.spectralmm_native <- function(x, ...) { print(summary(x), ...); invisible(
       if (is.finite(r$step)) sprintf("%.2f",r$step) else "-",r$spectrum))
   }
   .smm_print_terminal(info,metric,utils::tail(values,1),gtol,relgtol)
-  cat(if (metric=="LogLik") "LogLik includes distribution constants and excludes ridge; gradients refer to the optimization objective.\n" else "Objective is the summed model loss plus ridge penalty.\n")
+  cat(if (metric=="LogLik") "LogLik includes distribution constants but excludes ridge; gradients refer to the optimization objective.\n" else "Objective is the summed model loss excluding ridge penalty.\n")
 }

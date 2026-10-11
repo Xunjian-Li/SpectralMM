@@ -46,7 +46,7 @@ def _print_trace(history, info, solver, rank, family, options, n, p, intercept, 
     from ._display import model_lines, terminal_lines, stopping_reason
     label = 'PCG' if solver == 'spectral' else solver.upper()
     metric = 'LogLik' if not np.isnan(history[-1]['loglikelihood']) else 'Objective'
-    key = 'loglikelihood' if metric == 'LogLik' else 'loss'
+    key = 'loglikelihood' if metric == 'LogLik' else 'objective'
     print("\n"+"\n".join(model_lines(family,options,n,p,intercept,"C++",solver,rank))+"\n")
     print(f"{'Iter':>4}  {metric:>12}  {'GradNorm':>10}  {'RelGrad':>10}  {'Inner':>5}  {'Stepsize':>8}  Spectrum")
     for r in history:
@@ -55,7 +55,7 @@ def _print_trace(history, info, solver, rank, family, options, n, p, intercept, 
         value = '-' if np.isnan(r[key]) else f"{r[key]:.4e}"
         print(f"{r['iteration']:4d}  {value:>12}  {r['gradnorm']:10.3e}  {r['relgradnorm']:10.3e}  {inner:>5}  {step:>8}  {r['spectrum']}")
     print("\n"+"\n".join(terminal_lines(info,history[-1][key],metric,stopping_reason(info,gtol,relgtol))))
-    print('LogLik includes distribution constants and excludes ridge; gradients refer to the optimization objective.' if metric == 'LogLik' else 'Objective is the summed model loss plus ridge penalty.')
+    print('LogLik includes distribution constants but excludes ridge; gradients refer to the optimization objective.' if metric == 'LogLik' else 'Objective is the summed model loss excluding ridge penalty.')
 
 _REASON_LABELS = ('gradient', 'maximum iterations reached', 'line search failed', 'inner breakdown', 'negligible step', 'stalled near tolerance')
 _REASONS = ('gradient', 'maxiter', 'line_search_failed', 'inner_breakdown', 'negligible_step', 'stalled_step')
@@ -165,6 +165,8 @@ def _load_library(path):
         C.POINTER(_Krylov), C.POINTER(_Stop), _D, C.POINTER(_Info), C.POINTER(_Trace),
         C.c_int64, _I, C.POINTER(C.c_char), C.c_size_t, C.c_int32, C.c_int32, _D, C.c_double]
     lib.smm_fit_logged_stats.restype = C.c_int32
+    lib.smm_fit_logged_metrics.argtypes = lib.smm_fit_logged_stats.argtypes + [_D]
+    lib.smm_fit_logged_metrics.restype = C.c_int32
     lib.smm_infer.argtypes = [C.POINTER(_Matrix), _D, _D, C.POINTER(_Options), C.POINTER(_Family),
         C.c_int32, C.c_int32, C.c_double, _D, C.POINTER(_InferenceInfo), C.POINTER(C.c_char), C.c_size_t]
     lib.smm_infer.restype = C.c_int32
@@ -210,7 +212,7 @@ class Model:
             return f"SpectralMM ({self.family}), {self.coef.size} parameters\nInference {result['status']}: {result['reason']}"
         lines=[f"SpectralMM ({self.family}); covariance={result['cov_type']}; reference={result['statistic_type']}",
                f'Term               Estimate    Std. Error   {result["statistic_type"]} statistic      p-value        lower        upper']
-        names=(['(Intercept)'] if self.fit_intercept else [])+[f'x{i+1}' for i in range(self.coef_.size)]
+        names=(['Intercept'] if self.fit_intercept else [])+[f'x{i+1}' for i in range(self.coef_.size)]
         for i in range(min(max_rows,self.coef.size)):
             vals=[self.coef[i],result['std_error'][i],result['statistic'][i],result['p_value'][i],*result['conf_int'][i]]
             lines.append(f'{names[i]:<16}'+''.join(f'{x:13.6g}' for x in vals))
@@ -393,11 +395,12 @@ def fit(X, y, family='gaussian', *, family_options=None, beta0=None, fit_interce
     capture = trace or verbose
     history = (_Trace * (opts.maxiter + 1))() if capture else None
     likelihood = (C.c_double * (opts.maxiter + 1))() if capture else None
+    objective = (C.c_double * (opts.maxiter + 1))() if capture else None
     size = C.c_int64()
-    code = lib.smm_fit_logged_stats(C.byref(desc), y.ctypes.data_as(_D), bptr, C.byref(opts), C.byref(fp),
+    code = lib.smm_fit_logged_metrics(C.byref(desc), y.ctypes.data_as(_D), bptr, C.byref(opts), C.byref(fp),
         C.byref(settings) if settings is not None else None, C.byref(stops),
         coef.ctypes.data_as(_D), C.byref(info), history, len(history) if capture else 0,
-        C.byref(size), error, len(error), int(fit_intercept), int(penalize_intercept), likelihood, np.nan if dispersion is None else dispersion)
+        C.byref(size), error, len(error), int(fit_intercept), int(penalize_intercept), likelihood, np.nan if dispersion is None else dispersion, objective)
     if code:
         raise ValueError(error.value.decode('utf-8'))
     result = {k: getattr(info, k) for k, _ in _Info._fields_}
@@ -408,6 +411,7 @@ def fit(X, y, family='gaussian', *, family_options=None, beta0=None, fit_interce
     if capture:
         for i, row in enumerate(history):
             row["loglikelihood"] = likelihood[i]
+            row["objective"] = objective[i]
             row["spectrum"] = _SPECTRUM[row["spectrum"]]
     if verbose:
         _print_trace(history, result, solver, opts.rank or (p-1 if p<20 else 10),family,family_options,X.shape[0],p,fit_intercept,opts.gtol,opts.relgtol)

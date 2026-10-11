@@ -67,3 +67,29 @@ end
         @test first(findfirst("Stopping criterion",text))<first(findfirst("Inference:",text))
     end
 end
+
+
+@testset "Unpenalized objective output" begin
+    rng=MersenneTwister(101); X=randn(rng,60,3); y=2 .+ X[:,1] .+ randn(rng,60)
+    loss(r)=.5*sum(ifelse.(r.>=0,.3,.7).*r.^2)
+    for backend in (:julia,:cpp), solver in (:pcg,:cho), (intercept,penalty) in ((true,false),(true,true),(false,false))
+        start=fill(.4,3+intercept)
+        opts=(;family=:expectile,family_options=(q=.3,),backend,solver,intercept,penalize_intercept=penalty,ridge=2.,start,inference=false)
+        quiet=SpectralMM.fit(X,y;opts...)
+        expected=loss(y-predict(quiet,X))
+        @test quiet.objective≈expected
+        b=intercept && !penalty ? coef(quiet)[2:end] : coef(quiet)
+        @test diagnostics(quiet).optimization_objective≈expected+sum(abs2,b)
+        @test !occursin("(Intercept)",sprint(show,MIME"text/plain"(),quiet))
+        mktemp() do path,io
+            logged=redirect_stdout(io) do
+                SpectralMM.fit(X,y;opts...,verbose=true)
+            end
+            flush(io); text=read(path,String)
+            @test coef(logged)==coef(quiet)
+            @test occursin("Objective is the summed model loss excluding ridge penalty.",text)
+            value=parse(Float64,match(r"Final Objective: ([^\n]+)",text).captures[1])
+            @test value≈expected rtol=1e-6
+        end
+    end
+end

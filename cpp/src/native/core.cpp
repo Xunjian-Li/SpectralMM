@@ -349,7 +349,7 @@ void pcg(const Design& X, const Vec& w, const Vec& g, const Spectrum& s,
 
 void fit(const smm_matrix& input, const double *yp, const double *beta0,
          const smm_options& options, double *out, smm_info& info, const smm_krylov_options *krylov, const smm_stop_options *stop,
-         smm_trace_entry *trace, int64_t trace_capacity, int64_t *trace_size, const smm_family_options *family, bool intercept, bool penalize_intercept, smm_trace_detail *detail, double *likelihood, double dispersion) {
+         smm_trace_entry *trace, int64_t trace_capacity, int64_t *trace_size, const smm_family_options *family, bool intercept, bool penalize_intercept, smm_trace_detail *detail, double *likelihood, double dispersion, double *objective) {
     ModelOptions o(options,family);
     SMM_RESET();
     SMM_SCOPE(0);
@@ -420,6 +420,7 @@ void fit(const smm_matrix& input, const double *yp, const double *beta0,
         if (slot && (trace ? trace[slot-1].iteration : detail[slot-1].iteration)==info.iterations) --slot;
         else ++*trace_size;
         if (likelihood) likelihood[slot]=display_loglik(eta,y,o,p,dispersion);
+        if (objective) { auto unpenalized=o; unpenalized.ridge=0.; objective[slot]=loss(eta,y,b,unpenalized); }
         if (trace) trace[slot]={info.iterations,info.inner_iterations,info.restarts,info.corrections,
                                f,g.norm(),g.norm()/scale};
         if (detail) detail[slot]={info.iterations,info.inner_iterations,info.restarts,info.corrections,

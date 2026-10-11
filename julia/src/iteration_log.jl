@@ -48,7 +48,7 @@ function print_failure_iteration(iter,inner_iter,status)
 end
 function print_final_metric(value,relgrad,metric,gradnorm)
     @printf("Final %s: %.6e\nGradient norm:  %.3e\nRelative gradient: %.3e\n",metric,value,gradnorm,relgrad)
-    println(metric=="LogLik" ? "LogLik includes distribution constants and excludes ridge; gradients refer to the optimization objective." : "Objective is the summed model loss plus ridge penalty.")
+    println(metric=="LogLik" ? "LogLik includes distribution constants but excludes ridge; gradients refer to the optimization objective." : "Objective is the summed model loss excluding ridge penalty.")
 end
 function print_convergence(iters,loss,relgrad;metric="Objective",gradnorm=NaN,total_inner=nothing,criterion="gradient tolerance")
     println("\nStatus: converged\nStopping criterion: ",criterion)
@@ -75,7 +75,7 @@ function iteration_metric(f,y,p,dispersion)
     return "LogLik"
 end
 function iteration_value(f,y,eta,p,dispersion,objective)
-    iteration_metric(f,y,p,dispersion)=="Objective" && return objective
+    iteration_metric(f,y,p,dispersion)=="Objective" && return logloss_xb(f,eta,y,view(eta,1:0))
     names=Dict(:GaussianIdentity=>:gaussian,:GaussianLog=>:gaussian_log,
         :BernoulliLogit=>:bernoulli,:BernoulliProbit=>:probit,:BinomialLogit=>:binomial,
         :PoissonLog=>:poisson,:NegativeBinomialLog=>:negative_binomial,

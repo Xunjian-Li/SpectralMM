@@ -89,12 +89,12 @@ with n-p degrees of freedom unless `dispersion` is supplied; its displayed likel
 is a plug-in likelihood, not a profile maximum over dispersion. These scales are
 recomputed at each displayed point. Student-t uses its fixed `nu` and `sigma`.
 For Pseudo-Huber, expectile, smoothed quantile, Tweedie, or fractional count data,
-the column is `Objective`: summed model loss plus ridge penalty, without division
+the column is `Objective`: summed model loss excluding ridge penalty, without division
 by n. Undefined likelihoods at individual points are displayed as `-`.
 
 - Row 0 is the initial point. Later rows report accepted parameter updates.
 - `GradNorm` and `RelGrad` refer to the **optimization objective**, including ridge,
-  not to the displayed normalized likelihood. `RelGrad` uses the initial scale
+  not to the displayed unpenalized loss or normalized likelihood. `RelGrad` uses the initial scale
   1 + initial gradient norm. The stopping rules and optimization objective are unchanged.
 - `Inner` counts inner iterations (one factorization for CHO).
 - `Stepsize` is the outer line-search multiplier, not the norm of the coefficient update.
