@@ -1,9 +1,25 @@
 using Pkg
-Pkg.activate(joinpath(@__DIR__, "..", "julia"))
+Pkg.activate(@__DIR__)
 
 using SpectralMM, BenchmarkTools, DataFrames, GLM
 using LinearAlgebra, Random, Statistics
 import Distributions
+
+# BLAS threads are process-wide; configure explicitly for reproducible benchmarks.
+function configure_benchmark_threads()
+    setting = lowercase(strip(get(ENV, "SPECTRALMM_BENCH_THREADS", "12")))
+    requested = setting == "max" ? Sys.CPU_THREADS : tryparse(Int, setting)
+    requested === nothing && throw(ArgumentError("SPECTRALMM_BENCH_THREADS must be a positive integer or max"))
+    requested > 0 || throw(ArgumentError("SPECTRALMM_BENCH_THREADS must be positive"))
+    BLAS.set_num_threads(requested)
+    println("Julia threads: ", Threads.nthreads(),
+            "; BLAS threads: ", BLAS.get_num_threads(),
+            "; requested BLAS threads: ", requested)
+    println("BLAS configuration: ", BLAS.get_config())
+    return BLAS.get_num_threads()
+end
+
+configure_benchmark_threads()
 
 glm_spec(::SpectralMM.BernoulliLogit)   = (Distributions.Bernoulli(), LogitLink())
 glm_spec(::SpectralMM.BernoulliProbit)  = (Distributions.Bernoulli(), ProbitLink())
@@ -126,14 +142,20 @@ function benchmark_problem(
         verbose=false,
     ))
 
-    add!("Spectral-MM", () -> SpectralMM.spectral_mm(
-        X, y;
-        family=family,
-        beta0=β0,
-        spectral=spectral,
-        inner=inner,
-        outer=outer,
-    ); rank=spectral.k)
+    # Compare both inner solvers with identical remaining options and initialization.
+    inner_options = NamedTuple{fieldnames(typeof(inner))}(
+        Tuple(getfield(inner, key) for key in fieldnames(typeof(inner))))
+    for solver in (:pcg, :mm)
+        solver_inner = typeof(inner)(; merge(inner_options, (; solver))...)
+        add!("Spectral-MM ($(uppercase(string(solver))))", () -> SpectralMM.spectral_mm(
+            X, y;
+            family=family,
+            beta0=β0,
+            spectral=spectral,
+            inner=solver_inner,
+            outer=outer,
+        ); rank=spectral.k)
+    end
 
     for solver in krylov_solvers
         add!(uppercase(string(solver)), () -> SpectralMM.irls_krylov(

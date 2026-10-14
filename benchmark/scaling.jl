@@ -5,8 +5,8 @@ using CSV
 const SEED = 3124
 const T = Float64
 
-ps = [500, 1000, 2000, 5000]
-# ps = [5000]
+# ps = [500, 1000, 2000, 5000]
+ps = [5000]
 
 families = [
     # GLM

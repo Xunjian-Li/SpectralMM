@@ -6,7 +6,7 @@ const SEED = 3124
 const T = Float64
 const NNZ_PER_ROW = 20
 
-ps = [500, 1000, 2000, 5000]
+ps = [5000]
 
 families = [
     SpectralMM.GaussianIdentity(),
