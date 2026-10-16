@@ -2,22 +2,11 @@ args <- commandArgs(trailingOnly=TRUE); out <- args[[1]]; root <- args[[2]]
 library(Matrix); library(jsonlite)
 library(SpectralMM)
 config <- fromJSON(file.path(out,"config.json"),simplifyVector=FALSE)
-params <- list(negative_binomial=list(theta=4),smooth_quantile=list(tau=.25,smoothing=.1),expectile=list(tau=.25),pseudo_huber=list(delta=1),student_t=list(nu=4,sigma=1))
-read_num <- function(path,n) readBin(path,"double",n=n,endian="little")
-read_int <- function(path,n) readBin(path,"integer",n=n,endian="little")
-solvers <- c("Spectral-MM (PCG)"="pcg","Spectral-MM (MM)"="mm",CG="cg",CGLS="cgls",CRLS="crls",LSQR="lsqr",LSMR="lsmr")
+source(file.path(root,"benchmark/native/common.R"))
 rows <- list(); samples <- list()
 for(case in config$cases) {
- base <- file.path(out,"data",case$id); n <- case$n; p <- case$p_total
- y <- read_num(paste0(base,"_y.bin"),n); b0 <- read_num(paste0(base,"_beta0.bin"),p)
- if(case$storage=="dense") X <- matrix(read_num(paste0(base,"_X.bin"),n*p),nrow=n) else
-  X <- new("dgCMatrix",Dim=as.integer(c(n,p)),x=read_num(paste0(base,"_values.bin"),case$nnz),i=read_int(paste0(base,"_indices.bin"),case$nnz),p=read_int(paste0(base,"_indptr.bin"),p+1))
- fp <- params[[case$family]]; if(is.null(fp)) fp <- list()
- run <- function(method) spectralmm_fit(inference=FALSE, intercept=FALSE, X,y,case$family,family_options=fp,beta0=b0,solver=solvers[[method]],
-   rank=config$rank,krylovdim=config$krylovdim,floor=config$floor,ridge=0,maxiter=config$maxiter,inner_maxiter=config$inner_maxiter,eta_max=config$eta_max,
-   correction_tol=config$correction_tol,resid_tol=config$resid_tol,gtol=config$gtol,relgtol=config$relgtol,nesterov=TRUE,
-   krylov_rtol=config$krylov_rtol,krylov_atol=config$krylov_atol,
-   accept_negligible=config$accept_negligible,accept_stalled=config$accept_stalled)
+ input <- load_case(out,case); X <- input$X; y <- input$y; b0 <- input$b0
+ run <- function(method) native_fit(X,y,case$family,b0,method,config)
  batches <- list(); results <- list(); times <- setNames(lapply(solvers,function(x) numeric()),names(solvers))
  for(method in names(solvers)) {
   start <- proc.time()[["elapsed"]]; run(method); warm <- proc.time()[["elapsed"]]-start

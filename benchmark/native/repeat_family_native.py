@@ -1,5 +1,6 @@
 """Round-robin native timings after the full family/GLM run."""
-from family_performance import *
+from common import *
+import shutil
 if __name__=='__main__':
  parser=argparse.ArgumentParser()
  parser.add_argument('--output',type=Path,required=True)

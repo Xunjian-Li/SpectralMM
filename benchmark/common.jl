@@ -6,8 +6,8 @@ using LinearAlgebra, Random, Statistics
 import Distributions
 
 # BLAS threads are process-wide; configure explicitly for reproducible benchmarks.
-function configure_benchmark_threads()
-    setting = lowercase(strip(get(ENV, "SPECTRALMM_BENCH_THREADS", "12")))
+function configure_benchmark_threads(setting=get(ENV, "SPECTRALMM_BENCH_THREADS", "12"))
+    setting = lowercase(strip(setting))
     requested = setting == "max" ? Sys.CPU_THREADS : tryparse(Int, setting)
     requested === nothing && throw(ArgumentError("SPECTRALMM_BENCH_THREADS must be a positive integer or max"))
     requested > 0 || throw(ArgumentError("SPECTRALMM_BENCH_THREADS must be positive"))

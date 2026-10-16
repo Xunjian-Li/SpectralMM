@@ -1,146 +1,94 @@
 # Benchmarks
 
-Run all commands below from the **repository root**, not from `benchmark/`.
-There are two separate experiment suites: Python/R comparisons using the C++
-core, and the original pure-Julia comparisons. They have different entry points
-and parameter settings.
+There are two experiments. Run all commands from the repository root.
+Both include **Spectral-MM (PCG)** and **Spectral-MM (MM)**, dense and sparse
+inputs, six GLM families and four non-GLM losses.
 
-## Python and R: current workflow
+| Experiment | Entry point | Parameters | Default size |
+|---|---|---|---|
+| Pure Julia | `run_julia.jl` | [julia_settings.jl](julia_settings.jl) | p = 5000 for dense and sparse |
+| Python and R, C++ backend | `run_python_r.py` | [native/settings.json](native/settings.json) | p = 1000 for dense and sparse |
 
-Use a Python environment containing NumPy, SciPy, pandas, statsmodels, patsy and
-threadpoolctl. The local environment used for these experiments is
-`/Users/caleblee/miniconda3/bin/python`; use that executable instead of `python`
-if your shell's Python does not have these dependencies. Native builds also
-require CMake, a C++17 compiler, R, and the R dependencies listed in the
-[detailed instructions](native/README.md#requirements).
+Here p excludes the intercept; n = 2p, and the fitted model has p + 1
+parameters. These retain the existing experiments' solver settings and stopping
+rules; their timings are not a controlled backend-only comparison.
 
-On this machine, reuse the retained input data:
+## 1. Julia
 
-```sh
-python benchmark/native/run_experiment.py \
-  --settings benchmark/native/settings.json \
-  --inputs benchmark/data/p1000 \
-  --output benchmark/runs/p1000-threads12-new
-```
-
-Choose a fresh output directory for every experiment. The runner automatically
-builds the current C++ source, installs R into an isolated local library, runs
-both interfaces sequentially, and exports tables. It records source, binary,
-input and result hashes to prevent mixing incompatible timing sessions.
-
-The binary inputs are **local and ignored by Git**. On a fresh clone, first
-prepare Julia and then omit `--inputs` to generate them:
-
-```sh
-julia --project=julia -e 'using Pkg; Pkg.instantiate()'
-python benchmark/native/run_experiment.py \
-  --settings benchmark/native/settings.json \
-  --output benchmark/runs/generated-p1000
-```
-
-Default settings are in [native/settings.json](native/settings.json): 1000
-predictors, 2000 observations, one additional intercept, 12 requested threads,
-three initial timing samples and five native repeat rounds. Both PCG and MM are
-included, along with CG/CGLS/CRLS/LSQR/LSMR and applicable official GLM comparators.
-Cholesky is not included in this Python/R suite.
-
-To customize a run without editing the shared defaults:
-
-```sh
-cp benchmark/native/settings.json benchmark/settings.local.json
-# Edit benchmark/settings.local.json, then:
-python benchmark/native/run_experiment.py \
-  --settings benchmark/settings.local.json \
-  --inputs benchmark/data/p1000 \
-  --output benchmark/runs/custom-run
-```
-
-Change `threads` to a positive integer or `"max"`. If `size` changes, omit
-`--inputs` or provide data generated for that exact size. See the
-[parameter reference](native/README.md#change-experiment-parameters) for all
-settings. This JSON does not control the original Julia scripts below.
-
-## Saved results and LaTeX export
-
-- [Latest imported initial measurements](native/results/initial-strict-12-2026-10-15/README.md)
-- [Latest tables and report](native/results/initial-strict-12-2026-10-15/latex/report.md)
-- [Standalone Overleaf source](native/results/initial-strict-12-2026-10-15/latex/performance_tables.tex)
-
-Export those saved measurements without fitting or compiling native code:
-
-```sh
-python benchmark/native/export_latex.py \
-  --results benchmark/native/results/initial-strict-12-2026-10-15 \
-  --source initial
-```
-
-For a new complete runner experiment, `latex/` contains initial-only results and
-`latex_repeat/` contains verified native repeat timings plus the matching initial
-GLM timings. Historical initial and repeat results must not be mixed across
-versions; the latest imported measurements have the provenance limitations
-stated in their README.
-
-## Original pure-Julia comparisons
-
-These scripts use the local Julia package and a separate benchmark environment:
+Install the benchmark dependencies once, then run:
 
 ```sh
 julia --project=benchmark benchmark/setup.jl
-julia --threads=12 --project=benchmark benchmark/scaling.jl
-# Run separately when the dense experiment has finished:
-julia --threads=12 --project=benchmark benchmark/scaling_sparse.jl
+julia --threads=12 --project=benchmark benchmark/run_julia.jl \
+  --output benchmark/runs/julia-new
 ```
 
-Both scripts currently set `ps = [5000]`, `n = 2p`, and add an intercept,
-so there are 10,000 observations and 5,001 fitted parameters. Edit `ps` and the
-option constructors in the relevant script to change this suite's settings.
-The sparse script uses approximately 20 nonzeros per row. Its Cholesky reference
-and Cholesky comparator allocate dense workspaces, so this is not an entirely
-matrix-free sparse experiment; increasing p substantially can exhaust memory.
+Use `--storage dense` or `--storage sparse` to run only one design type.
+Edit `julia_settings.jl` to change `dense_sizes`, `sparse_sizes`, `samples`,
+BLAS `threads`, or solver tolerances. A custom settings file can be supplied
+with `--settings path/to/settings.jl`.
 
-Each script **overwrites** its CSV only after the entire run finishes:
+Outputs: `dense.csv`, `sparse.csv` and `settings.txt` in the chosen directory.
+Comparators are Cholesky, CGLS, CRLS, LSQR, LSMR and GLM.jl where applicable.
+The Cholesky comparator and reference use dense workspaces even for sparse
+inputs; take memory requirements into account before increasing p.
 
-- `benchmark/scaling_results.csv`
-- `benchmark/scaling_sparse_results.csv`
+## 2. Python and R
 
-Save a copy before rerunning if you need to retain the previous measurements.
-These scripts do not use the Python/R runner's fresh-output protection.
-
-For a notebook, restart the kernel before switching package environments, set
-the working directory to the repository root, then run:
-
-```julia
-include("benchmark/setup.jl")
-ENV["SPECTRALMM_BENCH_THREADS"] = "12" # Or "max".
-include("benchmark/scaling.jl")
-```
-
-`include("benchmark/common.jl")` only activates the environment, configures BLAS
-and defines helpers; it does not execute the benchmark or update a CSV.
-The Julia scripts default to 12 BLAS threads. For all logical CPUs on macOS:
+Requirements: Python with NumPy, SciPy, pandas, statsmodels, patsy and
+threadpoolctl; R with Rcpp, RcppEigen, Matrix, jsonlite and MASS; CMake and a
+C++17 compiler. Julia generates new inputs; prepare it once:
 
 ```sh
-SPECTRALMM_BENCH_THREADS=max julia --threads="$(sysctl -n hw.logicalcpu)" \
-  --project=benchmark benchmark/scaling.jl
+julia --project=julia -e 'using Pkg; Pkg.instantiate()'
+python benchmark/run_python_r.py --output benchmark/runs/python-r-new
 ```
 
-Julia worker threads and BLAS threads are separate settings. Loading SpectralMM
-does not change either. A requested thread count does not guarantee that every
-operation uses all threads, or that more threads are faster.
+The runner builds the current C++ source automatically, installs R in an isolated
+local library, generates inputs, runs Python and R sequentially, and exports
+LaTeX tables. Both languages use identical input files and initial coefficients.
+Comparators are CG, CGLS, CRLS, LSQR, LSMR and applicable statsmodels/R GLM fits.
 
-## Directory layout
+To reuse the retained local p = 1000 data instead of generating it:
 
-| Path within `benchmark/` | Purpose |
+```sh
+python benchmark/run_python_r.py \
+  --inputs benchmark/data/p1000 --output benchmark/runs/python-r-reused
+```
+
+Edit `native/settings.json`, or copy it and pass `--settings path/to/settings.json`.
+Change `size` for p, `threads` for BLAS threads, `samples`/`repeat_samples` for
+timing repetitions, and `gtol`/`relgtol` for native gradient tolerances.
+When changing `size`, omit `--inputs` or supply matching data.
+See the [detailed parameter and stopping-rule notes](native/README.md).
+
+Outputs include `python.csv`, `R.csv`, raw samples, configuration and provenance.
+`latex/` contains initial measurements; `latex_repeat/` contains verified native
+repeat measurements with matching GLM baselines. GLM baselines keep their own
+deviance-based stopping rules with the configured tolerance; they do not use
+the native solvers' gradient stopping rule.
+
+## Data, results and threads
+
+Always choose a **new output directory** for a new experiment.
+Both experiments request 12 BLAS threads by default. Set the settings file's
+`threads` to `"max"` for all logical CPUs. For Julia worker threads as well,
+use `julia --threads=auto`; worker and BLAS thread counts are separate.
+`SPECTRALMM_BENCH_THREADS` overrides the Julia BLAS setting.
+
+| Location | Contents |
 |---|---|
-| `native/` | Python/R runners, shared settings, exporters and instructions |
-| `native/results/` | Curated result archives, raw timing records and tables |
-| `data/p1000/` | Local retained fixtures; ignored by Git |
-| `build/` | Automatically created C++ build and isolated R installation; ignored |
-| `runs/` | New experiment outputs; ignored |
-| `scaling*.jl`, `common.jl` | Original Julia suite |
-| `scaling*_results.csv`, `*_glm.tex`, `*_nonglm.tex` | Saved Julia results and table fragments |
+| `data/p1000/` | Retained local binary inputs; ignored by Git, reproducible through the runner |
+| `build/` | Automatic native builds and isolated R library; ignored by Git |
+| `runs/` | New experiment outputs; ignored by Git |
+| `native/results/` | Archived Python/R measurements, provenance and tables |
+| `scaling*_results.csv`, `*_glm.tex`, `*_nonglm.tex` | Saved Julia results |
 
-The root-level `build/` is no longer used by this benchmark workflow.
-Native solvers and official GLM implementations retain different stopping rules;
-final gradients are evaluated using a common definition. See the
-[interpretation notes](native/README.md#interpretation) before reporting speedups.
+[Latest Python/R tables](native/results/initial-strict-12-2026-10-15/latex/performance_tables.tex)
+and [their provenance notes](native/results/initial-strict-12-2026-10-15/README.md)
+remain unchanged. Do not mix archived timings from different runs or code versions.
+
+Implementation helpers remain in `common.jl` and `native/`. The old
+`scaling.jl` and `scaling_sparse.jl` paths are compatibility wrappers around the
+shared Julia runner; they still overwrite their original CSV destinations.
+Use the two entry points above for new experiments.

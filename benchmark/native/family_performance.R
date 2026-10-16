@@ -1,4 +1,4 @@
-# Invoked by run.py so Python and R share exact binary input fixtures.
+# Invoked by family_performance.py with shared binary input fixtures.
 args <- commandArgs(trailingOnly=TRUE)
 out <- normalizePath(args[[1]]); root <- normalizePath(args[[2]])
 library(Matrix)
@@ -8,27 +8,15 @@ config <- fromJSON(file.path(out,"config.json"),simplifyVector=FALSE)
 capture.output(sessionInfo(),file=file.path(out,"environment_R.txt"))
 cat("\nLAPACK (La_library): ",La_library(),"\n",file=file.path(out,"environment_R.txt"),append=TRUE)
 cat("Thread environment: ",paste(Sys.getenv(c("OPENBLAS_NUM_THREADS","OMP_NUM_THREADS","MKL_NUM_THREADS","VECLIB_MAXIMUM_THREADS")),collapse=","),"\n",file=file.path(out,"environment_R.txt"),append=TRUE)
-read_num <- function(path,n) readBin(path,what="double",n=n,size=8,endian="little")
-read_int <- function(path,n) readBin(path,what="integer",n=n,size=4,endian="little")
-params <- list(negative_binomial=list(theta=4),smooth_quantile=list(tau=.25,smoothing=.1),
-  expectile=list(tau=.25),pseudo_huber=list(delta=1),student_t=list(nu=4,sigma=1))
-family_params <- function(family) { p <- params[[family]]; if(is.null(p)) list() else p }
+source(file.path(root,"benchmark/native/common.R"))
 score <- function(X,y,b,family,scale) {
   i <- spectralmm_fit(inference=FALSE, intercept=FALSE, X,y,family,family_options=family_params(family),beta0=b,gtol=1e100)$info
   c(loss=i$loss,gradnorm=i$gradnorm,relgrad=i$gradnorm/scale)
 }
-methods <- c("Spectral-MM (PCG)","Spectral-MM (MM)","CG","CGLS","CRLS","LSQR","LSMR","GLM")
-solvers <- setNames(c("pcg","mm","cg","cgls","crls","lsqr","lsmr"),methods[1:7])
 rows <- list(); samples <- list()
 for (case in config$cases) {
-  base <- file.path(out,"data",case$id); n <- case$n; p <- case$p_total
-  y <- read_num(paste0(base,"_y.bin"),n)
-  if (case$storage=="dense") X <- matrix(read_num(paste0(base,"_X.bin"),n*p),nrow=n) else
-    X <- new("dgCMatrix",Dim=as.integer(c(n,p)),
-             x=read_num(paste0(base,"_values.bin"),case$nnz),
-             i=read_int(paste0(base,"_indices.bin"),case$nnz),
-             p=read_int(paste0(base,"_indptr.bin"),p+1))
-  b0 <- read_num(paste0(base,"_beta0.bin"),p)
+  n <- case$n; p <- case$p_total
+  input <- load_case(out,case); X <- input$X; y <- input$y; b0 <- input$b0
   scale <- 1+score(X,y,b0,case$family,1)[["gradnorm"]]
   set.seed(case$seed+17)
   coefs <- list(); case_rows <- list()
@@ -47,12 +35,7 @@ for (case in config$cases) {
       m <- glm.fit(XX,y,start=b0,family=fam,control=glm.control(epsilon=config$glm_tolerance,maxit=config$maxiter))
       list(coef=coef(m),converged=m$converged,outer=m$iter,inner=NA_integer_)
     } else function() {
-      m <- spectralmm_fit(inference=FALSE, intercept=FALSE, X,y,case$family,family_options=family_params(case$family),beta0=b0,solver=solvers[[method]],rank=config$rank,
-                floor=if(is.null(config$floor)) 1e-6 else config$floor,
-                krylovdim=config$krylovdim,maxiter=config$maxiter,inner_maxiter=config$inner_maxiter,
-                gtol=config$gtol,relgtol=config$relgtol,eta_max=config$eta_max,
-                correction_tol=config$correction_tol,resid_tol=config$resid_tol,
-                krylov_rtol=config$krylov_rtol,krylov_atol=config$krylov_atol,ridge=0,nesterov=TRUE,accept_negligible=config$accept_negligible,accept_stalled=config$accept_stalled)
+      m <- native_fit(X,y,case$family,b0,method,config)
       list(coef=coef(m),converged=m$info$converged,outer=m$info$iterations,inner=m$info$inner_iterations)
     }
     row <- tryCatch({
@@ -88,7 +71,7 @@ for (case in config$cases) {
     case_rows[[length(case_rows)+1]] <- row
     cat(sprintf("R %s %s: %.3f ms, quality=%s\n",case$id,method,row$median_ms,row$quality_pass)); flush.console()
   }
-  ref <- read_num(paste0(base,"_julia_coef.bin"),p)
+  ref <- read_num(file.path(out,"data",paste0(case$id,"_julia_coef.bin")),p)
   for(j in seq_along(case_rows)) {
     method <- case_rows[[j]]$method
     if(!is.null(coefs[[method]])) case_rows[[j]]$relative_coef_error <- sqrt(sum((coefs[[method]]-ref)^2))/max(1,sqrt(sum(ref^2)))

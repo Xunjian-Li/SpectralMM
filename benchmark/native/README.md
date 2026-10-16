@@ -42,7 +42,7 @@ The retained input binaries are local, ignored build artifacts at
 They are not shipped in Git. Run:
 
 ```sh
-python benchmark/native/run_experiment.py \
+python benchmark/run_python_r.py \
   --settings benchmark/native/settings.json \
   --inputs benchmark/data/p1000 \
   --output benchmark/runs/p1000-threads12-new
@@ -64,7 +64,7 @@ The Julia fixture-generation baseline is not included in the Python/R tables.
 On another machine, or for a different size, omit `--inputs` to regenerate data:
 
 ```sh
-python benchmark/native/run_experiment.py \
+python benchmark/run_python_r.py \
   --settings benchmark/native/settings.json \
   --output benchmark/runs/regenerated-p1000
 ```
@@ -109,9 +109,9 @@ guarantee that each BLAS provider actually uses that many workers.
 ## Run in stages and export
 
 ```sh
-python benchmark/native/run_experiment.py --output benchmark/runs/new-run \
+python benchmark/run_python_r.py --output benchmark/runs/new-run \
   --inputs benchmark/data/p1000 --stage initial
-python benchmark/native/run_experiment.py --output benchmark/runs/new-run \
+python benchmark/run_python_r.py --output benchmark/runs/new-run \
   --stage repeat
 ```
 

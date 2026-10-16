@@ -57,3 +57,9 @@ def native_options(config):
     result={key:config[key] for key in keys}
     result.update(ridge=0.,nesterov=True,fit_intercept=False,inference=False)
     return result
+
+PARAMS={'negative_binomial': {'theta':4.}, 'smooth_quantile':{'tau':.25,'smoothing':.1},
+        'expectile':{'tau':.25},'pseudo_huber':{'delta':1.},'student_t':{'nu':4.,'sigma':1.}}
+FAMILIES=['gaussian','bernoulli','probit','poisson','gamma','negative_binomial',
+          'smooth_quantile','expectile','pseudo_huber','student_t']
+GLM_FAMILIES=set(FAMILIES[:6])

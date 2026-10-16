@@ -2,11 +2,6 @@
 """Benchmark article-style Julia-generated inputs, all article families."""
 from common import *
 import shutil
-PARAMS={'negative_binomial': {'theta':4.}, 'smooth_quantile':{'tau':.25,'smoothing':.1},
-        'expectile':{'tau':.25},'pseudo_huber':{'delta':1.},'student_t':{'nu':4.,'sigma':1.}}
-FAMILIES=['gaussian','bernoulli','probit','poisson','gamma','negative_binomial',
-          'smooth_quantile','expectile','pseudo_huber','student_t']
-GLM_FAMILIES=set(FAMILIES[:6])
 FIELDS=FIELDS+['termination']
 def glm_family(family):
     return {'gaussian':lambda:sm.families.Gaussian(), 'bernoulli':lambda:sm.families.Binomial(),
