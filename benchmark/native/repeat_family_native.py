@@ -2,23 +2,22 @@
 from family_performance import *
 if __name__=='__main__':
  parser=argparse.ArgumentParser()
- parser.add_argument('--output',type=Path,default=ROOT/'benchmark/native/results/family-performance')
+ parser.add_argument('--output',type=Path,required=True)
  parser.add_argument('--language',choices=['both','python','R'],default='both')
  args=parser.parse_args(); out=args.output.resolve()
  config=json.loads((out/'config.json').read_text()); rows=[]; samples=[]
- with threadpool_limits(limits=1):
+ with threadpool_limits(limits=config['threads']):
   for case in (config['cases'] if args.language in ('both','python') else []):
    X,y=load_case(out,case); b0=np.fromfile(out/'data'/f"{case['id']}_beta0.bin",dtype='<f8')
    def run(method):
-    return fit(X,y,case['family'],family_options=PARAMS.get(case['family'],{}),beta0=b0,solver=SOLVERS[method],
-      rank=5,krylovdim=12,floor=1e-6,ridge=0.,maxiter=1000,inner_maxiter=200,eta_max=.6,
-      correction_tol=.05,resid_tol=.5,gtol=1e-6,relgtol=1e-8,nesterov=True, fit_intercept=False, inference=False)
+    return fit(X,y,case['family'],family_options=PARAMS.get(case['family'],{}),beta0=b0,
+               solver=SOLVERS[method],**native_options(config))
    methods=METHODS[:-1]; batches={}; results={}; times={m:[] for m in methods}
    for method in methods:
     start=time.perf_counter(); run(method); warm=time.perf_counter()-start
-    batches[method]=max(1,min(50,int(np.ceil(.05/max(warm,1e-6)))))
+    batches[method]=max(1,min(config['max_batch'],int(np.ceil(config['min_sample_seconds']/max(warm,1e-6)))))
    rng=np.random.default_rng(718)
-   for sample in range(5):
+   for sample in range(config['repeat_samples']):
     for method in rng.permutation(methods):
      start=time.perf_counter()
      for _ in range(batches[method]): results[method]=run(method)

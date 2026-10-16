@@ -5,7 +5,7 @@ config <- fromJSON(file.path(out,"config.json"),simplifyVector=FALSE)
 params <- list(negative_binomial=list(theta=4),smooth_quantile=list(tau=.25,smoothing=.1),expectile=list(tau=.25),pseudo_huber=list(delta=1),student_t=list(nu=4,sigma=1))
 read_num <- function(path,n) readBin(path,"double",n=n,endian="little")
 read_int <- function(path,n) readBin(path,"integer",n=n,endian="little")
-solvers <- c("Spectral-MM"="spectral",CG="cg",CGLS="cgls",CRLS="crls",LSQR="lsqr",LSMR="lsmr")
+solvers <- c("Spectral-MM (PCG)"="pcg","Spectral-MM (MM)"="mm",CG="cg",CGLS="cgls",CRLS="crls",LSQR="lsqr",LSMR="lsmr")
 rows <- list(); samples <- list()
 for(case in config$cases) {
  base <- file.path(out,"data",case$id); n <- case$n; p <- case$p_total
@@ -14,15 +14,17 @@ for(case in config$cases) {
   X <- new("dgCMatrix",Dim=as.integer(c(n,p)),x=read_num(paste0(base,"_values.bin"),case$nnz),i=read_int(paste0(base,"_indices.bin"),case$nnz),p=read_int(paste0(base,"_indptr.bin"),p+1))
  fp <- params[[case$family]]; if(is.null(fp)) fp <- list()
  run <- function(method) spectralmm_fit(inference=FALSE, intercept=FALSE, X,y,case$family,family_options=fp,beta0=b0,solver=solvers[[method]],
-   rank=5,krylovdim=12,floor=1e-6,ridge=0,maxiter=1000,inner_maxiter=200,eta_max=.6,
-   correction_tol=.05,resid_tol=.5,gtol=1e-6,relgtol=1e-8,nesterov=TRUE)
+   rank=config$rank,krylovdim=config$krylovdim,floor=config$floor,ridge=0,maxiter=config$maxiter,inner_maxiter=config$inner_maxiter,eta_max=config$eta_max,
+   correction_tol=config$correction_tol,resid_tol=config$resid_tol,gtol=config$gtol,relgtol=config$relgtol,nesterov=TRUE,
+   krylov_rtol=config$krylov_rtol,krylov_atol=config$krylov_atol,
+   accept_negligible=config$accept_negligible,accept_stalled=config$accept_stalled)
  batches <- list(); results <- list(); times <- setNames(lapply(solvers,function(x) numeric()),names(solvers))
  for(method in names(solvers)) {
   start <- proc.time()[["elapsed"]]; run(method); warm <- proc.time()[["elapsed"]]-start
-  batches[[method]] <- max(1,min(50,ceiling(.05/max(.001,warm))))
+  batches[[method]] <- max(1,min(config$max_batch,ceiling(config$min_sample_seconds/max(.001,warm))))
  }
  set.seed(718)
- for(sample in 1:5) for(method in sample(names(solvers))) {
+ for(sample in seq_len(config$repeat_samples)) for(method in sample(names(solvers))) {
   start <- proc.time()[["elapsed"]]
   for(k in seq_len(batches[[method]])) results[[method]] <- run(method)
   ms <- 1000*(proc.time()[["elapsed"]]-start)/batches[[method]]

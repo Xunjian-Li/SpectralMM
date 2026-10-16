@@ -1,70 +1,159 @@
-# Native benchmark
+# Python and R benchmarks
 
-The retained benchmark covers the article's six GLM and four residual models,
-with shared Julia-generated data, dense/CSC designs, Python/R native Spectral-PCG
-and five Krylov solvers, applicable GLM references, and original Julia Spectral-MM.
+Run commands from the repository root. These experiments compare
+Spectral-MM (PCG), Spectral-MM (MM), CG, CGLS, CRLS, LSQR and LSMR, plus
+statsmodels.GLM / R glm.fit for the six applicable GLM families. Ten models
+are tested with both dense and sparse designs. Cholesky is not included.
 
-- [Final report](results/family-performance/report.md)
-- [Python LaTeX tables](results/family-performance/latex/python_tables.tex)
-- [R LaTeX tables](results/family-performance/latex/R_tables.tex)
-- [English LaTeX usage and reproduction guide](../../docs/usage_and_benchmark.tex)
+## Saved results
 
-## Reproduce without overwriting the archive
+- [Latest initial-run tables and report](results/initial-strict-12-2026-10-15/latex/report.md)
+- [Standalone Overleaf document](results/initial-strict-12-2026-10-15/latex/performance_tables.tex)
+- [Latest result provenance and limitations](results/initial-strict-12-2026-10-15/README.md)
+- `results/all-strict-12-2026-10-15/`: earlier strict-stopping measurements and tables, before the latest MM rerun. Do not combine with the latest initial results.
+- `results/pcg-mm-2026-10-15/`: earlier two-method run with step stopping enabled.
+- `results/family-performance/`: original historical archive.
 
-Run from the repository root after building the core and installing dependencies
-as described in `cpp/README.md`. Julia, Python and Rscript must be on PATH.
+The latest imported initial results have 152 rows per language (304 combined).
+They contain three timing samples per method. The temporary directory's five-round
+CSV files were older and are intentionally not copied into the latest directory.
+No historical numbers were remeasured or silently replaced during consolidation.
+
+## Requirements
+
+Use a Python environment with NumPy, SciPy, pandas, statsmodels, patsy and
+threadpoolctl. R needs Rcpp, RcppEigen, Matrix, jsonlite and MASS. CMake and a C++17
+compiler are needed for the local builds. Eigen is detected at common system
+locations or fetched by CMake; `EIGEN3_INCLUDE_DIR` can specify local headers.
+Julia is needed only when generating new input data. Prepare its environment once:
 
 ```sh
-BENCH_OUT=build/family-benchmark
-julia --compiled-modules=existing --project=julia benchmark/native/family_performance.jl 1000 "$BENCH_OUT"
-python3 benchmark/native/family_performance.py --size 1000 --output "$BENCH_OUT" --language both
-python3 benchmark/native/repeat_family_native.py --output "$BENCH_OUT" --language both
-python3 benchmark/native/report_family_performance.py --output "$BENCH_OUT"
-python3 benchmark/native/export_latex.py --results "$BENCH_OUT"
+julia --project=julia -e 'using Pkg; Pkg.instantiate()'
 ```
 
-The argument 1000 is the number of features excluding the intercept; n=2000 and
-p_total=1001. To run n=10000, p_total=5001, change both size arguments to 5000.
-GLM references may take a long time when they hit the 1000-iteration limit.
-Use `--language python` or `--language R` for a single interface. Both are needed
-for the combined report. Input data were removed from the retained archive;
-regenerate them with the Julia script before a new timing run.
+Use the same Python executable for setup and experiments. On the current machine,
+`/Users/caleblee/miniconda3/bin/python` has the required Python dependencies.
+Changing code does not update an already loaded notebook; use fresh processes.
 
-## Files
+## Reproduce the current 1000-predictor experiment
 
-- `common.py`: shared imports, binary input loader and result writer.
-- `family_performance.jl`: data/initialization generation and Julia baseline.
-- `family_performance.py` / `.R`: first Python/R runs, including GLM references.
-- `repeat_family_native.py` / `.R`: five-round interleaved native timing.
-- `report_family_performance.py`: report from recorded results.
-- `export_latex.py`: two four-table documents and Julia supplement.
+The retained input binaries are local, ignored build artifacts at
+`benchmark/data/p1000/data/`. They were copied from the completed experiment.
+They are not shipped in Git. Run:
 
-The archive retains original and repeat summaries, per-sample timings, settings,
-environment metadata and LaTeX results. Keeping the original GLM/Julia timing
-sessions explicit prevents mixing them silently with the later native repeat.
+```sh
+python benchmark/native/run_experiment.py \
+  --settings benchmark/native/settings.json \
+  --inputs benchmark/data/p1000 \
+  --output benchmark/runs/p1000-threads12-new
+```
 
-## Intercept compatibility
+The output must be new. The runner performs these steps in order:
 
-Shared benchmark matrices already contain an intercept column. The benchmark
-scripts explicitly use `fit_intercept=False` / `intercept=FALSE` so the new
-wrapper defaults do not add a duplicate column. The archived results are retained
-measurements, not a timing run of the updated implementation. Re-run the commands
-above into a fresh output directory to measure the current code.
+1. Synchronize the shared C++ source into the three language package trees.
+2. Incrementally build a release C++ library and install R into an isolated local library under `benchmark/build/`. R installation is skipped when its source fingerprint is unchanged.
+3. Load Python from this checkout and R from that isolated library, ignoring old temporary library paths.
+4. Use the existing binary fixtures, including identical initial coefficients for every method.
+5. Run Python and R sequentially: three initial timing samples for all methods, then five interleaved rounds for native methods.
+6. Save source/binary/input hashes, settings and environment records; export initial-only tables and a separate verified repeat-based set.
 
-Native benchmark fits explicitly set `inference=False` / `inference=FALSE`.
-They measure optimization without covariance/statistical reporting. Inference
-cost should be measured separately if required.
+No changes are made to the user's global Python/R installation. The runner may
+synchronize package source copies and writes build products under ignored `benchmark/build/`.
+The Julia fixture-generation baseline is not included in the Python/R tables.
 
-## Original Julia versus the native Julia wrapper
+On another machine, or for a different size, omit `--inputs` to regenerate data:
 
-Run `julia --project=julia benchmark/native/compare_julia_native.jl` from the repository
-root for warmed, matched-configuration comparisons. See the retained
-[wrapper timing investigation](results/julia-wrapper-timing.md) for measured
-loading overhead, the caching fix, and limitations.
+```sh
+python benchmark/native/run_experiment.py \
+  --settings benchmark/native/settings.json \
+  --output benchmark/runs/regenerated-p1000
+```
 
-The subsequent [wrapper optimizations](results/wrapper-optimizations.md) record
-Python/R/Julia validation, local before/after timings and Julia allocation changes.
+## Change experiment parameters
 
-The current local native library enables Apple Accelerate BLAS. See the
-[BLAS comparison](results/blas-comparison.md) for numerical checks and timings
-against the preceding Eigen-only library.
+Copy and edit the JSON settings; do not edit separate Python and R constants:
+
+```sh
+cp benchmark/native/settings.json benchmark/settings.local.json
+```
+
+| Setting | Meaning | Default |
+|---|---|---:|
+| `size` | Predictors excluding intercept; n=2*size, total parameters=size+1 | 1000 |
+| `threads` | Requested BLAS and Julia threads; integer or `"max"` | 12 |
+| `samples` | Initial measured samples, including GLM | 3 |
+| `repeat_samples` | Interleaved native timing rounds | 5 |
+| `rank`, `krylovdim` | Spectral rank and initial Lanczos dimension | 5, 12 |
+| `maxiter`, `inner_maxiter` | Outer and inner iteration limits | 1000, 200 |
+| `gtol`, `relgtol` | Absolute and relative gradient thresholds | 1e-6, 1e-8 |
+| `eta_max` | Inner forcing tolerance | 0.6 |
+| `floor` | Spectral regularization rho | 1e-6 |
+| `correction_tol`, `resid_tol` | Spectral update tolerances | 0.05, 0.5 |
+| `krylov_rtol`, `krylov_atol` | Other Krylov methods' inner tolerances | 1e-4, 1e-8 |
+| `glm_tolerance` | Deviance tolerance passed to official GLM implementations | 1e-12 |
+| `accept_negligible`, `accept_stalled` | Native step-based acceptance | false, false |
+| `min_sample_seconds`, `max_batch` | Timing batch calibration controls | 0.05, 1000 |
+
+For example, change `threads` to 1 and keep all other fields unchanged to compare
+thread counts. Use a different `--output` for each run. If `size` changes, omit
+`--inputs` or supply data generated for that exact size. Model families, fixed
+family parameters, and seeds are defined in `family_performance.jl` and the
+Python/R family parameter mappings; changing them requires updating all mappings
+and generating new data. They are not configurable through this JSON.
+
+The native ridge penalty remains zero, intercept columns are already present,
+and inference is disabled. MM inner Nesterov is now enabled by the C++ core;
+`nesterov=True` controls outer acceleration. Threads are requested limits, not a
+guarantee that each BLAS provider actually uses that many workers.
+
+## Run in stages and export
+
+```sh
+python benchmark/native/run_experiment.py --output benchmark/runs/new-run \
+  --inputs benchmark/data/p1000 --stage initial
+python benchmark/native/run_experiment.py --output benchmark/runs/new-run \
+  --stage repeat
+```
+
+Use the same settings file for both stages. The repeat stage rejects changed
+sources, inputs, settings or binaries rather than mixing measurements.
+
+Export without computing any fits or compiling native code:
+
+```sh
+python benchmark/native/export_latex.py \
+  --results benchmark/native/results/initial-strict-12-2026-10-15 \
+  --source initial
+```
+
+Output: `latex/performance_tables.tex` (standalone, eight tables), language-level
+and individual fragments, and `latex/report.md`. Upload the standalone file to
+Overleaf; no additional inputs are required. For inclusion in a paper, use the
+fragments with `booktabs`, `longtable` and `amsmath`.
+
+`--source repeat` uses native repeat timings and initial GLM timings only when
+both stages have matching provenance created by the runner. It writes separately
+to `latex_repeat/`. Older archives without this evidence cannot use that mode.
+
+## Interpretation
+
+Each GLM implementation retains its own deviance-based stopping rule. Python uses
+absolute deviance difference with zero relative tolerance; R uses relative
+deviance change. These thresholds are not gradient tolerances. Final gradients
+are scored consistently against the summed model loss, without ridge:
+`norm(g) / (1 + norm(g_initial))`. The common criterion is absolute gradient <=
+`gtol` OR relative gradient <= `relgtol`.
+
+Tables label this column **Gradient converged**, separate from solver-declared
+convergence. Warnings (including separation) are marked separately and retained
+in raw CSVs. A small gradient under separation does not prove a finite MLE.
+Consequently these are software comparisons under specified stopping rules, not
+identical-final-accuracy algorithm timings. In particular, do not interpret a
+speed ratio as a same-accuracy advantage when a comparator did not meet the
+common gradient threshold or has a model-validity warning.
+
+## Other retained investigations
+
+The Julia/native wrapper and small-backend investigations remain available in
+`compare_julia_native.jl`, `small_current_backends.jl`, and their historical reports
+under `results/`. They use their own settings and are not part of this experiment.

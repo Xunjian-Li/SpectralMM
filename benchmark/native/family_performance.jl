@@ -1,6 +1,6 @@
 # Generate article-style shared binary fixtures and time original Julia Spectral-MM.
 using SpectralMM, LinearAlgebra, SparseArrays, Random, Statistics, Printf
-BLAS.set_num_threads(1)
+BLAS.set_num_threads(parse(Int,get(ENV,"SPECTRALMM_BENCH_THREADS","12")))
 p=length(ARGS)>0 ? parse(Int,ARGS[1]) : 1000
 out=length(ARGS)>1 ? ARGS[2] : "build/family-performance"
 mkpath(joinpath(out,"data"))

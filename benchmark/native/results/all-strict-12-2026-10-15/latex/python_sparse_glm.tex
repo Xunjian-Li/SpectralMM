@@ -1,0 +1,78 @@
+\begingroup
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{longtable}{llrrrc}
+\caption{Computational comparison for generalized linear models in Python with a sparse design matrix: $n=2{,}000$, $p=1{,}001$ (including the intercept). Runtimes are in seconds; 12 threads were requested.}
+\label{tab:python-sparse-glm-strict}\\
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & Converged \\
+\midrule
+\endfirsthead
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & Converged \\
+\midrule
+\endhead
+\midrule
+\multicolumn{6}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Gaussian-identity & Spectral-MM (PCG) & 0.005 & 26 & $5.56\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.007 & 32 & $8.22\times10^{-9}$ & Yes \\
+ & CG & 0.002 & 2 & $6.76\times10^{-9}$ & Yes \\
+ & CRLS & 0.002 & 2 & $6.81\times10^{-9}$ & Yes \\
+ & CGLS & 0.002 & 2 & $6.76\times10^{-9}$ & Yes \\
+ & LSQR & 0.002 & 2 & $6.76\times10^{-9}$ & Yes \\
+ & LSMR & 0.002 & 2 & $6.81\times10^{-9}$ & Yes \\
+ & \texttt{statsmodels.GLM} & 0.461 & -- & $1.34\times10^{-14}$ & Yes \\
+\midrule
+Bernoulli-logit & Spectral-MM (PCG) & 0.052 & 86 & $5.12\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.122 & 37 & $7.06\times10^{-9}$ & Yes \\
+ & CG & 0.091 & 16 & $2.38\times10^{-9}$ & Yes \\
+ & CGLS & 0.091 & 16 & $1.57\times10^{-9}$ & Yes \\
+ & CRLS & 0.092 & 16 & $1.35\times10^{-9}$ & Yes \\
+ & LSMR & 0.094 & 16 & $1.35\times10^{-9}$ & Yes \\
+ & LSQR & 0.094 & 16 & $2.09\times10^{-9}$ & Yes \\
+ & \texttt{statsmodels.GLM} & 3.672 & -- & $1.44\times10^{-15}$ & Yes \\
+\midrule
+Bernoulli-probit & Spectral-MM (PCG) & 0.097 & 80 & $6.27\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.079 & 28 & $3.03\times10^{-9}$ & Yes \\
+ & CG & 0.085 & 14 & $8.01\times10^{-9}$ & Yes \\
+ & CGLS & 0.087 & 14 & $8.08\times10^{-9}$ & Yes \\
+ & LSQR & 0.088 & 14 & $7.94\times10^{-9}$ & Yes \\
+ & CRLS & 0.091 & 16 & $5.02\times10^{-9}$ & Yes \\
+ & LSMR & 0.095 & 16 & $4.69\times10^{-9}$ & Yes \\
+ & \texttt{statsmodels.GLM} & 3.374 & -- & $9.99\times10^{-15}$ & Yes \\
+\midrule
+Poisson-log & Spectral-MM (PCG) & 0.007 & 30 & $5.85\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.012 & 33 & $8.36\times10^{-9}$ & Yes \\
+ & CRLS & 0.005 & 5 & $9.87\times10^{-9}$ & Yes \\
+ & CG & 0.005 & 5 & $9.91\times10^{-9}$ & Yes \\
+ & LSMR & 0.005 & 5 & $9.87\times10^{-9}$ & Yes \\
+ & CGLS & 0.005 & 5 & $9.91\times10^{-9}$ & Yes \\
+ & LSQR & 0.006 & 5 & $9.91\times10^{-9}$ & Yes \\
+ & \texttt{statsmodels.GLM} & 0.764 & -- & $8.57\times10^{-15}$ & Yes \\
+\midrule
+Gamma-log & Spectral-MM (PCG) & 0.018 & 82 & $9.44\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.034 & 140 & $8.35\times10^{-9}$ & Yes \\
+ & CRLS & 0.034 & 40 & $9.43\times10^{-9}$ & Yes \\
+ & CG & 0.035 & 40 & $9.41\times10^{-9}$ & Yes \\
+ & LSMR & 0.036 & 40 & $9.43\times10^{-9}$ & Yes \\
+ & CGLS & 0.037 & 40 & $9.41\times10^{-9}$ & Yes \\
+ & LSQR & 0.038 & 40 & $9.41\times10^{-9}$ & Yes \\
+ & \texttt{statsmodels.GLM} & 76.505 & -- & $8.25\times10^{-2}$ & No \\
+\midrule
+Negative-binomial-log & Spectral-MM (PCG) & 0.010 & 36 & $5.56\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.016 & 40 & $7.62\times10^{-9}$ & Yes \\
+ & CRLS & 0.016 & 17 & $6.89\times10^{-9}$ & Yes \\
+ & CG & 0.016 & 17 & $6.16\times10^{-9}$ & Yes \\
+ & LSMR & 0.016 & 17 & $6.89\times10^{-9}$ & Yes \\
+ & CGLS & 0.017 & 17 & $6.16\times10^{-9}$ & Yes \\
+ & LSQR & 0.017 & 17 & $6.16\times10^{-9}$ & Yes \\
+ & \texttt{statsmodels.GLM} & 1.439 & -- & $1.16\times10^{-8}$ & No \\
+\end{longtable}
+\noindent\textit{Notes.} Native timings are medians of five interleaved rounds after warm-up; GLM timings, where present, are medians of three initial-run measurements. Iteration is the number of outer iterations. Converged means $\|g\|_2\leq10^{-6}$ or $\|g\|_2/(1+\|g_0\|_2)\leq10^{-8}$, independently of the solver status. Native fits disable negligible-step and stalled-step stopping, use rank 5, $\rho=10^{-6}$, no ridge penalty, at most 1000 outer iterations and 200 inner iterations. Inference is disabled.
+The non-intercept design has approximately 20 nonzeros per row (approximately 2\% density); sparse GLM inputs are converted to dense within the timed call.
+The negative-binomial shape parameter is fixed at 4. A small gradient alone does not establish existence of a finite maximum-likelihood estimate for separated binary data.
+\par
+\endgroup

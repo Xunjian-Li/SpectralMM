@@ -1,0 +1,290 @@
+\begingroup
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{llrrrc}
+\caption{Computational comparison for generalized linear models in R with a dense design matrix: $n=2000$, $p=1001$ (including the intercept). Times are seconds; 12 threads were requested.}
+\label{tab:R-dense-glm-initial}\\
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & \shortstack{Gradient\\converged} \\
+\midrule
+\endfirsthead
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & \shortstack{Gradient\\converged} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{6}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Gaussian-identity & Spectral-MM (PCG) & 0.041 & 25 & $9.38\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.073 & 23 & $2.04\times10^{-9}$ & Yes \\
+ & LSMR & 0.026 & 2 & $7.38\times10^{-9}$ & Yes \\
+ & CRLS & 0.027 & 2 & $7.38\times10^{-9}$ & Yes \\
+ & CG & 0.028 & 2 & $7.34\times10^{-9}$ & Yes \\
+ & LSQR & 0.028 & 2 & $7.34\times10^{-9}$ & Yes \\
+ & CGLS & 0.029 & 2 & $7.34\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 0.501 & 2 & $1.83\times10^{-15}$ & Yes \\
+\midrule
+Bernoulli-logit & Spectral-MM (PCG) & 0.154 & 54 & $6.21\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.208 & 16 & $6.55\times10^{-10}$ & Yes \\
+ & LSMR & 0.497 & 11 & $5.29\times10^{-9}$ & Yes \\
+ & CGLS & 0.500 & 11 & $5.24\times10^{-9}$ & Yes \\
+ & CG & 0.500 & 11 & $5.34\times10^{-9}$ & Yes \\
+ & CRLS & 0.500 & 11 & $5.29\times10^{-9}$ & Yes \\
+ & LSQR & 0.505 & 11 & $5.29\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 15.075 & 60 & $4.03\times10^{-14}$ & Yes$^{\ddagger}$ \\
+\midrule
+Bernoulli-probit & Spectral-MM (PCG) & 0.134 & 37 & $7.56\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.161 & 17 & $4.08\times10^{-9}$ & Yes \\
+ & CRLS & 0.518 & 11 & $2.95\times10^{-10}$ & Yes \\
+ & LSMR & 0.519 & 11 & $2.95\times10^{-10}$ & Yes \\
+ & CGLS & 0.527 & 11 & $2.83\times10^{-10}$ & Yes \\
+ & CG & 0.528 & 11 & $2.84\times10^{-10}$ & Yes \\
+ & LSQR & 0.528 & 11 & $2.83\times10^{-10}$ & Yes \\
+ & \texttt{glm.fit} & 10.026 & 39 & $9.64\times10^{-17}$ & Yes$^{\ddagger}$ \\
+\midrule
+Poisson-log & Spectral-MM (PCG) & 0.084 & 34 & $6.46\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.157 & 21 & $2.38\times10^{-9}$ & Yes \\
+ & CRLS & 0.107 & 6 & $5.67\times10^{-10}$ & Yes \\
+ & LSMR & 0.108 & 6 & $5.65\times10^{-10}$ & Yes \\
+ & CGLS & 0.117 & 6 & $6.08\times10^{-10}$ & Yes \\
+ & CG & 0.117 & 6 & $5.56\times10^{-10}$ & Yes \\
+ & LSQR & 0.117 & 6 & $5.42\times10^{-10}$ & Yes \\
+ & \texttt{glm.fit} & 2.777 & 11 & $2.37\times10^{-15}$ & Yes \\
+\midrule
+Gamma-log & Spectral-MM (PCG) & 0.079 & 64 & $7.35\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.131 & 126 & $7.95\times10^{-9}$ & Yes \\
+ & CG & 0.561 & 45 & $7.50\times10^{-9}$ & Yes \\
+ & LSMR & 0.568 & 49 & $5.41\times10^{-9}$ & Yes \\
+ & CGLS & 0.573 & 45 & $7.50\times10^{-9}$ & Yes \\
+ & CRLS & 0.583 & 49 & $5.41\times10^{-9}$ & Yes \\
+ & LSQR & 0.586 & 45 & $7.50\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 255.080 & 1000 & $2.41\times10^{-2}$ & No$^{\ddagger}$ \\
+\midrule
+Negative-binomial-log & Spectral-MM (PCG) & 0.069 & 42 & $7.16\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.125 & 80 & $7.58\times10^{-9}$ & Yes \\
+ & CRLS & 0.349 & 28 & $7.34\times10^{-9}$ & Yes \\
+ & LSMR & 0.352 & 28 & $7.34\times10^{-9}$ & Yes \\
+ & CG & 0.388 & 28 & $4.98\times10^{-9}$ & Yes \\
+ & CGLS & 0.391 & 28 & $4.98\times10^{-9}$ & Yes \\
+ & LSQR & 0.391 & 28 & $4.98\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 4.256 & 17 & $1.00\times10^{-7}$ & No \\
+\end{longtable}
+\noindent\textit{Notes.} All timings are medians of 3 initial-run samples.
+Gradient convergence means $\|g\|_2\leq 1.00\times10^{-6}$ or $\|g\|_2/(1+\|g_0\|_2)\leq 1.00\times10^{-8}$.
+Relative gradients are evaluated using a common definition after fitting. GLM implementations use deviance-based stopping; runtimes do not necessarily correspond to identical final accuracy.
+Python GLM uses absolute deviance tolerance $1.00\times10^{-12}$ and zero relative tolerance; R GLM uses relative deviance tolerance $1.00\times10^{-12}$.
+$^{\ddagger}$A warning or error was recorded; see the CSV warnings/error fields. A small gradient alone does not establish a finite MLE under separation.
+Native negligible-step and stalled-step acceptance are disabled.
+\par
+\endgroup
+
+\clearpage
+\begingroup
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{llrrrc}
+\caption{Computational comparison for non-GLM regression models in R with a dense design matrix: $n=2000$, $p=1001$ (including the intercept). Times are seconds; 12 threads were requested.}
+\label{tab:R-dense-nonglm-initial}\\
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & \shortstack{Gradient\\converged} \\
+\midrule
+\endfirsthead
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & \shortstack{Gradient\\converged} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{6}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Smooth quantile & Spectral-MM (PCG) & 0.201 & 49 & $7.78\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.350 & 34 & $5.91\times10^{-9}$ & Yes \\
+ & CRLS & 0.871 & 21 & $7.89\times10^{-10}$ & Yes \\
+ & CG & 0.895 & 19 & $8.78\times10^{-10}$ & Yes \\
+ & LSMR & 0.968 & 24 & $8.11\times10^{-10}$ & Yes \\
+ & LSQR & 1.226 & 26 & $7.59\times10^{-10}$ & Yes \\
+ & CGLS & 1.228 & 26 & $8.04\times10^{-10}$ & Yes \\
+\midrule
+Expectile & Spectral-MM (PCG) & 0.048 & 29 & $7.06\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.083 & 22 & $2.82\times10^{-9}$ & Yes \\
+ & CRLS & 0.064 & 5 & $3.47\times10^{-10}$ & Yes \\
+ & LSMR & 0.065 & 5 & $3.47\times10^{-10}$ & Yes \\
+ & CGLS & 0.069 & 5 & $3.59\times10^{-10}$ & Yes \\
+ & CG & 0.069 & 5 & $3.59\times10^{-10}$ & Yes \\
+ & LSQR & 0.069 & 5 & $3.59\times10^{-10}$ & Yes \\
+\midrule
+Pseudo-Huber & Spectral-MM (PCG) & 0.054 & 30 & $7.55\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.085 & 21 & $9.30\times10^{-9}$ & Yes \\
+ & CRLS & 0.136 & 9 & $3.79\times10^{-9}$ & Yes \\
+ & LSMR & 0.137 & 9 & $3.79\times10^{-9}$ & Yes \\
+ & LSQR & 0.147 & 9 & $3.69\times10^{-9}$ & Yes \\
+ & CG & 0.147 & 9 & $3.69\times10^{-9}$ & Yes \\
+ & CGLS & 0.148 & 9 & $3.69\times10^{-9}$ & Yes \\
+\midrule
+Student-$t$ & Spectral-MM (PCG) & 0.065 & 48 & $6.66\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.126 & 35 & $4.83\times10^{-9}$ & Yes \\
+ & CRLS & 0.273 & 25 & $7.14\times10^{-9}$ & Yes \\
+ & LSMR & 0.276 & 25 & $7.14\times10^{-9}$ & Yes \\
+ & CG & 0.285 & 24 & $8.54\times10^{-9}$ & Yes \\
+ & CGLS & 0.288 & 24 & $8.54\times10^{-9}$ & Yes \\
+ & LSQR & 0.288 & 24 & $8.54\times10^{-9}$ & Yes \\
+\end{longtable}
+\noindent\textit{Notes.} All timings are medians of 3 initial-run samples.
+Gradient convergence means $\|g\|_2\leq 1.00\times10^{-6}$ or $\|g\|_2/(1+\|g_0\|_2)\leq 1.00\times10^{-8}$.
+Relative gradients are evaluated using a common definition after fitting. GLM implementations use deviance-based stopping; runtimes do not necessarily correspond to identical final accuracy.
+Python GLM uses absolute deviance tolerance $1.00\times10^{-12}$ and zero relative tolerance; R GLM uses relative deviance tolerance $1.00\times10^{-12}$.
+$^{\ddagger}$A warning or error was recorded; see the CSV warnings/error fields. A small gradient alone does not establish a finite MLE under separation.
+Native negligible-step and stalled-step acceptance are disabled.
+Parameters: smooth quantile $(q,\epsilon)=(0.25,0.1)$; expectile $q=0.25$; pseudo-Huber $\delta=1$; Student-$t$ $(\nu,\sigma)=(4,1)$.
+\par
+\endgroup
+
+\clearpage
+\begingroup
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{llrrrc}
+\caption{Computational comparison for generalized linear models in R with a sparse design matrix: $n=2000$, $p=1001$ (including the intercept). Times are seconds; 12 threads were requested.}
+\label{tab:R-sparse-glm-initial}\\
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & \shortstack{Gradient\\converged} \\
+\midrule
+\endfirsthead
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & \shortstack{Gradient\\converged} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{6}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Gaussian-identity & Spectral-MM (PCG) & 0.005 & 26 & $5.56\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.007 & 21 & $6.64\times10^{-9}$ & Yes \\
+ & CRLS & 0.002 & 2 & $6.81\times10^{-9}$ & Yes \\
+ & CG & 0.002 & 2 & $6.76\times10^{-9}$ & Yes \\
+ & LSMR & 0.002 & 2 & $6.81\times10^{-9}$ & Yes \\
+ & LSQR & 0.002 & 2 & $6.76\times10^{-9}$ & Yes \\
+ & CGLS & 0.003 & 2 & $6.76\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 0.480 & 2 & $1.02\times10^{-14}$ & Yes \\
+\midrule
+Bernoulli-logit & Spectral-MM (PCG) & 0.053 & 86 & $5.12\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.037 & 34 & $5.60\times10^{-9}$ & Yes \\
+ & CRLS & 0.100 & 16 & $1.34\times10^{-9}$ & Yes \\
+ & CGLS & 0.101 & 16 & $2.00\times10^{-9}$ & Yes \\
+ & CG & 0.101 & 16 & $2.59\times10^{-9}$ & Yes \\
+ & LSMR & 0.103 & 16 & $1.34\times10^{-9}$ & Yes \\
+ & LSQR & 0.103 & 16 & $2.93\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 24.826 & 98 & $1.05\times10^{-13}$ & Yes$^{\ddagger}$ \\
+\midrule
+Bernoulli-probit & Spectral-MM (PCG) & 0.092 & 73 & $6.82\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.042 & 25 & $2.09\times10^{-9}$ & Yes \\
+ & CG & 0.093 & 14 & $8.10\times10^{-9}$ & Yes \\
+ & CGLS & 0.095 & 14 & $8.22\times10^{-9}$ & Yes \\
+ & LSQR & 0.096 & 14 & $8.12\times10^{-9}$ & Yes \\
+ & CRLS & 0.101 & 16 & $5.14\times10^{-9}$ & Yes \\
+ & LSMR & 0.104 & 16 & $4.42\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 10.128 & 40 & $1.39\times10^{-16}$ & Yes$^{\ddagger}$ \\
+\midrule
+Poisson-log & Spectral-MM (PCG) & 0.008 & 30 & $5.85\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.010 & 26 & $9.75\times10^{-9}$ & Yes \\
+ & CRLS & 0.006 & 5 & $9.87\times10^{-9}$ & Yes \\
+ & CG & 0.006 & 5 & $9.91\times10^{-9}$ & Yes \\
+ & LSMR & 0.006 & 5 & $9.87\times10^{-9}$ & Yes \\
+ & CGLS & 0.006 & 5 & $9.91\times10^{-9}$ & Yes \\
+ & LSQR & 0.006 & 5 & $9.91\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 1.520 & 6 & $3.35\times10^{-13}$ & Yes \\
+\midrule
+Gamma-log & Spectral-MM (PCG) & 0.017 & 82 & $9.44\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.030 & 124 & $7.44\times10^{-9}$ & Yes \\
+ & CRLS & 0.036 & 40 & $9.43\times10^{-9}$ & Yes \\
+ & CG & 0.038 & 40 & $9.41\times10^{-9}$ & Yes \\
+ & LSMR & 0.039 & 40 & $9.43\times10^{-9}$ & Yes \\
+ & CGLS & 0.040 & 41 & $5.05\times10^{-9}$ & Yes \\
+ & LSQR & 0.040 & 40 & $9.41\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 250.943 & 1000 & $8.25\times10^{-2}$ & No$^{\ddagger}$ \\
+\midrule
+Negative-binomial-log & Spectral-MM (PCG) & 0.010 & 36 & $5.56\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.017 & 58 & $6.93\times10^{-9}$ & Yes \\
+ & CRLS & 0.017 & 17 & $6.89\times10^{-9}$ & Yes \\
+ & CG & 0.018 & 17 & $6.16\times10^{-9}$ & Yes \\
+ & LSMR & 0.018 & 17 & $6.89\times10^{-9}$ & Yes \\
+ & CGLS & 0.018 & 17 & $6.16\times10^{-9}$ & Yes \\
+ & LSQR & 0.019 & 17 & $6.16\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 3.306 & 13 & $2.06\times10^{-7}$ & No \\
+\end{longtable}
+\noindent\textit{Notes.} All timings are medians of 3 initial-run samples.
+Gradient convergence means $\|g\|_2\leq 1.00\times10^{-6}$ or $\|g\|_2/(1+\|g_0\|_2)\leq 1.00\times10^{-8}$.
+Relative gradients are evaluated using a common definition after fitting. GLM implementations use deviance-based stopping; runtimes do not necessarily correspond to identical final accuracy.
+Python GLM uses absolute deviance tolerance $1.00\times10^{-12}$ and zero relative tolerance; R GLM uses relative deviance tolerance $1.00\times10^{-12}$.
+$^{\ddagger}$A warning or error was recorded; see the CSV warnings/error fields. A small gradient alone does not establish a finite MLE under separation.
+Native negligible-step and stalled-step acceptance are disabled.
+Sparse GLM inputs are converted to dense within the timed call.
+\par
+\endgroup
+
+\clearpage
+\begingroup
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{llrrrc}
+\caption{Computational comparison for non-GLM regression models in R with a sparse design matrix: $n=2000$, $p=1001$ (including the intercept). Times are seconds; 12 threads were requested.}
+\label{tab:R-sparse-nonglm-initial}\\
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & \shortstack{Gradient\\converged} \\
+\midrule
+\endfirsthead
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & \shortstack{Gradient\\converged} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{6}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Smooth quantile & Spectral-MM (PCG) & 0.020 & 43 & $6.07\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.064 & 34 & $7.31\times10^{-9}$ & Yes \\
+ & CRLS & 0.076 & 19 & $1.82\times10^{-9}$ & Yes \\
+ & LSMR & 0.079 & 19 & $1.15\times10^{-9}$ & Yes \\
+ & CG & 0.086 & 19 & $3.10\times10^{-9}$ & Yes \\
+ & CGLS & 0.086 & 19 & $5.30\times10^{-9}$ & Yes \\
+ & LSQR & 0.088 & 19 & $4.68\times10^{-9}$ & Yes \\
+\midrule
+Expectile & Spectral-MM (PCG) & 0.006 & 25 & $9.93\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.010 & 33 & $9.58\times10^{-9}$ & Yes \\
+ & CRLS & 0.006 & 5 & $1.32\times10^{-10}$ & Yes \\
+ & CG & 0.006 & 5 & $1.11\times10^{-10}$ & Yes \\
+ & LSMR & 0.006 & 5 & $1.32\times10^{-10}$ & Yes \\
+ & CGLS & 0.006 & 5 & $1.11\times10^{-10}$ & Yes \\
+ & LSQR & 0.006 & 5 & $1.11\times10^{-10}$ & Yes \\
+\midrule
+Pseudo-Huber & Spectral-MM (PCG) & 0.008 & 26 & $6.17\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.013 & 40 & $8.76\times10^{-9}$ & Yes \\
+ & CRLS & 0.013 & 10 & $4.07\times10^{-9}$ & Yes \\
+ & CG & 0.014 & 10 & $4.04\times10^{-9}$ & Yes \\
+ & LSMR & 0.014 & 10 & $4.07\times10^{-9}$ & Yes \\
+ & CGLS & 0.014 & 10 & $4.04\times10^{-9}$ & Yes \\
+ & LSQR & 0.014 & 10 & $4.04\times10^{-9}$ & Yes \\
+\midrule
+Student-$t$ & Spectral-MM (PCG) & 0.010 & 42 & $8.82\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.014 & 35 & $6.27\times10^{-9}$ & Yes \\
+ & CRLS & 0.024 & 25 & $6.23\times10^{-9}$ & Yes \\
+ & CG & 0.025 & 25 & $7.02\times10^{-9}$ & Yes \\
+ & LSMR & 0.025 & 25 & $6.23\times10^{-9}$ & Yes \\
+ & CGLS & 0.026 & 25 & $7.02\times10^{-9}$ & Yes \\
+ & LSQR & 0.026 & 25 & $7.02\times10^{-9}$ & Yes \\
+\end{longtable}
+\noindent\textit{Notes.} All timings are medians of 3 initial-run samples.
+Gradient convergence means $\|g\|_2\leq 1.00\times10^{-6}$ or $\|g\|_2/(1+\|g_0\|_2)\leq 1.00\times10^{-8}$.
+Relative gradients are evaluated using a common definition after fitting. GLM implementations use deviance-based stopping; runtimes do not necessarily correspond to identical final accuracy.
+Python GLM uses absolute deviance tolerance $1.00\times10^{-12}$ and zero relative tolerance; R GLM uses relative deviance tolerance $1.00\times10^{-12}$.
+$^{\ddagger}$A warning or error was recorded; see the CSV warnings/error fields. A small gradient alone does not establish a finite MLE under separation.
+Native negligible-step and stalled-step acceptance are disabled.
+Sparse GLM inputs are converted to dense within the timed call.
+Parameters: smooth quantile $(q,\epsilon)=(0.25,0.1)$; expectile $q=0.25$; pseudo-Huber $\delta=1$; Student-$t$ $(\nu,\sigma)=(4,1)$.
+\par
+\endgroup

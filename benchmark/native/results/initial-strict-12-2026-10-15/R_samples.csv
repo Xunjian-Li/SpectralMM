@@ -1,0 +1,457 @@
+"language","case","method","sample","batch","time_ms"
+"R","gaussian_dense_p1000","GLM",1,1,504
+"R","gaussian_dense_p1000","GLM",2,1,465
+"R","gaussian_dense_p1000","GLM",3,1,501
+"R","gaussian_dense_p1000","Spectral-MM (MM)",1,1,72.0000000000001
+"R","gaussian_dense_p1000","Spectral-MM (MM)",2,1,73
+"R","gaussian_dense_p1000","Spectral-MM (MM)",3,1,77
+"R","gaussian_dense_p1000","CGLS",1,2,29.5000000000001
+"R","gaussian_dense_p1000","CGLS",2,2,28.9999999999999
+"R","gaussian_dense_p1000","CGLS",3,2,28
+"R","gaussian_dense_p1000","Spectral-MM (PCG)",1,2,39.5000000000001
+"R","gaussian_dense_p1000","Spectral-MM (PCG)",2,2,41.4999999999999
+"R","gaussian_dense_p1000","Spectral-MM (PCG)",3,2,40.5
+"R","gaussian_dense_p1000","CG",1,2,28
+"R","gaussian_dense_p1000","CG",2,2,27.4999999999999
+"R","gaussian_dense_p1000","CG",3,2,27.5000000000001
+"R","gaussian_dense_p1000","LSMR",1,2,26.5
+"R","gaussian_dense_p1000","LSMR",2,2,27.0000000000001
+"R","gaussian_dense_p1000","LSMR",3,2,26.5
+"R","gaussian_dense_p1000","LSQR",1,2,28
+"R","gaussian_dense_p1000","LSQR",2,2,27.9999999999998
+"R","gaussian_dense_p1000","LSQR",3,2,27.5000000000003
+"R","gaussian_dense_p1000","CRLS",1,2,27.0000000000001
+"R","gaussian_dense_p1000","CRLS",2,2,26.9999999999997
+"R","gaussian_dense_p1000","CRLS",3,2,27.0000000000001
+"R","gaussian_sparse_p1000","GLM",1,1,480
+"R","gaussian_sparse_p1000","GLM",2,1,479
+"R","gaussian_sparse_p1000","GLM",3,1,505.999999999999
+"R","gaussian_sparse_p1000","Spectral-MM (MM)",1,8,6.75000000000003
+"R","gaussian_sparse_p1000","Spectral-MM (MM)",2,8,6.74999999999992
+"R","gaussian_sparse_p1000","Spectral-MM (MM)",3,8,6.75000000000003
+"R","gaussian_sparse_p1000","CGLS",1,25,2.36000000000001
+"R","gaussian_sparse_p1000","CGLS",2,25,2.51999999999999
+"R","gaussian_sparse_p1000","CGLS",3,25,2.51999999999999
+"R","gaussian_sparse_p1000","Spectral-MM (PCG)",1,11,5.18181818181822
+"R","gaussian_sparse_p1000","Spectral-MM (PCG)",2,11,5.18181818181814
+"R","gaussian_sparse_p1000","Spectral-MM (PCG)",3,11,5.18181818181822
+"R","gaussian_sparse_p1000","CG",1,25,2.32000000000003
+"R","gaussian_sparse_p1000","CG",2,25,2.31999999999999
+"R","gaussian_sparse_p1000","CG",3,25,2.27999999999998
+"R","gaussian_sparse_p1000","LSMR",1,26,2.38461538461536
+"R","gaussian_sparse_p1000","LSMR",2,26,2.42307692307695
+"R","gaussian_sparse_p1000","LSMR",3,26,2.42307692307691
+"R","gaussian_sparse_p1000","LSQR",1,25,2.44
+"R","gaussian_sparse_p1000","LSQR",2,25,2.39999999999998
+"R","gaussian_sparse_p1000","LSQR",3,25,2.52000000000002
+"R","gaussian_sparse_p1000","CRLS",1,22,2.40909090909091
+"R","gaussian_sparse_p1000","CRLS",2,22,2.31818181818183
+"R","gaussian_sparse_p1000","CRLS",3,22,2.31818181818183
+"R","bernoulli_dense_p1000","GLM",1,1,15139
+"R","bernoulli_dense_p1000","GLM",2,1,15075
+"R","bernoulli_dense_p1000","GLM",3,1,14998
+"R","bernoulli_dense_p1000","Spectral-MM (MM)",1,1,207.999999999998
+"R","bernoulli_dense_p1000","Spectral-MM (MM)",2,1,207.999999999998
+"R","bernoulli_dense_p1000","Spectral-MM (MM)",3,1,207.999999999998
+"R","bernoulli_dense_p1000","CGLS",1,1,502.00000000001
+"R","bernoulli_dense_p1000","CGLS",2,1,498.999999999995
+"R","bernoulli_dense_p1000","CGLS",3,1,500
+"R","bernoulli_dense_p1000","Spectral-MM (PCG)",1,1,153.999999999996
+"R","bernoulli_dense_p1000","Spectral-MM (PCG)",2,1,153.000000000006
+"R","bernoulli_dense_p1000","Spectral-MM (PCG)",3,1,153.999999999996
+"R","bernoulli_dense_p1000","CG",1,1,500
+"R","bernoulli_dense_p1000","CG",2,1,500.999999999991
+"R","bernoulli_dense_p1000","CG",3,1,499.000000000009
+"R","bernoulli_dense_p1000","LSMR",1,1,490.000000000009
+"R","bernoulli_dense_p1000","LSMR",2,1,497.99999999999
+"R","bernoulli_dense_p1000","LSMR",3,1,497
+"R","bernoulli_dense_p1000","LSQR",1,1,504.999999999995
+"R","bernoulli_dense_p1000","LSQR",2,1,500
+"R","bernoulli_dense_p1000","LSQR",3,1,504.999999999995
+"R","bernoulli_dense_p1000","CRLS",1,1,500
+"R","bernoulli_dense_p1000","CRLS",2,1,500
+"R","bernoulli_dense_p1000","CRLS",3,1,507.999999999996
+"R","bernoulli_sparse_p1000","GLM",1,1,24651
+"R","bernoulli_sparse_p1000","GLM",2,1,24826
+"R","bernoulli_sparse_p1000","GLM",3,1,25084
+"R","bernoulli_sparse_p1000","Spectral-MM (MM)",1,2,37.4999999999943
+"R","bernoulli_sparse_p1000","Spectral-MM (MM)",2,2,37.4999999999943
+"R","bernoulli_sparse_p1000","Spectral-MM (MM)",3,2,38.0000000000109
+"R","bernoulli_sparse_p1000","CGLS",1,1,100.999999999999
+"R","bernoulli_sparse_p1000","CGLS",2,1,100.999999999999
+"R","bernoulli_sparse_p1000","CGLS",3,1,100.999999999999
+"R","bernoulli_sparse_p1000","Spectral-MM (PCG)",1,1,54.000000000002
+"R","bernoulli_sparse_p1000","Spectral-MM (PCG)",2,1,52.9999999999973
+"R","bernoulli_sparse_p1000","Spectral-MM (PCG)",3,1,53.0000000000257
+"R","bernoulli_sparse_p1000","CG",1,1,100.999999999999
+"R","bernoulli_sparse_p1000","CG",2,1,100.000000000023
+"R","bernoulli_sparse_p1000","CG",3,1,100.999999999999
+"R","bernoulli_sparse_p1000","LSMR",1,1,103.000000000009
+"R","bernoulli_sparse_p1000","LSMR",2,1,102.99999999998
+"R","bernoulli_sparse_p1000","LSMR",3,1,103.000000000009
+"R","bernoulli_sparse_p1000","LSQR",1,1,105.000000000018
+"R","bernoulli_sparse_p1000","LSQR",2,1,102.99999999998
+"R","bernoulli_sparse_p1000","LSQR",3,1,103.000000000009
+"R","bernoulli_sparse_p1000","CRLS",1,1,99.9999999999943
+"R","bernoulli_sparse_p1000","CRLS",2,1,100.999999999999
+"R","bernoulli_sparse_p1000","CRLS",3,1,99.9999999999943
+"R","probit_dense_p1000","GLM",1,1,10026
+"R","probit_dense_p1000","GLM",2,1,10021
+"R","probit_dense_p1000","GLM",3,1,10045
+"R","probit_dense_p1000","Spectral-MM (MM)",1,1,160.999999999973
+"R","probit_dense_p1000","Spectral-MM (MM)",2,1,160.000000000025
+"R","probit_dense_p1000","Spectral-MM (MM)",3,1,161.000000000001
+"R","probit_dense_p1000","CGLS",1,1,525.999999999982
+"R","probit_dense_p1000","CGLS",2,1,529.000000000025
+"R","probit_dense_p1000","CGLS",3,1,527.000000000015
+"R","probit_dense_p1000","Spectral-MM (PCG)",1,1,133.999999999986
+"R","probit_dense_p1000","Spectral-MM (PCG)",2,1,134.000000000015
+"R","probit_dense_p1000","Spectral-MM (PCG)",3,1,133.999999999986
+"R","probit_dense_p1000","CG",1,1,527.000000000015
+"R","probit_dense_p1000","CG",2,1,530.000000000001
+"R","probit_dense_p1000","CG",3,1,527.999999999992
+"R","probit_dense_p1000","LSMR",1,1,519.000000000005
+"R","probit_dense_p1000","LSMR",2,1,515.999999999991
+"R","probit_dense_p1000","LSMR",3,1,519.000000000005
+"R","probit_dense_p1000","LSQR",1,1,528.00000000002
+"R","probit_dense_p1000","LSQR",2,1,527.999999999992
+"R","probit_dense_p1000","LSQR",3,1,528.999999999996
+"R","probit_dense_p1000","CRLS",1,1,508.00000000001
+"R","probit_dense_p1000","CRLS",2,1,518.000000000001
+"R","probit_dense_p1000","CRLS",3,1,534.999999999997
+"R","probit_sparse_p1000","GLM",1,1,10205
+"R","probit_sparse_p1000","GLM",2,1,10128
+"R","probit_sparse_p1000","GLM",3,1,10072
+"R","probit_sparse_p1000","Spectral-MM (MM)",1,2,42.0000000000016
+"R","probit_sparse_p1000","Spectral-MM (MM)",2,2,42.0000000000016
+"R","probit_sparse_p1000","Spectral-MM (MM)",3,2,42.0000000000016
+"R","probit_sparse_p1000","CGLS",1,1,94.9999999999704
+"R","probit_sparse_p1000","CGLS",2,1,95.0000000000273
+"R","probit_sparse_p1000","CGLS",3,1,93.9999999999941
+"R","probit_sparse_p1000","Spectral-MM (PCG)",1,1,91.9999999999845
+"R","probit_sparse_p1000","Spectral-MM (PCG)",2,1,91.9999999999845
+"R","probit_sparse_p1000","Spectral-MM (PCG)",3,1,91.0000000000082
+"R","probit_sparse_p1000","CG",1,1,93.0000000000177
+"R","probit_sparse_p1000","CG",2,1,93.0000000000177
+"R","probit_sparse_p1000","CG",3,1,92.9999999999609
+"R","probit_sparse_p1000","LSMR",1,1,103.999999999985
+"R","probit_sparse_p1000","LSMR",2,1,104.000000000042
+"R","probit_sparse_p1000","LSMR",3,1,102.999999999952
+"R","probit_sparse_p1000","LSQR",1,1,96.0000000000036
+"R","probit_sparse_p1000","LSQR",2,1,95.9999999999468
+"R","probit_sparse_p1000","LSQR",3,1,96.0000000000036
+"R","probit_sparse_p1000","CRLS",1,1,102.000000000032
+"R","probit_sparse_p1000","CRLS",2,1,100.999999999999
+"R","probit_sparse_p1000","CRLS",3,1,99.9999999999659
+"R","poisson_dense_p1000","GLM",1,1,2788.00000000001
+"R","poisson_dense_p1000","GLM",2,1,2744.00000000003
+"R","poisson_dense_p1000","GLM",3,1,2776.99999999999
+"R","poisson_dense_p1000","Spectral-MM (MM)",1,1,157.000000000039
+"R","poisson_dense_p1000","Spectral-MM (MM)",2,1,156.000000000006
+"R","poisson_dense_p1000","Spectral-MM (MM)",3,1,156.999999999982
+"R","poisson_dense_p1000","CGLS",1,1,117.000000000019
+"R","poisson_dense_p1000","CGLS",2,1,117.999999999995
+"R","poisson_dense_p1000","CGLS",3,1,117.000000000019
+"R","poisson_dense_p1000","Spectral-MM (PCG)",1,1,84.0000000000032
+"R","poisson_dense_p1000","Spectral-MM (PCG)",2,1,84.0000000000032
+"R","poisson_dense_p1000","Spectral-MM (PCG)",3,1,84.9999999999795
+"R","poisson_dense_p1000","CG",1,1,117.000000000019
+"R","poisson_dense_p1000","CG",2,1,117.000000000019
+"R","poisson_dense_p1000","CG",3,1,117.999999999995
+"R","poisson_dense_p1000","LSMR",1,1,108.000000000004
+"R","poisson_dense_p1000","LSMR",2,1,107.000000000028
+"R","poisson_dense_p1000","LSMR",3,1,108.99999999998
+"R","poisson_dense_p1000","LSQR",1,1,116.999999999962
+"R","poisson_dense_p1000","LSQR",2,1,117.000000000019
+"R","poisson_dense_p1000","LSQR",3,1,117.000000000019
+"R","poisson_dense_p1000","CRLS",1,1,107.000000000028
+"R","poisson_dense_p1000","CRLS",2,1,107.000000000028
+"R","poisson_dense_p1000","CRLS",3,1,106.999999999971
+"R","poisson_sparse_p1000","GLM",1,1,1521.00000000002
+"R","poisson_sparse_p1000","GLM",2,1,1519.99999999998
+"R","poisson_sparse_p1000","GLM",3,1,1514.99999999999
+"R","poisson_sparse_p1000","Spectral-MM (MM)",1,5,10.4000000000042
+"R","poisson_sparse_p1000","Spectral-MM (MM)",2,5,10.3999999999928
+"R","poisson_sparse_p1000","Spectral-MM (MM)",3,5,10.5999999999995
+"R","poisson_sparse_p1000","CGLS",1,9,6.11111111111187
+"R","poisson_sparse_p1000","CGLS",2,9,6.00000000000339
+"R","poisson_sparse_p1000","CGLS",3,9,6.11111111111187
+"R","poisson_sparse_p1000","Spectral-MM (PCG)",1,7,7.71428571429007
+"R","poisson_sparse_p1000","Spectral-MM (PCG)",2,7,7.57142857142818
+"R","poisson_sparse_p1000","Spectral-MM (PCG)",3,7,7.71428571428195
+"R","poisson_sparse_p1000","CG",1,9,5.88888888888859
+"R","poisson_sparse_p1000","CG",2,9,6.00000000000339
+"R","poisson_sparse_p1000","CG",3,9,5.99999999999707
+"R","poisson_sparse_p1000","LSMR",1,9,6.11111111111187
+"R","poisson_sparse_p1000","LSMR",2,9,5.99999999999707
+"R","poisson_sparse_p1000","LSMR",3,9,5.99999999999707
+"R","poisson_sparse_p1000","LSQR",1,9,6.33333333333515
+"R","poisson_sparse_p1000","LSQR",2,9,6.22222222222035
+"R","poisson_sparse_p1000","LSQR",3,9,6.44444444444364
+"R","poisson_sparse_p1000","CRLS",1,9,5.77777777777379
+"R","poisson_sparse_p1000","CRLS",2,9,5.77777777777379
+"R","poisson_sparse_p1000","CRLS",3,9,5.7777777777801
+"R","gamma_dense_p1000","GLM",1,1,256115
+"R","gamma_dense_p1000","GLM",2,1,254415
+"R","gamma_dense_p1000","GLM",3,1,255080
+"R","gamma_dense_p1000","Spectral-MM (MM)",1,1,130.999999999858
+"R","gamma_dense_p1000","Spectral-MM (MM)",2,1,132.000000000062
+"R","gamma_dense_p1000","Spectral-MM (MM)",3,1,131.000000000085
+"R","gamma_dense_p1000","CGLS",1,1,571.999999999889
+"R","gamma_dense_p1000","CGLS",2,1,575.000000000045
+"R","gamma_dense_p1000","CGLS",3,1,572.999999999865
+"R","gamma_dense_p1000","Spectral-MM (PCG)",1,1,79.9999999999272
+"R","gamma_dense_p1000","Spectral-MM (PCG)",2,1,76.9999999999982
+"R","gamma_dense_p1000","Spectral-MM (PCG)",3,1,79.0000000001783
+"R","gamma_dense_p1000","CG",1,1,561.000000000149
+"R","gamma_dense_p1000","CG",2,1,560.999999999922
+"R","gamma_dense_p1000","CG",3,1,560.999999999922
+"R","gamma_dense_p1000","LSMR",1,1,567.999999999984
+"R","gamma_dense_p1000","LSMR",2,1,588.999999999942
+"R","gamma_dense_p1000","LSMR",3,1,567.999999999984
+"R","gamma_dense_p1000","LSQR",1,1,586.000000000013
+"R","gamma_dense_p1000","LSQR",2,1,586.000000000013
+"R","gamma_dense_p1000","LSQR",3,1,585.000000000036
+"R","gamma_dense_p1000","CRLS",1,1,583.000000000084
+"R","gamma_dense_p1000","CRLS",2,1,582.999999999856
+"R","gamma_dense_p1000","CRLS",3,1,589.000000000169
+"R","gamma_sparse_p1000","GLM",1,1,250943
+"R","gamma_sparse_p1000","GLM",2,1,257269
+"R","gamma_sparse_p1000","GLM",3,1,250057
+"R","gamma_sparse_p1000","Spectral-MM (MM)",1,2,30.0000000002001
+"R","gamma_sparse_p1000","Spectral-MM (MM)",2,2,29.9999999999727
+"R","gamma_sparse_p1000","Spectral-MM (MM)",3,2,29.9999999999727
+"R","gamma_sparse_p1000","CGLS",1,2,39.9999999999636
+"R","gamma_sparse_p1000","CGLS",2,2,39.9999999999636
+"R","gamma_sparse_p1000","CGLS",3,2,39.9999999999636
+"R","gamma_sparse_p1000","Spectral-MM (PCG)",1,3,17.3333333333782
+"R","gamma_sparse_p1000","Spectral-MM (PCG)",2,3,17.3333333333782
+"R","gamma_sparse_p1000","Spectral-MM (PCG)",3,3,17.6666666666279
+"R","gamma_sparse_p1000","CG",1,2,37.5000000001364
+"R","gamma_sparse_p1000","CG",2,2,38.0000000000109
+"R","gamma_sparse_p1000","CG",3,2,37.5000000001364
+"R","gamma_sparse_p1000","LSMR",1,2,38.5000000001128
+"R","gamma_sparse_p1000","LSMR",2,2,38.9999999999873
+"R","gamma_sparse_p1000","LSMR",3,2,38.4999999998854
+"R","gamma_sparse_p1000","LSQR",1,2,39.9999999999636
+"R","gamma_sparse_p1000","LSQR",2,2,39.9999999999636
+"R","gamma_sparse_p1000","LSQR",3,2,40.5000000000655
+"R","gamma_sparse_p1000","CRLS",1,2,35.4999999999563
+"R","gamma_sparse_p1000","CRLS",2,2,36.0000000000582
+"R","gamma_sparse_p1000","CRLS",3,2,36.0000000000582
+"R","negative_binomial_dense_p1000","GLM",1,1,4255.99999999986
+"R","negative_binomial_dense_p1000","GLM",2,1,4248.00000000005
+"R","negative_binomial_dense_p1000","GLM",3,1,4259.00000000001
+"R","negative_binomial_dense_p1000","Spectral-MM (MM)",1,1,124.000000000251
+"R","negative_binomial_dense_p1000","Spectral-MM (MM)",2,1,125
+"R","negative_binomial_dense_p1000","Spectral-MM (MM)",3,1,125
+"R","negative_binomial_dense_p1000","CGLS",1,1,391.000000000076
+"R","negative_binomial_dense_p1000","CGLS",2,1,390.000000000327
+"R","negative_binomial_dense_p1000","CGLS",3,1,391.999999999825
+"R","negative_binomial_dense_p1000","Spectral-MM (PCG)",1,1,68.99999999996
+"R","negative_binomial_dense_p1000","Spectral-MM (PCG)",2,1,68.99999999996
+"R","negative_binomial_dense_p1000","Spectral-MM (PCG)",3,1,70.9999999999127
+"R","negative_binomial_dense_p1000","CG",1,1,388.000000000375
+"R","negative_binomial_dense_p1000","CG",2,1,387.99999999992
+"R","negative_binomial_dense_p1000","CG",3,1,388.000000000375
+"R","negative_binomial_dense_p1000","LSMR",1,1,352.000000000317
+"R","negative_binomial_dense_p1000","LSMR",2,1,351.999999999862
+"R","negative_binomial_dense_p1000","LSMR",3,1,351.000000000113
+"R","negative_binomial_dense_p1000","LSQR",1,1,391.000000000076
+"R","negative_binomial_dense_p1000","LSQR",2,1,391.000000000076
+"R","negative_binomial_dense_p1000","LSQR",3,1,389.999999999873
+"R","negative_binomial_dense_p1000","CRLS",1,1,347.999999999956
+"R","negative_binomial_dense_p1000","CRLS",2,1,348.999999999705
+"R","negative_binomial_dense_p1000","CRLS",3,1,351.000000000113
+"R","negative_binomial_sparse_p1000","GLM",1,1,3322.99999999987
+"R","negative_binomial_sparse_p1000","GLM",2,1,3282.00000000015
+"R","negative_binomial_sparse_p1000","GLM",3,1,3306.00000000004
+"R","negative_binomial_sparse_p1000","Spectral-MM (MM)",1,4,16.7500000000018
+"R","negative_binomial_sparse_p1000","Spectral-MM (MM)",2,4,16.5000000000646
+"R","negative_binomial_sparse_p1000","Spectral-MM (MM)",3,4,16.4999999999509
+"R","negative_binomial_sparse_p1000","CGLS",1,3,18.3333333332788
+"R","negative_binomial_sparse_p1000","CGLS",2,3,18.66666666668
+"R","negative_binomial_sparse_p1000","CGLS",3,3,18.3333333332788
+"R","negative_binomial_sparse_p1000","Spectral-MM (PCG)",1,6,9.83333333329028
+"R","negative_binomial_sparse_p1000","Spectral-MM (PCG)",2,6,9.66666666666545
+"R","negative_binomial_sparse_p1000","Spectral-MM (PCG)",3,6,9.66666666666545
+"R","negative_binomial_sparse_p1000","CG",1,3,18.0000000000291
+"R","negative_binomial_sparse_p1000","CG",2,3,18.0000000000291
+"R","negative_binomial_sparse_p1000","CG",3,3,17.6666666666279
+"R","negative_binomial_sparse_p1000","LSMR",1,3,18.0000000000291
+"R","negative_binomial_sparse_p1000","LSMR",2,3,17.9999999998775
+"R","negative_binomial_sparse_p1000","LSMR",3,3,18.0000000000291
+"R","negative_binomial_sparse_p1000","LSQR",1,3,18.66666666668
+"R","negative_binomial_sparse_p1000","LSQR",2,3,18.9999999999297
+"R","negative_binomial_sparse_p1000","LSQR",3,3,18.66666666668
+"R","negative_binomial_sparse_p1000","CRLS",1,3,16.999999999977
+"R","negative_binomial_sparse_p1000","CRLS",2,3,16.999999999977
+"R","negative_binomial_sparse_p1000","CRLS",3,3,16.999999999977
+"R","smooth_quantile_dense_p1000","Spectral-MM (MM)",1,1,350.000000000364
+"R","smooth_quantile_dense_p1000","Spectral-MM (MM)",2,1,349.999999999909
+"R","smooth_quantile_dense_p1000","Spectral-MM (MM)",3,1,351.000000000113
+"R","smooth_quantile_dense_p1000","CGLS",1,1,1230.99999999977
+"R","smooth_quantile_dense_p1000","CGLS",2,1,1228.00000000007
+"R","smooth_quantile_dense_p1000","CGLS",3,1,1224.00000000016
+"R","smooth_quantile_dense_p1000","Spectral-MM (PCG)",1,1,201.999999999771
+"R","smooth_quantile_dense_p1000","Spectral-MM (PCG)",2,1,201.000000000022
+"R","smooth_quantile_dense_p1000","Spectral-MM (PCG)",3,1,201.000000000022
+"R","smooth_quantile_dense_p1000","CG",1,1,892.00000000028
+"R","smooth_quantile_dense_p1000","CG",2,1,923.999999999978
+"R","smooth_quantile_dense_p1000","CG",3,1,894.999999999982
+"R","smooth_quantile_dense_p1000","LSMR",1,1,989.999999999782
+"R","smooth_quantile_dense_p1000","LSMR",2,1,968.000000000302
+"R","smooth_quantile_dense_p1000","LSMR",3,1,967.000000000098
+"R","smooth_quantile_dense_p1000","LSQR",1,1,1228.00000000007
+"R","smooth_quantile_dense_p1000","LSQR",2,1,1225.00000000036
+"R","smooth_quantile_dense_p1000","LSQR",3,1,1225.99999999966
+"R","smooth_quantile_dense_p1000","CRLS",1,1,870.000000000346
+"R","smooth_quantile_dense_p1000","CRLS",2,1,870.99999999964
+"R","smooth_quantile_dense_p1000","CRLS",3,1,872.000000000298
+"R","smooth_quantile_sparse_p1000","Spectral-MM (MM)",1,1,63.9999999998508
+"R","smooth_quantile_sparse_p1000","Spectral-MM (MM)",2,1,63.0000000001019
+"R","smooth_quantile_sparse_p1000","Spectral-MM (MM)",3,1,63.9999999998508
+"R","smooth_quantile_sparse_p1000","CGLS",1,1,83.9999999998327
+"R","smooth_quantile_sparse_p1000","CGLS",2,1,86.9999999999891
+"R","smooth_quantile_sparse_p1000","CGLS",3,1,86.0000000002401
+"R","smooth_quantile_sparse_p1000","Spectral-MM (PCG)",1,3,20.3333333332315
+"R","smooth_quantile_sparse_p1000","Spectral-MM (PCG)",2,3,20.3333333333831
+"R","smooth_quantile_sparse_p1000","Spectral-MM (PCG)",3,3,20.3333333333831
+"R","smooth_quantile_sparse_p1000","CG",1,1,86.0000000002401
+"R","smooth_quantile_sparse_p1000","CG",2,1,85.9999999997854
+"R","smooth_quantile_sparse_p1000","CG",3,1,85.9999999997854
+"R","smooth_quantile_sparse_p1000","LSMR",1,1,79.0000000001783
+"R","smooth_quantile_sparse_p1000","LSMR",2,1,78.9999999997235
+"R","smooth_quantile_sparse_p1000","LSMR",3,1,77.0000000002256
+"R","smooth_quantile_sparse_p1000","LSQR",1,1,88.0000000001928
+"R","smooth_quantile_sparse_p1000","LSQR",2,1,88.0000000001928
+"R","smooth_quantile_sparse_p1000","LSQR",3,1,86.9999999999891
+"R","smooth_quantile_sparse_p1000","CRLS",1,1,76.0000000000218
+"R","smooth_quantile_sparse_p1000","CRLS",2,1,76.0000000000218
+"R","smooth_quantile_sparse_p1000","CRLS",3,1,76.0000000000218
+"R","expectile_dense_p1000","Spectral-MM (MM)",1,1,83.0000000000837
+"R","expectile_dense_p1000","Spectral-MM (MM)",2,1,83.0000000000837
+"R","expectile_dense_p1000","Spectral-MM (MM)",3,1,82.0000000003347
+"R","expectile_dense_p1000","CGLS",1,1,69.0000000004147
+"R","expectile_dense_p1000","CGLS",2,1,68.99999999996
+"R","expectile_dense_p1000","CGLS",3,1,68.99999999996
+"R","expectile_dense_p1000","Spectral-MM (PCG)",1,2,47.4999999999
+"R","expectile_dense_p1000","Spectral-MM (PCG)",2,2,48.0000000000018
+"R","expectile_dense_p1000","Spectral-MM (PCG)",3,2,48.0000000000018
+"R","expectile_dense_p1000","CG",1,1,68.000000000211
+"R","expectile_dense_p1000","CG",2,1,68.99999999996
+"R","expectile_dense_p1000","CG",3,1,68.99999999996
+"R","expectile_dense_p1000","LSMR",1,1,65.0000000000546
+"R","expectile_dense_p1000","LSMR",2,1,63.9999999998508
+"R","expectile_dense_p1000","LSMR",3,1,65.0000000000546
+"R","expectile_dense_p1000","LSQR",1,1,68.99999999996
+"R","expectile_dense_p1000","LSQR",2,1,68.99999999996
+"R","expectile_dense_p1000","LSQR",3,1,67.9999999997563
+"R","expectile_dense_p1000","CRLS",1,1,64.0000000003056
+"R","expectile_dense_p1000","CRLS",2,1,63.9999999998508
+"R","expectile_dense_p1000","CRLS",3,1,63.9999999998508
+"R","expectile_sparse_p1000","Spectral-MM (MM)",1,5,10.1999999999862
+"R","expectile_sparse_p1000","Spectral-MM (MM)",2,5,10.1999999999862
+"R","expectile_sparse_p1000","Spectral-MM (MM)",3,5,10.0000000000364
+"R","expectile_sparse_p1000","CGLS",1,9,6.0000000000097
+"R","expectile_sparse_p1000","CGLS",2,9,5.88888888892648
+"R","expectile_sparse_p1000","CGLS",3,9,5.99999999995917
+"R","expectile_sparse_p1000","Spectral-MM (PCG)",1,9,6.11111111109292
+"R","expectile_sparse_p1000","Spectral-MM (PCG)",2,9,6.11111111114345
+"R","expectile_sparse_p1000","Spectral-MM (PCG)",3,9,6.0000000000097
+"R","expectile_sparse_p1000","CG",1,9,5.88888888887595
+"R","expectile_sparse_p1000","CG",2,9,5.88888888892648
+"R","expectile_sparse_p1000","CG",3,9,5.77777777774221
+"R","expectile_sparse_p1000","LSMR",1,9,5.88888888892648
+"R","expectile_sparse_p1000","LSMR",2,9,5.88888888887595
+"R","expectile_sparse_p1000","LSMR",3,9,5.88888888887595
+"R","expectile_sparse_p1000","LSQR",1,9,6.11111111114345
+"R","expectile_sparse_p1000","LSQR",2,9,6.11111111109292
+"R","expectile_sparse_p1000","LSQR",3,9,6.11111111114345
+"R","expectile_sparse_p1000","CRLS",1,9,5.55555555557577
+"R","expectile_sparse_p1000","CRLS",2,9,5.66666666665899
+"R","expectile_sparse_p1000","CRLS",3,9,5.66666666665899
+"R","pseudo_huber_dense_p1000","Spectral-MM (MM)",1,1,84.9999999995816
+"R","pseudo_huber_dense_p1000","Spectral-MM (MM)",2,1,85.0000000000364
+"R","pseudo_huber_dense_p1000","Spectral-MM (MM)",3,1,85.0000000000364
+"R","pseudo_huber_dense_p1000","CGLS",1,1,148.999999999887
+"R","pseudo_huber_dense_p1000","CGLS",2,1,148.000000000138
+"R","pseudo_huber_dense_p1000","CGLS",3,1,146.999999999935
+"R","pseudo_huber_dense_p1000","Spectral-MM (PCG)",1,1,54.0000000000873
+"R","pseudo_huber_dense_p1000","Spectral-MM (PCG)",2,1,52.9999999998836
+"R","pseudo_huber_dense_p1000","Spectral-MM (PCG)",3,1,54.0000000000873
+"R","pseudo_huber_dense_p1000","CG",1,1,145.999999999731
+"R","pseudo_huber_dense_p1000","CG",2,1,147.000000000389
+"R","pseudo_huber_dense_p1000","CG",3,1,147.999999999683
+"R","pseudo_huber_dense_p1000","LSMR",1,1,137.000000000171
+"R","pseudo_huber_dense_p1000","LSMR",2,1,136.999999999716
+"R","pseudo_huber_dense_p1000","LSMR",3,1,135.999999999967
+"R","pseudo_huber_dense_p1000","LSQR",1,1,146.999999999935
+"R","pseudo_huber_dense_p1000","LSQR",2,1,146.999999999935
+"R","pseudo_huber_dense_p1000","LSQR",3,1,146.999999999935
+"R","pseudo_huber_dense_p1000","CRLS",1,1,135.999999999967
+"R","pseudo_huber_dense_p1000","CRLS",2,1,135.999999999967
+"R","pseudo_huber_dense_p1000","CRLS",3,1,135.000000000218
+"R","pseudo_huber_sparse_p1000","Spectral-MM (MM)",1,4,13.2499999999709
+"R","pseudo_huber_sparse_p1000","Spectral-MM (MM)",2,4,13.0000000000337
+"R","pseudo_huber_sparse_p1000","Spectral-MM (MM)",3,4,13.2499999999709
+"R","pseudo_huber_sparse_p1000","CGLS",1,4,13.7500000000728
+"R","pseudo_huber_sparse_p1000","CGLS",2,4,13.7500000000728
+"R","pseudo_huber_sparse_p1000","CGLS",3,4,13.7499999999591
+"R","pseudo_huber_sparse_p1000","Spectral-MM (PCG)",1,7,7.5714285714769
+"R","pseudo_huber_sparse_p1000","Spectral-MM (PCG)",2,7,7.57142857141194
+"R","pseudo_huber_sparse_p1000","Spectral-MM (PCG)",3,7,7.71428571429819
+"R","pseudo_huber_sparse_p1000","CG",1,4,13.5000000000218
+"R","pseudo_huber_sparse_p1000","CG",2,4,13.5000000000218
+"R","pseudo_huber_sparse_p1000","CG",3,4,13.5000000000218
+"R","pseudo_huber_sparse_p1000","LSMR",1,4,13.5000000000218
+"R","pseudo_huber_sparse_p1000","LSMR",2,4,13.4999999999081
+"R","pseudo_huber_sparse_p1000","LSMR",3,4,13.5000000000218
+"R","pseudo_huber_sparse_p1000","LSQR",1,4,14.2499999999472
+"R","pseudo_huber_sparse_p1000","LSQR",2,4,14.2500000000609
+"R","pseudo_huber_sparse_p1000","LSQR",3,4,14.00000000001
+"R","pseudo_huber_sparse_p1000","CRLS",1,4,12.7499999999827
+"R","pseudo_huber_sparse_p1000","CRLS",2,4,13.0000000000337
+"R","pseudo_huber_sparse_p1000","CRLS",3,4,13.0000000000337
+"R","student_t_dense_p1000","Spectral-MM (MM)",1,1,126.999999999953
+"R","student_t_dense_p1000","Spectral-MM (MM)",2,1,126.000000000204
+"R","student_t_dense_p1000","Spectral-MM (MM)",3,1,125.999999999749
+"R","student_t_dense_p1000","CGLS",1,1,288.000000000011
+"R","student_t_dense_p1000","CGLS",2,1,288.000000000011
+"R","student_t_dense_p1000","CGLS",3,1,288.000000000011
+"R","student_t_dense_p1000","Spectral-MM (PCG)",1,1,65.0000000000546
+"R","student_t_dense_p1000","Spectral-MM (PCG)",2,1,64.9999999995998
+"R","student_t_dense_p1000","Spectral-MM (PCG)",3,1,64.0000000003056
+"R","student_t_dense_p1000","CG",1,1,285.000000000309
+"R","student_t_dense_p1000","CG",2,1,284.000000000106
+"R","student_t_dense_p1000","CG",3,1,284.999999999854
+"R","student_t_dense_p1000","LSMR",1,1,275.99999999984
+"R","student_t_dense_p1000","LSMR",2,1,277.000000000044
+"R","student_t_dense_p1000","LSMR",3,1,275.000000000091
+"R","student_t_dense_p1000","LSQR",1,1,291.000000000167
+"R","student_t_dense_p1000","LSQR",2,1,285.999999999603
+"R","student_t_dense_p1000","LSQR",3,1,288.000000000011
+"R","student_t_dense_p1000","CRLS",1,1,276.000000000295
+"R","student_t_dense_p1000","CRLS",2,1,270.999999999731
+"R","student_t_dense_p1000","CRLS",3,1,273.000000000138
+"R","student_t_sparse_p1000","Spectral-MM (MM)",1,4,14.4999999999982
+"R","student_t_sparse_p1000","Spectral-MM (MM)",2,4,14.2499999999472
+"R","student_t_sparse_p1000","Spectral-MM (MM)",3,4,14.2499999999472
+"R","student_t_sparse_p1000","CGLS",1,2,25.9999999998399
+"R","student_t_sparse_p1000","CGLS",2,2,26.0000000000673
+"R","student_t_sparse_p1000","CGLS",3,2,26.0000000000673
+"R","student_t_sparse_p1000","Spectral-MM (PCG)",1,6,9.66666666666545
+"R","student_t_sparse_p1000","Spectral-MM (PCG)",2,6,9.66666666666545
+"R","student_t_sparse_p1000","Spectral-MM (PCG)",3,6,9.66666666666545
+"R","student_t_sparse_p1000","CG",1,2,25.000000000091
+"R","student_t_sparse_p1000","CG",2,2,25.000000000091
+"R","student_t_sparse_p1000","CG",3,2,25.4999999999654
+"R","student_t_sparse_p1000","LSMR",1,2,25.4999999999654
+"R","student_t_sparse_p1000","LSMR",2,2,26.0000000000673
+"R","student_t_sparse_p1000","LSMR",3,2,25.4999999999654
+"R","student_t_sparse_p1000","LSQR",1,2,26.4999999999418
+"R","student_t_sparse_p1000","LSQR",2,2,27.0000000000437
+"R","student_t_sparse_p1000","LSQR",3,2,26.4999999999418
+"R","student_t_sparse_p1000","CRLS",1,3,24.3333333332885
+"R","student_t_sparse_p1000","CRLS",2,3,24.33333333344
+"R","student_t_sparse_p1000","CRLS",3,3,24.3333333332885

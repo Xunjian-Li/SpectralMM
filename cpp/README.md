@@ -336,3 +336,12 @@ behavior; none were disabled to obtain the wrapper speed improvements.
 The shared C++ sources now live in `../src/native/`, so the standard R package
 and this standalone CMake build compile a single canonical core. R benchmarks load the installed package with `library(SpectralMM)`; the old
 development loader has been removed.
+
+## MM inner acceleration
+
+The native `solver="mm"` uses Nesterov acceleration inside each weighted
+least-squares subproblem by default, matching Julia's `inner.nesterov=true`.
+The inner momentum restarts for every outer subproblem; the accepted iterate,
+not the extrapolated point, is returned. Existing `nesterov` options continue to
+control outer acceleration only. PCG is unchanged. The native inner momentum
+is always enabled for MM; this change does not introduce an additional API flag.

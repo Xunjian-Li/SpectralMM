@@ -1,0 +1,552 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=1.5cm]{geometry}
+\usepackage{booktabs,longtable,amsmath}
+\begin{document}
+\begingroup
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{longtable}{llrrrc}
+\caption{Computational comparison for generalized linear models in Python with a dense design matrix: $n=2{,}000$, $p=1{,}001$ (including the intercept). Runtimes are in seconds; 12 threads were requested.}
+\label{tab:python-dense-glm-strict}\\
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & Converged \\
+\midrule
+\endfirsthead
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & Converged \\
+\midrule
+\endhead
+\midrule
+\multicolumn{6}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Gaussian-identity & Spectral-MM (PCG) & 0.014 & 25 & $9.38\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.030 & 59 & $1.94\times10^{-9}$ & Yes \\
+ & CRLS & 0.009 & 2 & $7.38\times10^{-9}$ & Yes \\
+ & LSMR & 0.009 & 2 & $7.38\times10^{-9}$ & Yes \\
+ & CG & 0.009 & 2 & $7.34\times10^{-9}$ & Yes \\
+ & LSQR & 0.009 & 2 & $7.34\times10^{-9}$ & Yes \\
+ & CGLS & 0.009 & 2 & $7.34\times10^{-9}$ & Yes \\
+ & \texttt{statsmodels.GLM} & 0.448 & -- & $5.20\times10^{-15}$ & Yes \\
+\midrule
+Bernoulli-logit & Spectral-MM (PCG) & 0.066 & 54 & $6.21\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.155 & 31 & $7.70\times10^{-9}$ & Yes \\
+ & LSMR & 0.152 & 11 & $5.29\times10^{-9}$ & Yes \\
+ & LSQR & 0.154 & 11 & $5.35\times10^{-9}$ & Yes \\
+ & CGLS & 0.155 & 11 & $5.26\times10^{-9}$ & Yes \\
+ & CRLS & 0.157 & 11 & $5.29\times10^{-9}$ & Yes \\
+ & CG & 0.160 & 11 & $5.31\times10^{-9}$ & Yes \\
+ & \texttt{statsmodels.GLM} & 3.305 & -- & $5.08\times10^{-16}$ & Yes \\
+\midrule
+Bernoulli-probit & Spectral-MM (PCG) & 0.066 & 37 & $7.56\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.126 & 23 & $3.87\times10^{-9}$ & Yes \\
+ & LSMR & 0.158 & 11 & $2.94\times10^{-10}$ & Yes \\
+ & LSQR & 0.161 & 11 & $2.85\times10^{-10}$ & Yes \\
+ & CRLS & 0.161 & 11 & $2.95\times10^{-10}$ & Yes \\
+ & CGLS & 0.162 & 11 & $2.83\times10^{-10}$ & Yes \\
+ & CG & 0.166 & 11 & $2.85\times10^{-10}$ & Yes \\
+ & \texttt{statsmodels.GLM} & 3.077 & -- & $2.51\times10^{-15}$ & Yes \\
+\midrule
+Poisson-log & Spectral-MM (PCG) & 0.030 & 35 & $5.55\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.096 & 92 & $3.69\times10^{-9}$ & Yes \\
+ & LSMR & 0.035 & 6 & $5.64\times10^{-10}$ & Yes \\
+ & CRLS & 0.035 & 6 & $5.66\times10^{-10}$ & Yes \\
+ & LSQR & 0.037 & 6 & $6.18\times10^{-10}$ & Yes \\
+ & CG & 0.038 & 6 & $5.61\times10^{-10}$ & Yes \\
+ & CGLS & 0.038 & 6 & $6.10\times10^{-10}$ & Yes \\
+ & \texttt{statsmodels.GLM} & 1.046 & -- & $8.21\times10^{-15}$ & Yes \\
+\midrule
+Gamma-log & Spectral-MM (PCG) & 0.031 & 64 & $7.35\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.049 & 98 & $9.46\times10^{-9}$ & Yes \\
+ & CRLS & 0.181 & 49 & $5.41\times10^{-9}$ & Yes \\
+ & CGLS & 0.184 & 45 & $7.50\times10^{-9}$ & Yes \\
+ & LSQR & 0.184 & 45 & $7.50\times10^{-9}$ & Yes \\
+ & LSMR & 0.185 & 49 & $5.41\times10^{-9}$ & Yes \\
+ & CG & 0.197 & 50 & $5.34\times10^{-9}$ & Yes \\
+ & \texttt{statsmodels.GLM} & 74.969 & -- & $2.41\times10^{-2}$ & No \\
+\midrule
+Negative-binomial-log & Spectral-MM (PCG) & 0.027 & 42 & $7.16\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.067 & 71 & $5.49\times10^{-9}$ & Yes \\
+ & CRLS & 0.121 & 31 & $2.89\times10^{-9}$ & Yes \\
+ & LSMR & 0.125 & 31 & $2.89\times10^{-9}$ & Yes \\
+ & CG & 0.126 & 28 & $4.98\times10^{-9}$ & Yes \\
+ & LSQR & 0.128 & 28 & $4.98\times10^{-9}$ & Yes \\
+ & CGLS & 0.130 & 29 & $6.21\times10^{-9}$ & Yes \\
+ & \texttt{statsmodels.GLM} & 1.788 & -- & $5.30\times10^{-9}$ & Yes \\
+\end{longtable}
+\noindent\textit{Notes.} Native timings are medians of five interleaved rounds after warm-up; GLM timings, where present, are medians of three initial-run measurements. Iteration is the number of outer iterations. Converged means $\|g\|_2\leq10^{-6}$ or $\|g\|_2/(1+\|g_0\|_2)\leq10^{-8}$, independently of the solver status. Native fits disable negligible-step and stalled-step stopping, use rank 5, $\rho=10^{-6}$, no ridge penalty, at most 1000 outer iterations and 200 inner iterations. Inference is disabled.
+The negative-binomial shape parameter is fixed at 4. A small gradient alone does not establish existence of a finite maximum-likelihood estimate for separated binary data.
+\par
+\endgroup
+
+\clearpage
+\begingroup
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{longtable}{llrrrc}
+\caption{Computational comparison for non-GLM regression models in Python with a dense design matrix: $n=2{,}000$, $p=1{,}001$ (including the intercept). Runtimes are in seconds; 12 threads were requested.}
+\label{tab:python-dense-nonglm-strict}\\
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & Converged \\
+\midrule
+\endfirsthead
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & Converged \\
+\midrule
+\endhead
+\midrule
+\multicolumn{6}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Smooth quantile & Spectral-MM (PCG) & 0.067 & 47 & $9.62\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.301 & 251 & $7.09\times10^{-9}$ & Yes \\
+ & CRLS & 0.259 & 20 & $7.62\times10^{-10}$ & Yes \\
+ & LSMR & 0.284 & 22 & $2.41\times10^{-9}$ & Yes \\
+ & LSQR & 0.287 & 20 & $9.19\times10^{-10}$ & Yes \\
+ & CGLS & 0.291 & 20 & $1.11\times10^{-9}$ & Yes \\
+ & CG & 0.384 & 26 & $7.73\times10^{-10}$ & Yes \\
+\midrule
+Expectile & Spectral-MM (PCG) & 0.018 & 29 & $7.06\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.035 & 55 & $9.76\times10^{-9}$ & Yes \\
+ & CRLS & 0.021 & 5 & $3.47\times10^{-10}$ & Yes \\
+ & LSMR & 0.021 & 5 & $3.47\times10^{-10}$ & Yes \\
+ & LSQR & 0.023 & 5 & $3.59\times10^{-10}$ & Yes \\
+ & CG & 0.023 & 5 & $3.59\times10^{-10}$ & Yes \\
+ & CGLS & 0.023 & 5 & $3.59\times10^{-10}$ & Yes \\
+\midrule
+Pseudo-Huber & Spectral-MM (PCG) & 0.021 & 31 & $7.86\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.043 & 55 & $7.97\times10^{-9}$ & Yes \\
+ & CRLS & 0.044 & 9 & $3.79\times10^{-9}$ & Yes \\
+ & LSMR & 0.045 & 9 & $3.79\times10^{-9}$ & Yes \\
+ & LSQR & 0.048 & 9 & $3.69\times10^{-9}$ & Yes \\
+ & CG & 0.048 & 9 & $3.69\times10^{-9}$ & Yes \\
+ & CGLS & 0.048 & 9 & $3.69\times10^{-9}$ & Yes \\
+\midrule
+Student-$t$ & Spectral-MM (PCG) & 0.026 & 48 & $6.52\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.050 & 46 & $7.02\times10^{-9}$ & Yes \\
+ & CRLS & 0.091 & 25 & $7.14\times10^{-9}$ & Yes \\
+ & LSMR & 0.092 & 25 & $7.14\times10^{-9}$ & Yes \\
+ & CG & 0.095 & 24 & $8.54\times10^{-9}$ & Yes \\
+ & LSQR & 0.095 & 24 & $8.54\times10^{-9}$ & Yes \\
+ & CGLS & 0.095 & 24 & $8.54\times10^{-9}$ & Yes \\
+\end{longtable}
+\noindent\textit{Notes.} Native timings are medians of five interleaved rounds after warm-up; GLM timings, where present, are medians of three initial-run measurements. Iteration is the number of outer iterations. Converged means $\|g\|_2\leq10^{-6}$ or $\|g\|_2/(1+\|g_0\|_2)\leq10^{-8}$, independently of the solver status. Native fits disable negligible-step and stalled-step stopping, use rank 5, $\rho=10^{-6}$, no ridge penalty, at most 1000 outer iterations and 200 inner iterations. Inference is disabled.
+Parameters: smooth quantile $(q,\epsilon)=(0.25,0.1)$; expectile $q=0.25$; pseudo-Huber $\delta=1$; Student-$t$ $(\nu,\sigma)=(4,1)$.
+\par
+\endgroup
+
+\clearpage
+\begingroup
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{longtable}{llrrrc}
+\caption{Computational comparison for generalized linear models in Python with a sparse design matrix: $n=2{,}000$, $p=1{,}001$ (including the intercept). Runtimes are in seconds; 12 threads were requested.}
+\label{tab:python-sparse-glm-strict}\\
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & Converged \\
+\midrule
+\endfirsthead
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & Converged \\
+\midrule
+\endhead
+\midrule
+\multicolumn{6}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Gaussian-identity & Spectral-MM (PCG) & 0.005 & 26 & $5.56\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.007 & 32 & $8.22\times10^{-9}$ & Yes \\
+ & CG & 0.002 & 2 & $6.76\times10^{-9}$ & Yes \\
+ & CRLS & 0.002 & 2 & $6.81\times10^{-9}$ & Yes \\
+ & CGLS & 0.002 & 2 & $6.76\times10^{-9}$ & Yes \\
+ & LSQR & 0.002 & 2 & $6.76\times10^{-9}$ & Yes \\
+ & LSMR & 0.002 & 2 & $6.81\times10^{-9}$ & Yes \\
+ & \texttt{statsmodels.GLM} & 0.461 & -- & $1.34\times10^{-14}$ & Yes \\
+\midrule
+Bernoulli-logit & Spectral-MM (PCG) & 0.052 & 86 & $5.12\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.122 & 37 & $7.06\times10^{-9}$ & Yes \\
+ & CG & 0.091 & 16 & $2.38\times10^{-9}$ & Yes \\
+ & CGLS & 0.091 & 16 & $1.57\times10^{-9}$ & Yes \\
+ & CRLS & 0.092 & 16 & $1.35\times10^{-9}$ & Yes \\
+ & LSMR & 0.094 & 16 & $1.35\times10^{-9}$ & Yes \\
+ & LSQR & 0.094 & 16 & $2.09\times10^{-9}$ & Yes \\
+ & \texttt{statsmodels.GLM} & 3.672 & -- & $1.44\times10^{-15}$ & Yes \\
+\midrule
+Bernoulli-probit & Spectral-MM (PCG) & 0.097 & 80 & $6.27\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.079 & 28 & $3.03\times10^{-9}$ & Yes \\
+ & CG & 0.085 & 14 & $8.01\times10^{-9}$ & Yes \\
+ & CGLS & 0.087 & 14 & $8.08\times10^{-9}$ & Yes \\
+ & LSQR & 0.088 & 14 & $7.94\times10^{-9}$ & Yes \\
+ & CRLS & 0.091 & 16 & $5.02\times10^{-9}$ & Yes \\
+ & LSMR & 0.095 & 16 & $4.69\times10^{-9}$ & Yes \\
+ & \texttt{statsmodels.GLM} & 3.374 & -- & $9.99\times10^{-15}$ & Yes \\
+\midrule
+Poisson-log & Spectral-MM (PCG) & 0.007 & 30 & $5.85\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.012 & 33 & $8.36\times10^{-9}$ & Yes \\
+ & CRLS & 0.005 & 5 & $9.87\times10^{-9}$ & Yes \\
+ & CG & 0.005 & 5 & $9.91\times10^{-9}$ & Yes \\
+ & LSMR & 0.005 & 5 & $9.87\times10^{-9}$ & Yes \\
+ & CGLS & 0.005 & 5 & $9.91\times10^{-9}$ & Yes \\
+ & LSQR & 0.006 & 5 & $9.91\times10^{-9}$ & Yes \\
+ & \texttt{statsmodels.GLM} & 0.764 & -- & $8.57\times10^{-15}$ & Yes \\
+\midrule
+Gamma-log & Spectral-MM (PCG) & 0.018 & 82 & $9.44\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.034 & 140 & $8.35\times10^{-9}$ & Yes \\
+ & CRLS & 0.034 & 40 & $9.43\times10^{-9}$ & Yes \\
+ & CG & 0.035 & 40 & $9.41\times10^{-9}$ & Yes \\
+ & LSMR & 0.036 & 40 & $9.43\times10^{-9}$ & Yes \\
+ & CGLS & 0.037 & 40 & $9.41\times10^{-9}$ & Yes \\
+ & LSQR & 0.038 & 40 & $9.41\times10^{-9}$ & Yes \\
+ & \texttt{statsmodels.GLM} & 76.505 & -- & $8.25\times10^{-2}$ & No \\
+\midrule
+Negative-binomial-log & Spectral-MM (PCG) & 0.010 & 36 & $5.56\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.016 & 40 & $7.62\times10^{-9}$ & Yes \\
+ & CRLS & 0.016 & 17 & $6.89\times10^{-9}$ & Yes \\
+ & CG & 0.016 & 17 & $6.16\times10^{-9}$ & Yes \\
+ & LSMR & 0.016 & 17 & $6.89\times10^{-9}$ & Yes \\
+ & CGLS & 0.017 & 17 & $6.16\times10^{-9}$ & Yes \\
+ & LSQR & 0.017 & 17 & $6.16\times10^{-9}$ & Yes \\
+ & \texttt{statsmodels.GLM} & 1.439 & -- & $1.16\times10^{-8}$ & No \\
+\end{longtable}
+\noindent\textit{Notes.} Native timings are medians of five interleaved rounds after warm-up; GLM timings, where present, are medians of three initial-run measurements. Iteration is the number of outer iterations. Converged means $\|g\|_2\leq10^{-6}$ or $\|g\|_2/(1+\|g_0\|_2)\leq10^{-8}$, independently of the solver status. Native fits disable negligible-step and stalled-step stopping, use rank 5, $\rho=10^{-6}$, no ridge penalty, at most 1000 outer iterations and 200 inner iterations. Inference is disabled.
+The non-intercept design has approximately 20 nonzeros per row (approximately 2\% density); sparse GLM inputs are converted to dense within the timed call.
+The negative-binomial shape parameter is fixed at 4. A small gradient alone does not establish existence of a finite maximum-likelihood estimate for separated binary data.
+\par
+\endgroup
+
+\clearpage
+\begingroup
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{longtable}{llrrrc}
+\caption{Computational comparison for non-GLM regression models in Python with a sparse design matrix: $n=2{,}000$, $p=1{,}001$ (including the intercept). Runtimes are in seconds; 12 threads were requested.}
+\label{tab:python-sparse-nonglm-strict}\\
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & Converged \\
+\midrule
+\endfirsthead
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & Converged \\
+\midrule
+\endhead
+\midrule
+\multicolumn{6}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Smooth quantile & Spectral-MM (PCG) & 0.021 & 42 & $8.93\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.173 & 41 & $5.24\times10^{-9}$ & Yes \\
+ & CRLS & 0.071 & 20 & $3.17\times10^{-10}$ & Yes \\
+ & LSMR & 0.072 & 19 & $1.10\times10^{-9}$ & Yes \\
+ & CGLS & 0.078 & 19 & $9.55\times10^{-9}$ & Yes \\
+ & CG & 0.078 & 19 & $5.99\times10^{-9}$ & Yes \\
+ & LSQR & 0.081 & 19 & $5.67\times10^{-9}$ & Yes \\
+\midrule
+Expectile & Spectral-MM (PCG) & 0.006 & 25 & $9.93\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.009 & 38 & $9.15\times10^{-9}$ & Yes \\
+ & CRLS & 0.005 & 5 & $1.32\times10^{-10}$ & Yes \\
+ & CG & 0.005 & 5 & $1.11\times10^{-10}$ & Yes \\
+ & LSMR & 0.005 & 5 & $1.32\times10^{-10}$ & Yes \\
+ & CGLS & 0.005 & 5 & $1.11\times10^{-10}$ & Yes \\
+ & LSQR & 0.005 & 5 & $1.11\times10^{-10}$ & Yes \\
+\midrule
+Pseudo-Huber & Spectral-MM (PCG) & 0.008 & 26 & $6.17\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.012 & 39 & $7.41\times10^{-9}$ & Yes \\
+ & CRLS & 0.012 & 10 & $4.07\times10^{-9}$ & Yes \\
+ & CG & 0.012 & 10 & $4.04\times10^{-9}$ & Yes \\
+ & LSMR & 0.012 & 10 & $4.07\times10^{-9}$ & Yes \\
+ & CGLS & 0.013 & 10 & $4.04\times10^{-9}$ & Yes \\
+ & LSQR & 0.013 & 10 & $4.04\times10^{-9}$ & Yes \\
+\midrule
+Student-$t$ & Spectral-MM (PCG) & 0.010 & 42 & $8.82\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.014 & 40 & $9.13\times10^{-9}$ & Yes \\
+ & CRLS & 0.022 & 25 & $6.23\times10^{-9}$ & Yes \\
+ & CG & 0.023 & 25 & $6.22\times10^{-9}$ & Yes \\
+ & LSMR & 0.023 & 25 & $6.23\times10^{-9}$ & Yes \\
+ & CGLS & 0.024 & 25 & $6.22\times10^{-9}$ & Yes \\
+ & LSQR & 0.024 & 25 & $7.02\times10^{-9}$ & Yes \\
+\end{longtable}
+\noindent\textit{Notes.} Native timings are medians of five interleaved rounds after warm-up; GLM timings, where present, are medians of three initial-run measurements. Iteration is the number of outer iterations. Converged means $\|g\|_2\leq10^{-6}$ or $\|g\|_2/(1+\|g_0\|_2)\leq10^{-8}$, independently of the solver status. Native fits disable negligible-step and stalled-step stopping, use rank 5, $\rho=10^{-6}$, no ridge penalty, at most 1000 outer iterations and 200 inner iterations. Inference is disabled.
+The non-intercept design has approximately 20 nonzeros per row (approximately 2\% density); sparse GLM inputs are converted to dense within the timed call.
+Parameters: smooth quantile $(q,\epsilon)=(0.25,0.1)$; expectile $q=0.25$; pseudo-Huber $\delta=1$; Student-$t$ $(\nu,\sigma)=(4,1)$.
+\par
+\endgroup
+
+\clearpage
+\begingroup
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{longtable}{llrrrc}
+\caption{Computational comparison for generalized linear models in R with a dense design matrix: $n=2{,}000$, $p=1{,}001$ (including the intercept). Runtimes are in seconds; 12 threads were requested.}
+\label{tab:R-dense-glm-strict}\\
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & Converged \\
+\midrule
+\endfirsthead
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & Converged \\
+\midrule
+\endhead
+\midrule
+\multicolumn{6}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Gaussian-identity & Spectral-MM (PCG) & 0.038 & 25 & $9.38\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.085 & 59 & $1.94\times10^{-9}$ & Yes \\
+ & LSMR & 0.026 & 2 & $7.38\times10^{-9}$ & Yes \\
+ & CRLS & 0.027 & 2 & $7.38\times10^{-9}$ & Yes \\
+ & CG & 0.028 & 2 & $7.34\times10^{-9}$ & Yes \\
+ & LSQR & 0.028 & 2 & $7.34\times10^{-9}$ & Yes \\
+ & CGLS & 0.028 & 2 & $7.34\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 0.547 & -- & $1.83\times10^{-15}$ & Yes \\
+\midrule
+Bernoulli-logit & Spectral-MM (PCG) & 0.148 & 54 & $6.21\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.447 & 31 & $7.70\times10^{-9}$ & Yes \\
+ & CRLS & 0.484 & 11 & $5.29\times10^{-9}$ & Yes \\
+ & LSMR & 0.485 & 11 & $5.29\times10^{-9}$ & Yes \\
+ & CGLS & 0.494 & 11 & $5.24\times10^{-9}$ & Yes \\
+ & LSQR & 0.494 & 11 & $5.29\times10^{-9}$ & Yes \\
+ & CG & 0.495 & 11 & $5.34\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 15.523 & -- & $4.03\times10^{-14}$ & Yes \\
+\midrule
+Bernoulli-probit & Spectral-MM (PCG) & 0.124 & 37 & $7.56\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.342 & 23 & $3.87\times10^{-9}$ & Yes \\
+ & CRLS & 0.491 & 11 & $2.95\times10^{-10}$ & Yes \\
+ & LSMR & 0.492 & 11 & $2.95\times10^{-10}$ & Yes \\
+ & CG & 0.502 & 11 & $2.84\times10^{-10}$ & Yes \\
+ & CGLS & 0.502 & 11 & $2.83\times10^{-10}$ & Yes \\
+ & LSQR & 0.503 & 11 & $2.83\times10^{-10}$ & Yes \\
+ & \texttt{glm.fit} & 9.863 & -- & $9.64\times10^{-17}$ & Yes \\
+\midrule
+Poisson-log & Spectral-MM (PCG) & 0.083 & 34 & $6.46\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.271 & 92 & $3.69\times10^{-9}$ & Yes \\
+ & CRLS & 0.108 & 6 & $5.67\times10^{-10}$ & Yes \\
+ & LSMR & 0.108 & 6 & $5.65\times10^{-10}$ & Yes \\
+ & CG & 0.117 & 6 & $5.56\times10^{-10}$ & Yes \\
+ & CGLS & 0.118 & 6 & $6.08\times10^{-10}$ & Yes \\
+ & LSQR & 0.118 & 6 & $5.42\times10^{-10}$ & Yes \\
+ & \texttt{glm.fit} & 2.802 & -- & $2.37\times10^{-15}$ & Yes \\
+\midrule
+Gamma-log & Spectral-MM (PCG) & 0.072 & 64 & $7.35\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.114 & 98 & $9.46\times10^{-9}$ & Yes \\
+ & CG & 0.549 & 45 & $7.50\times10^{-9}$ & Yes \\
+ & LSQR & 0.554 & 45 & $7.50\times10^{-9}$ & Yes \\
+ & CRLS & 0.554 & 49 & $5.41\times10^{-9}$ & Yes \\
+ & CGLS & 0.555 & 45 & $7.50\times10^{-9}$ & Yes \\
+ & LSMR & 0.556 & 49 & $5.41\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 251.297 & -- & $2.41\times10^{-2}$ & No \\
+\midrule
+Negative-binomial-log & Spectral-MM (PCG) & 0.066 & 42 & $7.16\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.178 & 71 & $5.49\times10^{-9}$ & Yes \\
+ & CRLS & 0.346 & 28 & $7.34\times10^{-9}$ & Yes \\
+ & LSMR & 0.350 & 28 & $7.34\times10^{-9}$ & Yes \\
+ & CG & 0.386 & 28 & $4.98\times10^{-9}$ & Yes \\
+ & CGLS & 0.388 & 28 & $4.98\times10^{-9}$ & Yes \\
+ & LSQR & 0.388 & 28 & $4.98\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 4.247 & -- & $1.00\times10^{-7}$ & No \\
+\end{longtable}
+\noindent\textit{Notes.} Native timings are medians of five interleaved rounds after warm-up; GLM timings, where present, are medians of three initial-run measurements. Iteration is the number of outer iterations. Converged means $\|g\|_2\leq10^{-6}$ or $\|g\|_2/(1+\|g_0\|_2)\leq10^{-8}$, independently of the solver status. Native fits disable negligible-step and stalled-step stopping, use rank 5, $\rho=10^{-6}$, no ridge penalty, at most 1000 outer iterations and 200 inner iterations. Inference is disabled.
+The negative-binomial shape parameter is fixed at 4. A small gradient alone does not establish existence of a finite maximum-likelihood estimate for separated binary data.
+\par
+\endgroup
+
+\clearpage
+\begingroup
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{longtable}{llrrrc}
+\caption{Computational comparison for non-GLM regression models in R with a dense design matrix: $n=2{,}000$, $p=1{,}001$ (including the intercept). Runtimes are in seconds; 12 threads were requested.}
+\label{tab:R-dense-nonglm-strict}\\
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & Converged \\
+\midrule
+\endfirsthead
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & Converged \\
+\midrule
+\endhead
+\midrule
+\multicolumn{6}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Smooth quantile & Spectral-MM (PCG) & 0.194 & 49 & $7.78\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.875 & 251 & $7.09\times10^{-9}$ & Yes \\
+ & CRLS & 0.869 & 21 & $7.89\times10^{-10}$ & Yes \\
+ & CG & 0.890 & 19 & $8.78\times10^{-10}$ & Yes \\
+ & LSMR & 0.967 & 24 & $8.11\times10^{-10}$ & Yes \\
+ & CGLS & 1.227 & 26 & $8.04\times10^{-10}$ & Yes \\
+ & LSQR & 1.229 & 26 & $7.59\times10^{-10}$ & Yes \\
+\midrule
+Expectile & Spectral-MM (PCG) & 0.047 & 29 & $7.06\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.093 & 55 & $9.76\times10^{-9}$ & Yes \\
+ & CRLS & 0.064 & 5 & $3.47\times10^{-10}$ & Yes \\
+ & LSMR & 0.065 & 5 & $3.47\times10^{-10}$ & Yes \\
+ & CG & 0.068 & 5 & $3.59\times10^{-10}$ & Yes \\
+ & LSQR & 0.068 & 5 & $3.59\times10^{-10}$ & Yes \\
+ & CGLS & 0.069 & 5 & $3.59\times10^{-10}$ & Yes \\
+\midrule
+Pseudo-Huber & Spectral-MM (PCG) & 0.051 & 30 & $7.55\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.112 & 55 & $7.97\times10^{-9}$ & Yes \\
+ & CRLS & 0.135 & 9 & $3.79\times10^{-9}$ & Yes \\
+ & LSMR & 0.136 & 9 & $3.79\times10^{-9}$ & Yes \\
+ & CG & 0.146 & 9 & $3.69\times10^{-9}$ & Yes \\
+ & CGLS & 0.147 & 9 & $3.69\times10^{-9}$ & Yes \\
+ & LSQR & 0.147 & 9 & $3.69\times10^{-9}$ & Yes \\
+\midrule
+Student-$t$ & Spectral-MM (PCG) & 0.063 & 48 & $6.66\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.141 & 46 & $7.02\times10^{-9}$ & Yes \\
+ & CRLS & 0.273 & 25 & $7.14\times10^{-9}$ & Yes \\
+ & LSMR & 0.276 & 25 & $7.14\times10^{-9}$ & Yes \\
+ & CG & 0.285 & 24 & $8.54\times10^{-9}$ & Yes \\
+ & CGLS & 0.287 & 24 & $8.54\times10^{-9}$ & Yes \\
+ & LSQR & 0.287 & 24 & $8.54\times10^{-9}$ & Yes \\
+\end{longtable}
+\noindent\textit{Notes.} Native timings are medians of five interleaved rounds after warm-up; GLM timings, where present, are medians of three initial-run measurements. Iteration is the number of outer iterations. Converged means $\|g\|_2\leq10^{-6}$ or $\|g\|_2/(1+\|g_0\|_2)\leq10^{-8}$, independently of the solver status. Native fits disable negligible-step and stalled-step stopping, use rank 5, $\rho=10^{-6}$, no ridge penalty, at most 1000 outer iterations and 200 inner iterations. Inference is disabled.
+Parameters: smooth quantile $(q,\epsilon)=(0.25,0.1)$; expectile $q=0.25$; pseudo-Huber $\delta=1$; Student-$t$ $(\nu,\sigma)=(4,1)$.
+\par
+\endgroup
+
+\clearpage
+\begingroup
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{longtable}{llrrrc}
+\caption{Computational comparison for generalized linear models in R with a sparse design matrix: $n=2{,}000$, $p=1{,}001$ (including the intercept). Runtimes are in seconds; 12 threads were requested.}
+\label{tab:R-sparse-glm-strict}\\
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & Converged \\
+\midrule
+\endfirsthead
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & Converged \\
+\midrule
+\endhead
+\midrule
+\multicolumn{6}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Gaussian-identity & Spectral-MM (PCG) & 0.005 & 26 & $5.56\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.007 & 32 & $8.22\times10^{-9}$ & Yes \\
+ & CRLS & 0.002 & 2 & $6.81\times10^{-9}$ & Yes \\
+ & CG & 0.002 & 2 & $6.76\times10^{-9}$ & Yes \\
+ & CGLS & 0.002 & 2 & $6.76\times10^{-9}$ & Yes \\
+ & LSQR & 0.002 & 2 & $6.76\times10^{-9}$ & Yes \\
+ & LSMR & 0.002 & 2 & $6.81\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 0.511 & -- & $1.02\times10^{-14}$ & Yes \\
+\midrule
+Bernoulli-logit & Spectral-MM (PCG) & 0.053 & 86 & $5.12\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.117 & 37 & $7.06\times10^{-9}$ & Yes \\
+ & CG & 0.101 & 16 & $2.59\times10^{-9}$ & Yes \\
+ & CGLS & 0.101 & 16 & $2.00\times10^{-9}$ & Yes \\
+ & CRLS & 0.101 & 16 & $1.34\times10^{-9}$ & Yes \\
+ & LSMR & 0.103 & 16 & $1.34\times10^{-9}$ & Yes \\
+ & LSQR & 0.103 & 16 & $2.93\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 24.974 & -- & $1.05\times10^{-13}$ & Yes \\
+\midrule
+Bernoulli-probit & Spectral-MM (PCG) & 0.092 & 73 & $6.82\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.077 & 28 & $3.03\times10^{-9}$ & Yes \\
+ & CG & 0.093 & 14 & $8.10\times10^{-9}$ & Yes \\
+ & CGLS & 0.094 & 14 & $8.22\times10^{-9}$ & Yes \\
+ & LSQR & 0.096 & 14 & $8.12\times10^{-9}$ & Yes \\
+ & CRLS & 0.099 & 16 & $5.14\times10^{-9}$ & Yes \\
+ & LSMR & 0.104 & 16 & $4.42\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 10.137 & -- & $1.39\times10^{-16}$ & Yes \\
+\midrule
+Poisson-log & Spectral-MM (PCG) & 0.007 & 30 & $5.85\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.011 & 32 & $8.38\times10^{-9}$ & Yes \\
+ & CRLS & 0.006 & 5 & $9.87\times10^{-9}$ & Yes \\
+ & CG & 0.006 & 5 & $9.91\times10^{-9}$ & Yes \\
+ & CGLS & 0.006 & 5 & $9.91\times10^{-9}$ & Yes \\
+ & LSMR & 0.006 & 5 & $9.87\times10^{-9}$ & Yes \\
+ & LSQR & 0.006 & 5 & $9.91\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 1.524 & -- & $3.35\times10^{-13}$ & Yes \\
+\midrule
+Gamma-log & Spectral-MM (PCG) & 0.017 & 82 & $9.44\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.032 & 140 & $8.35\times10^{-9}$ & Yes \\
+ & CRLS & 0.036 & 40 & $9.43\times10^{-9}$ & Yes \\
+ & CG & 0.038 & 40 & $9.41\times10^{-9}$ & Yes \\
+ & LSMR & 0.038 & 40 & $9.43\times10^{-9}$ & Yes \\
+ & CGLS & 0.040 & 41 & $5.05\times10^{-9}$ & Yes \\
+ & LSQR & 0.040 & 40 & $9.41\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 248.296 & -- & $8.25\times10^{-2}$ & No \\
+\midrule
+Negative-binomial-log & Spectral-MM (PCG) & 0.010 & 36 & $5.56\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.015 & 40 & $7.62\times10^{-9}$ & Yes \\
+ & CRLS & 0.017 & 17 & $6.89\times10^{-9}$ & Yes \\
+ & CG & 0.018 & 17 & $6.16\times10^{-9}$ & Yes \\
+ & LSMR & 0.018 & 17 & $6.89\times10^{-9}$ & Yes \\
+ & CGLS & 0.018 & 17 & $6.16\times10^{-9}$ & Yes \\
+ & LSQR & 0.019 & 17 & $6.16\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 3.305 & -- & $2.06\times10^{-7}$ & No \\
+\end{longtable}
+\noindent\textit{Notes.} Native timings are medians of five interleaved rounds after warm-up; GLM timings, where present, are medians of three initial-run measurements. Iteration is the number of outer iterations. Converged means $\|g\|_2\leq10^{-6}$ or $\|g\|_2/(1+\|g_0\|_2)\leq10^{-8}$, independently of the solver status. Native fits disable negligible-step and stalled-step stopping, use rank 5, $\rho=10^{-6}$, no ridge penalty, at most 1000 outer iterations and 200 inner iterations. Inference is disabled.
+The non-intercept design has approximately 20 nonzeros per row (approximately 2\% density); sparse GLM inputs are converted to dense within the timed call.
+The negative-binomial shape parameter is fixed at 4. A small gradient alone does not establish existence of a finite maximum-likelihood estimate for separated binary data.
+\par
+\endgroup
+
+\clearpage
+\begingroup
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{longtable}{llrrrc}
+\caption{Computational comparison for non-GLM regression models in R with a sparse design matrix: $n=2{,}000$, $p=1{,}001$ (including the intercept). Runtimes are in seconds; 12 threads were requested.}
+\label{tab:R-sparse-nonglm-strict}\\
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & Converged \\
+\midrule
+\endfirsthead
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & Converged \\
+\midrule
+\endhead
+\midrule
+\multicolumn{6}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Smooth quantile & Spectral-MM (PCG) & 0.020 & 43 & $6.07\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.163 & 41 & $5.24\times10^{-9}$ & Yes \\
+ & CRLS & 0.076 & 19 & $1.82\times10^{-9}$ & Yes \\
+ & LSMR & 0.078 & 19 & $1.15\times10^{-9}$ & Yes \\
+ & CG & 0.085 & 19 & $3.10\times10^{-9}$ & Yes \\
+ & CGLS & 0.086 & 19 & $5.30\times10^{-9}$ & Yes \\
+ & LSQR & 0.087 & 19 & $4.68\times10^{-9}$ & Yes \\
+\midrule
+Expectile & Spectral-MM (PCG) & 0.006 & 25 & $9.93\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.009 & 38 & $9.15\times10^{-9}$ & Yes \\
+ & CRLS & 0.006 & 5 & $1.32\times10^{-10}$ & Yes \\
+ & CG & 0.006 & 5 & $1.11\times10^{-10}$ & Yes \\
+ & LSMR & 0.006 & 5 & $1.32\times10^{-10}$ & Yes \\
+ & CGLS & 0.006 & 5 & $1.11\times10^{-10}$ & Yes \\
+ & LSQR & 0.006 & 5 & $1.11\times10^{-10}$ & Yes \\
+\midrule
+Pseudo-Huber & Spectral-MM (PCG) & 0.008 & 26 & $6.17\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.012 & 39 & $7.41\times10^{-9}$ & Yes \\
+ & CRLS & 0.013 & 10 & $4.07\times10^{-9}$ & Yes \\
+ & CG & 0.014 & 10 & $4.04\times10^{-9}$ & Yes \\
+ & LSMR & 0.014 & 10 & $4.07\times10^{-9}$ & Yes \\
+ & CGLS & 0.014 & 10 & $4.04\times10^{-9}$ & Yes \\
+ & LSQR & 0.014 & 10 & $4.04\times10^{-9}$ & Yes \\
+\midrule
+Student-$t$ & Spectral-MM (PCG) & 0.010 & 42 & $8.82\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.014 & 40 & $9.13\times10^{-9}$ & Yes \\
+ & CRLS & 0.025 & 25 & $6.23\times10^{-9}$ & Yes \\
+ & CG & 0.025 & 25 & $7.02\times10^{-9}$ & Yes \\
+ & LSMR & 0.026 & 25 & $6.23\times10^{-9}$ & Yes \\
+ & CGLS & 0.026 & 25 & $7.02\times10^{-9}$ & Yes \\
+ & LSQR & 0.026 & 25 & $7.02\times10^{-9}$ & Yes \\
+\end{longtable}
+\noindent\textit{Notes.} Native timings are medians of five interleaved rounds after warm-up; GLM timings, where present, are medians of three initial-run measurements. Iteration is the number of outer iterations. Converged means $\|g\|_2\leq10^{-6}$ or $\|g\|_2/(1+\|g_0\|_2)\leq10^{-8}$, independently of the solver status. Native fits disable negligible-step and stalled-step stopping, use rank 5, $\rho=10^{-6}$, no ridge penalty, at most 1000 outer iterations and 200 inner iterations. Inference is disabled.
+The non-intercept design has approximately 20 nonzeros per row (approximately 2\% density); sparse GLM inputs are converted to dense within the timed call.
+Parameters: smooth quantile $(q,\epsilon)=(0.25,0.1)$; expectile $q=0.25$; pseudo-Huber $\delta=1$; Student-$t$ $(\nu,\sigma)=(4,1)$.
+\par
+\endgroup
+
+\end{document}

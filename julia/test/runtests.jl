@@ -155,3 +155,5 @@ include("model_api.jl")
 include("readme_examples.jl")
 
 include("output_prediction.jl")
+
+include("mm_acceleration.jl")

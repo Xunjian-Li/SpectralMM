@@ -3,7 +3,7 @@
 import os
 # Set before importing numeric runtimes; threadpoolctl also enforces Python BLAS.
 for key in ('OPENBLAS_NUM_THREADS','OMP_NUM_THREADS','MKL_NUM_THREADS','VECLIB_MAXIMUM_THREADS'):
-    os.environ[key]='1'
+    os.environ[key]=os.environ.get('SPECTRALMM_BENCH_THREADS','12')
 import argparse
 import csv
 import hashlib
@@ -23,8 +23,8 @@ from threadpoolctl import threadpool_limits, threadpool_info
 ROOT=Path(__file__).resolve().parents[2]
 from spectralmm import fit
 from spectralmm import _api as spectralmm_api
-METHODS=['Spectral-MM','CG','CGLS','CRLS','LSQR','LSMR','GLM']
-SOLVERS=dict(zip(METHODS[:-1],['spectral','cg','cgls','crls','lsqr','lsmr']))
+METHODS=['Spectral-MM (PCG)','Spectral-MM (MM)','CG','CGLS','CRLS','LSQR','LSMR','GLM']
+SOLVERS=dict(zip(METHODS[:-1],['pcg','mm','cg','cgls','crls','lsqr','lsmr']))
 FIELDS=['language','family','storage','n','p','p_total','method','median_ms','min_ms','max_ms',
         'samples','batch','converged','quality_pass','iterations','inner_iterations','loss',
         'gradnorm','relgrad','coef_norm','relative_coef_error','glm_input','warnings','error']
@@ -47,3 +47,13 @@ def load_case(out,case):
 def write_csv(path,rows,fields):
     with path.open('w',newline='') as f:
         writer=csv.DictWriter(f,fieldnames=fields,extrasaction='ignore'); writer.writeheader(); writer.writerows(rows)
+
+
+def native_options(config):
+    """Identical native settings for initial and repeat runs."""
+    keys=('rank','krylovdim','floor','maxiter','inner_maxiter','eta_max',
+          'correction_tol','resid_tol','gtol','relgtol','krylov_rtol','krylov_atol',
+          'accept_negligible','accept_stalled')
+    result={key:config[key] for key in keys}
+    result.update(ridge=0.,nesterov=True,fit_intercept=False,inference=False)
+    return result

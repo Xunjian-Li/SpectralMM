@@ -1,0 +1,77 @@
+\begingroup
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{longtable}{llrrrc}
+\caption{Computational comparison for generalized linear models in R with a dense design matrix: $n=2{,}000$, $p=1{,}001$ (including the intercept). Runtimes are in seconds; 12 threads were requested.}
+\label{tab:R-dense-glm-strict}\\
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & Converged \\
+\midrule
+\endfirsthead
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & Converged \\
+\midrule
+\endhead
+\midrule
+\multicolumn{6}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Gaussian-identity & Spectral-MM (PCG) & 0.038 & 25 & $9.38\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.085 & 59 & $1.94\times10^{-9}$ & Yes \\
+ & LSMR & 0.026 & 2 & $7.38\times10^{-9}$ & Yes \\
+ & CRLS & 0.027 & 2 & $7.38\times10^{-9}$ & Yes \\
+ & CG & 0.028 & 2 & $7.34\times10^{-9}$ & Yes \\
+ & LSQR & 0.028 & 2 & $7.34\times10^{-9}$ & Yes \\
+ & CGLS & 0.028 & 2 & $7.34\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 0.547 & -- & $1.83\times10^{-15}$ & Yes \\
+\midrule
+Bernoulli-logit & Spectral-MM (PCG) & 0.148 & 54 & $6.21\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.447 & 31 & $7.70\times10^{-9}$ & Yes \\
+ & CRLS & 0.484 & 11 & $5.29\times10^{-9}$ & Yes \\
+ & LSMR & 0.485 & 11 & $5.29\times10^{-9}$ & Yes \\
+ & CGLS & 0.494 & 11 & $5.24\times10^{-9}$ & Yes \\
+ & LSQR & 0.494 & 11 & $5.29\times10^{-9}$ & Yes \\
+ & CG & 0.495 & 11 & $5.34\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 15.523 & -- & $4.03\times10^{-14}$ & Yes \\
+\midrule
+Bernoulli-probit & Spectral-MM (PCG) & 0.124 & 37 & $7.56\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.342 & 23 & $3.87\times10^{-9}$ & Yes \\
+ & CRLS & 0.491 & 11 & $2.95\times10^{-10}$ & Yes \\
+ & LSMR & 0.492 & 11 & $2.95\times10^{-10}$ & Yes \\
+ & CG & 0.502 & 11 & $2.84\times10^{-10}$ & Yes \\
+ & CGLS & 0.502 & 11 & $2.83\times10^{-10}$ & Yes \\
+ & LSQR & 0.503 & 11 & $2.83\times10^{-10}$ & Yes \\
+ & \texttt{glm.fit} & 9.863 & -- & $9.64\times10^{-17}$ & Yes \\
+\midrule
+Poisson-log & Spectral-MM (PCG) & 0.083 & 34 & $6.46\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.271 & 92 & $3.69\times10^{-9}$ & Yes \\
+ & CRLS & 0.108 & 6 & $5.67\times10^{-10}$ & Yes \\
+ & LSMR & 0.108 & 6 & $5.65\times10^{-10}$ & Yes \\
+ & CG & 0.117 & 6 & $5.56\times10^{-10}$ & Yes \\
+ & CGLS & 0.118 & 6 & $6.08\times10^{-10}$ & Yes \\
+ & LSQR & 0.118 & 6 & $5.42\times10^{-10}$ & Yes \\
+ & \texttt{glm.fit} & 2.802 & -- & $2.37\times10^{-15}$ & Yes \\
+\midrule
+Gamma-log & Spectral-MM (PCG) & 0.072 & 64 & $7.35\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.114 & 98 & $9.46\times10^{-9}$ & Yes \\
+ & CG & 0.549 & 45 & $7.50\times10^{-9}$ & Yes \\
+ & LSQR & 0.554 & 45 & $7.50\times10^{-9}$ & Yes \\
+ & CRLS & 0.554 & 49 & $5.41\times10^{-9}$ & Yes \\
+ & CGLS & 0.555 & 45 & $7.50\times10^{-9}$ & Yes \\
+ & LSMR & 0.556 & 49 & $5.41\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 251.297 & -- & $2.41\times10^{-2}$ & No \\
+\midrule
+Negative-binomial-log & Spectral-MM (PCG) & 0.066 & 42 & $7.16\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.178 & 71 & $5.49\times10^{-9}$ & Yes \\
+ & CRLS & 0.346 & 28 & $7.34\times10^{-9}$ & Yes \\
+ & LSMR & 0.350 & 28 & $7.34\times10^{-9}$ & Yes \\
+ & CG & 0.386 & 28 & $4.98\times10^{-9}$ & Yes \\
+ & CGLS & 0.388 & 28 & $4.98\times10^{-9}$ & Yes \\
+ & LSQR & 0.388 & 28 & $4.98\times10^{-9}$ & Yes \\
+ & \texttt{glm.fit} & 4.247 & -- & $1.00\times10^{-7}$ & No \\
+\end{longtable}
+\noindent\textit{Notes.} Native timings are medians of five interleaved rounds after warm-up; GLM timings, where present, are medians of three initial-run measurements. Iteration is the number of outer iterations. Converged means $\|g\|_2\leq10^{-6}$ or $\|g\|_2/(1+\|g_0\|_2)\leq10^{-8}$, independently of the solver status. Native fits disable negligible-step and stalled-step stopping, use rank 5, $\rho=10^{-6}$, no ridge penalty, at most 1000 outer iterations and 200 inner iterations. Inference is disabled.
+The negative-binomial shape parameter is fixed at 4. A small gradient alone does not establish existence of a finite maximum-likelihood estimate for separated binary data.
+\par
+\endgroup

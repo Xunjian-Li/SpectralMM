@@ -1,0 +1,23 @@
+{
+  "python": "3.9.21 (main, Dec 11 2024, 10:21:40) \n[Clang 14.0.6 ]",
+  "platform": "macOS-26.5.2-arm64-arm-64bit",
+  "threadpools": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libopenblas",
+      "filepath": "/Users/caleblee/miniconda3/lib/python3.9/site-packages/scipy/.dylibs/libopenblas.0.dylib",
+      "version": "0.3.27",
+      "threading_layer": "pthreads",
+      "architecture": "neoversen1"
+    }
+  ],
+  "threads_requested": 1,
+  "n": 2000,
+  "p": 1000,
+  "p_total": 1001,
+  "rounds": 5,
+  "scope": "PCG and MM only; fresh local source builds; languages timed sequentially",
+  "cpp_sha256": "6c600550aa4e863f7cf268ab8391a4e3269118230df9371b08c340fef0f890d5"
+}

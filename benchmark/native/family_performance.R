@@ -17,8 +17,8 @@ score <- function(X,y,b,family,scale) {
   i <- spectralmm_fit(inference=FALSE, intercept=FALSE, X,y,family,family_options=family_params(family),beta0=b,gtol=1e100)$info
   c(loss=i$loss,gradnorm=i$gradnorm,relgrad=i$gradnorm/scale)
 }
-methods <- c("Spectral-MM","CG","CGLS","CRLS","LSQR","LSMR","GLM")
-solvers <- setNames(c("spectral","cg","cgls","crls","lsqr","lsmr"),methods[1:6])
+methods <- c("Spectral-MM (PCG)","Spectral-MM (MM)","CG","CGLS","CRLS","LSQR","LSMR","GLM")
+solvers <- setNames(c("pcg","mm","cg","cgls","crls","lsqr","lsmr"),methods[1:7])
 rows <- list(); samples <- list()
 for (case in config$cases) {
   base <- file.path(out,"data",case$id); n <- case$n; p <- case$p_total
@@ -32,7 +32,7 @@ for (case in config$cases) {
   scale <- 1+score(X,y,b0,case$family,1)[["gradnorm"]]
   set.seed(case$seed+17)
   coefs <- list(); case_rows <- list()
-  for (method in sample(if(case$family %in% c("gaussian","bernoulli","probit","poisson","gamma","negative_binomial")) methods else methods[1:6])) {
+  for (method in sample(if(case$family %in% c("gaussian","bernoulli","probit","poisson","gamma","negative_binomial")) methods else methods[1:7])) {
     notes <- character()
     row <- list(language="R",family=case$family,storage=case$storage,n=n,p=case$p,p_total=p,method=method,
                 median_ms=NA_real_,min_ms=NA_real_,max_ms=NA_real_,samples=0,batch=0,converged=FALSE,quality_pass=FALSE,
@@ -52,7 +52,7 @@ for (case in config$cases) {
                 krylovdim=config$krylovdim,maxiter=config$maxiter,inner_maxiter=config$inner_maxiter,
                 gtol=config$gtol,relgtol=config$relgtol,eta_max=config$eta_max,
                 correction_tol=config$correction_tol,resid_tol=config$resid_tol,
-                krylov_rtol=config$krylov_rtol,krylov_atol=config$krylov_atol,ridge=0,nesterov=TRUE)
+                krylov_rtol=config$krylov_rtol,krylov_atol=config$krylov_atol,ridge=0,nesterov=TRUE,accept_negligible=config$accept_negligible,accept_stalled=config$accept_stalled)
       list(coef=coef(m),converged=m$info$converged,outer=m$info$iterations,inner=m$info$inner_iterations)
     }
     row <- tryCatch({

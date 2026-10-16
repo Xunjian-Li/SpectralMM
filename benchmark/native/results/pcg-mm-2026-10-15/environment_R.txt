@@ -1,0 +1,22 @@
+R version 4.4.2 (2024-10-31)
+Platform: aarch64-apple-darwin24.1.0
+Running under: macOS 26.5.2
+
+Matrix products: default
+BLAS:   /opt/homebrew/Cellar/openblas/0.3.29/lib/libopenblasp-r0.3.29.dylib 
+LAPACK: /opt/homebrew/Cellar/r/4.4.2_2/lib/R/lib/libRlapack.dylib;  LAPACK version 3.12.0
+
+locale:
+[1] C.UTF-8/C.UTF-8/C.UTF-8/C/C.UTF-8/C.UTF-8
+
+time zone: America/Los_Angeles
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] SpectralMM_0.2.0
+
+loaded via a namespace (and not attached):
+[1] compiler_4.4.2 Rcpp_1.1.0    

@@ -38,11 +38,8 @@ def benchmark_python(out,config):
                     return result.params,bool(result.converged),result.fit_history.get('iteration',-1),-1,'GLM'
             else:
                 def run():
-                    result=fit(X,y,family,family_options=PARAMS.get(family,{}),solver=SOLVERS[method],beta0=b0,rank=config['rank'],
-                        floor=config.get('floor',1e-6),krylovdim=config['krylovdim'],maxiter=config['maxiter'],inner_maxiter=config['inner_maxiter'],
-                        gtol=config['gtol'],relgtol=config['relgtol'],eta_max=config['eta_max'],
-                        correction_tol=config['correction_tol'],resid_tol=config['resid_tol'],
-                        krylov_rtol=config['krylov_rtol'],krylov_atol=config['krylov_atol'],ridge=0.,nesterov=True, fit_intercept=False, inference=False)
+                    result=fit(X,y,family,family_options=PARAMS.get(family,{}),solver=SOLVERS[method],
+                        beta0=b0,**native_options(config))
                     i=result.info
                     return result.coef,i['converged'],i['iterations'],i['inner_iterations'],i['termination_reason']
             try:
@@ -97,9 +94,10 @@ def benchmark_python(out,config):
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser()
-    parser.add_argument('--output',type=Path,default=ROOT/'benchmark/native/results/family-performance')
+    parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--language',choices=['python','R','both'],default='both')
     parser.add_argument('--size',type=int,default=1000)
+    parser.add_argument('--settings',type=Path,default=ROOT/'benchmark/native/settings.json')
     args=parser.parse_args(); out=args.output.resolve(); p=args.size
     cases=[]
     for family in FAMILIES:
@@ -107,17 +105,16 @@ if __name__=='__main__':
             id=f'{family}_{storage}_p{p}'
             nnz=(out/'data'/f'{id}_values.bin').stat().st_size//8 if storage=='sparse' else 2*p*(p+1)
             cases.append(dict(id=id,family=family,storage=storage,n=2*p,p=p,p_total=p+1,nnz=nnz,seed=3124))
-    config=dict(cases=cases,samples=3,min_sample_seconds=.05,max_batch=1000,maxiter=1000,
-        inner_maxiter=200,rank=5,krylovdim=12,floor=1e-6,gtol=1e-6,relgtol=1e-8,
-        eta_max=.6,correction_tol=.05,resid_tol=.5,krylov_rtol=1e-4,krylov_atol=1e-8,
-        glm_tolerance=1e-12,threads=1,methods=METHODS)
+    config=json.loads(args.settings.read_text())
+    config.update(cases=cases,size=p,methods=METHODS)
     (out/'config.json').write_text(json.dumps(config,indent=2))
-    with threadpool_limits(limits=1):
+    with threadpool_limits(limits=config['threads']):
         metadata=dict(platform=platform.platform(),python=sys.version,numpy=np.__version__,scipy=scipy.__version__,
             statsmodels=statsmodels.__version__,threadpools=threadpool_info(),
             native_sha256=hashlib.sha256(Path(spectralmm_api._library()._name).read_bytes()).hexdigest(),
             timing='warm end-to-end fit; excludes data generation/imports/compilation/scoring; sparse GLM conversion included')
-        (out/'environment_python.json').write_text(json.dumps(metadata,indent=2))
+        if args.language in ('both','python'):
+            (out/'environment_python.json').write_text(json.dumps(metadata,indent=2))
         if args.language in ('both','python'): benchmark_python(out,config)
     if args.language in ('both','R'):
         subprocess.run([shutil.which('Rscript') or 'Rscript',str(ROOT/'benchmark/native/family_performance.R'),str(out),str(ROOT)],check=True,env=os.environ)

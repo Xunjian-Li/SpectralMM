@@ -1,0 +1,23 @@
+{
+  "size": 1000,
+  "threads": 12,
+  "samples": 3,
+  "repeat_samples": 5,
+  "min_sample_seconds": 0.05,
+  "max_batch": 1000,
+  "maxiter": 1000,
+  "inner_maxiter": 200,
+  "rank": 5,
+  "krylovdim": 12,
+  "floor": 1e-06,
+  "gtol": 1e-06,
+  "relgtol": 1e-08,
+  "eta_max": 0.6,
+  "correction_tol": 0.05,
+  "resid_tol": 0.5,
+  "krylov_rtol": 0.0001,
+  "krylov_atol": 1e-08,
+  "glm_tolerance": 1e-12,
+  "accept_negligible": false,
+  "accept_stalled": false
+}

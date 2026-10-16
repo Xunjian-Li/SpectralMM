@@ -297,8 +297,10 @@ struct NoEigenAllocation {
 #endif
 struct PCGWorkspace {
     Vec r,z,p,Hp,Xp,weighted,coeff,projected;
-    PCGWorkspace(int64_t n, int64_t psize, int64_t rank)
-        : r(psize),z(psize),p(psize),Hp(psize),Xp(n),weighted(n),coeff(rank),projected(rank) {}
+    Vec mm_y,mm_old,mm_Xy,mm_Xold;
+    PCGWorkspace(int64_t n, int64_t psize, int64_t rank, bool mm=false)
+        : r(psize),z(psize),p(psize),Hp(psize),Xp(n),weighted(n),coeff(rank),projected(rank),
+          mm_y(mm ? psize : 0),mm_old(mm ? psize : 0),mm_Xy(mm ? n : 0),mm_Xold(mm ? n : 0) {}
 };
 void pcg(const Design& X, const Vec& w, const Vec& g, const Spectrum& s,
         const ModelOptions& o, int64_t rank, smm_info& info, bool& breakdown,
@@ -321,6 +323,48 @@ void pcg(const Design& X, const Vec& w, const Vec& g, const Spectrum& s,
     double rz=r.dot(z), initial=g.norm();
     breakdown=false;
     if (initial<=1e-10) return;
+    if (mm) {
+        // Match Julia's accelerated WLS MM: gradients are evaluated at the
+        // extrapolated point, but the accepted (non-extrapolated) step is returned.
+        // Inner momentum is independent of o.nesterov (outer acceleration).
+        ws.mm_y.setZero(); ws.mm_Xy.setZero();
+        double momentum=1.;
+        for (int64_t i=0;i<o.inner_maxiter;++i) {
+            if (!r.allFinite()) { breakdown=true; return; }
+            if (r.norm()<=std::max(1e-10,o.eta_max*initial)) return;
+            precondition_into();
+            if (!z.allFinite()) { breakdown=true; return; }
+            X.mv_into(z,ws.Xp);
+            if (!ws.Xp.allFinite()) { breakdown=true; return; }
+            double curvature=(w.array()*ws.Xp.array().square()).sum();
+            if (o.ridge>0.) curvature+=o.ridge*z.tail(z.size()-X.unpenalized).squaredNorm();
+            double alpha=curvature>0. ? r.dot(z)/curvature : 1.;
+            alpha=std::isfinite(alpha) ? std::clamp(alpha,1e-10,10.) : 1e-10;
+            ws.mm_old=delta; ws.mm_Xold=Xdelta;
+            delta=ws.mm_y+alpha*z;
+            Xdelta=ws.mm_Xy+alpha*ws.Xp;
+            ++info.inner_iterations;
+            if (!delta.allFinite() || !Xdelta.allFinite()) { breakdown=true; return; }
+            double next=.5*(1.+std::sqrt(1.+4.*momentum*momentum));
+            double theta=(momentum-1.)/next;
+            ws.mm_y=delta+theta*(delta-ws.mm_old);
+            ws.mm_Xy=Xdelta+theta*(Xdelta-ws.mm_Xold);
+            if (!ws.mm_y.allFinite() || !ws.mm_Xy.allFinite()) { breakdown=true; return; }
+            // r = -(g + H*y); the cached X*y avoids another design product.
+            ws.weighted.array()=w.array()*ws.mm_Xy.array();
+            X.tmv_into(ws.weighted,Hp);
+            Hp.tail(z.size()-X.unpenalized)+=o.ridge*ws.mm_y.tail(z.size()-X.unpenalized);
+            r=-g-Hp;
+            momentum=next;
+        }
+        // At the iteration limit validate the gradient at the returned step.
+        ws.weighted.array()=w.array()*Xdelta.array();
+        X.tmv_into(ws.weighted,Hp);
+        Hp.tail(delta.size()-X.unpenalized)+=o.ridge*delta.tail(delta.size()-X.unpenalized);
+        r=-g-Hp;
+        breakdown=!r.allFinite();
+        return;
+    }
     for (int64_t i=0;i<o.inner_maxiter;++i) {
         X.mv_into(p,ws.Xp);
         ws.weighted.array()=w.array()*ws.Xp.array();
@@ -404,7 +448,7 @@ void fit(const smm_matrix& input, const double *yp, const double *beta0,
         spec.resize(input.n,p,rank+1);
         spectralws=std::make_unique<SpectralWorkspace>(input.n,p,rank,o);
     }
-    PCGWorkspace pcgws(spectral_mode ? input.n : 0,spectral_mode ? p : 0,spectral_mode ? rank : 0);
+    PCGWorkspace pcgws(spectral_mode ? input.n : 0,spectral_mode ? p : 0,spectral_mode ? rank : 0,krylov && krylov->solver==6);
     std::unique_ptr<KrylovWorkspace> krylovws;
     if (!spectral_mode && !cholesky_mode) krylovws=std::make_unique<KrylovWorkspace>(X,o.ridge,krylov->solver);
     Vec eval(p),ee(input.n),step(p),dEta(input.n),trial(p),trialEta(input.n);

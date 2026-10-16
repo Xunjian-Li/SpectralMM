@@ -1,0 +1,55 @@
+\begingroup
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{longtable}{llrrrc}
+\caption{Computational comparison for non-GLM regression models in R with a dense design matrix: $n=2{,}000$, $p=1{,}001$ (including the intercept). Runtimes are in seconds; 12 threads were requested.}
+\label{tab:R-dense-nonglm-strict}\\
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & Converged \\
+\midrule
+\endfirsthead
+\toprule
+Model & Method & Time (s) & Iteration & Rel. Grad. & Converged \\
+\midrule
+\endhead
+\midrule
+\multicolumn{6}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Smooth quantile & Spectral-MM (PCG) & 0.194 & 49 & $7.78\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.875 & 251 & $7.09\times10^{-9}$ & Yes \\
+ & CRLS & 0.869 & 21 & $7.89\times10^{-10}$ & Yes \\
+ & CG & 0.890 & 19 & $8.78\times10^{-10}$ & Yes \\
+ & LSMR & 0.967 & 24 & $8.11\times10^{-10}$ & Yes \\
+ & CGLS & 1.227 & 26 & $8.04\times10^{-10}$ & Yes \\
+ & LSQR & 1.229 & 26 & $7.59\times10^{-10}$ & Yes \\
+\midrule
+Expectile & Spectral-MM (PCG) & 0.047 & 29 & $7.06\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.093 & 55 & $9.76\times10^{-9}$ & Yes \\
+ & CRLS & 0.064 & 5 & $3.47\times10^{-10}$ & Yes \\
+ & LSMR & 0.065 & 5 & $3.47\times10^{-10}$ & Yes \\
+ & CG & 0.068 & 5 & $3.59\times10^{-10}$ & Yes \\
+ & LSQR & 0.068 & 5 & $3.59\times10^{-10}$ & Yes \\
+ & CGLS & 0.069 & 5 & $3.59\times10^{-10}$ & Yes \\
+\midrule
+Pseudo-Huber & Spectral-MM (PCG) & 0.051 & 30 & $7.55\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.112 & 55 & $7.97\times10^{-9}$ & Yes \\
+ & CRLS & 0.135 & 9 & $3.79\times10^{-9}$ & Yes \\
+ & LSMR & 0.136 & 9 & $3.79\times10^{-9}$ & Yes \\
+ & CG & 0.146 & 9 & $3.69\times10^{-9}$ & Yes \\
+ & CGLS & 0.147 & 9 & $3.69\times10^{-9}$ & Yes \\
+ & LSQR & 0.147 & 9 & $3.69\times10^{-9}$ & Yes \\
+\midrule
+Student-$t$ & Spectral-MM (PCG) & 0.063 & 48 & $6.66\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 0.141 & 46 & $7.02\times10^{-9}$ & Yes \\
+ & CRLS & 0.273 & 25 & $7.14\times10^{-9}$ & Yes \\
+ & LSMR & 0.276 & 25 & $7.14\times10^{-9}$ & Yes \\
+ & CG & 0.285 & 24 & $8.54\times10^{-9}$ & Yes \\
+ & CGLS & 0.287 & 24 & $8.54\times10^{-9}$ & Yes \\
+ & LSQR & 0.287 & 24 & $8.54\times10^{-9}$ & Yes \\
+\end{longtable}
+\noindent\textit{Notes.} Native timings are medians of five interleaved rounds after warm-up; GLM timings, where present, are medians of three initial-run measurements. Iteration is the number of outer iterations. Converged means $\|g\|_2\leq10^{-6}$ or $\|g\|_2/(1+\|g_0\|_2)\leq10^{-8}$, independently of the solver status. Native fits disable negligible-step and stalled-step stopping, use rank 5, $\rho=10^{-6}$, no ridge penalty, at most 1000 outer iterations and 200 inner iterations. Inference is disabled.
+Parameters: smooth quantile $(q,\epsilon)=(0.25,0.1)$; expectile $q=0.25$; pseudo-Huber $\delta=1$; Student-$t$ $(\nu,\sigma)=(4,1)$.
+\par
+\endgroup

@@ -1,0 +1,49 @@
+\begin{table}[htbp]
+\centering
+\caption{
+Computational comparisons for non-GLM regression models with a dense design matrix,
+$n=10{,}000$ and $p=5{,}001$.
+Runtimes are reported in seconds.
+Iteration denotes the number of outer iterations,
+Rel. Grad. is the relative gradient norm at termination,
+and Converged indicates whether Rel. Grad. is at most $10^{-6}$.
+}
+\label{tab:nonglm-comparison-dense}
+\begin{tabular}{llrrrc}
+\toprule
+Model & Method & Time & Iteration & Rel. Grad. & Converged \\
+\midrule
+Smooth quantile & Spectral-MM (PCG) & 3.341 & 41 & $2.48\times10^{-8}$ & Yes \\
+ & Spectral-MM (MM) & 4.675 & 39 & $4.02\times10^{-8}$ & Yes \\
+ & Cholesky & 12.451 & 23 & $1.10\times10^{-11}$ & Yes \\
+ & LSQR & 18.967 & 33 & $5.12\times10^{-7}$ & Yes \\
+ & LSMR & 22.435 & 66 & $3.44\times10^{-7}$ & Yes \\
+ & CRLS & 23.345 & 33 & $3.57\times10^{-9}$ & Yes \\
+ & CGLS & 25.203 & 32 & $4.28\times10^{-10}$ & Yes \\
+\midrule
+Expectile & Spectral-MM (PCG) & 0.732 & 31 & $8.46\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 1.075 & 19 & $4.89\times10^{-8}$ & Yes \\
+ & LSMR & 0.978 & 8 & $1.21\times10^{-8}$ & Yes \\
+ & CRLS & 1.016 & 5 & $8.80\times10^{-10}$ & Yes \\
+ & LSQR & 1.047 & 8 & $8.84\times10^{-9}$ & Yes \\
+ & CGLS & 1.060 & 5 & $9.70\times10^{-10}$ & Yes \\
+ & Cholesky & 2.781 & 5 & $2.69\times10^{-15}$ & Yes \\
+\midrule
+Pseudo-Huber & Spectral-MM (PCG) & 0.786 & 30 & $6.85\times10^{-9}$ & Yes \\
+ & Spectral-MM (MM) & 1.084 & 23 & $5.63\times10^{-8}$ & Yes \\
+ & LSMR & 3.256 & 23 & $4.35\times10^{-8}$ & Yes \\
+ & CRLS & 3.280 & 14 & $1.96\times10^{-9}$ & Yes \\
+ & LSQR & 3.383 & 18 & $6.91\times10^{-8}$ & Yes \\
+ & CGLS & 3.469 & 14 & $2.00\times10^{-9}$ & Yes \\
+ & Cholesky & 7.818 & 14 & $1.43\times10^{-9}$ & Yes \\
+\midrule
+Student $t$ & Spectral-MM (PCG) & 1.135 & 46 & $2.13\times10^{-8}$ & Yes \\
+ & Spectral-MM (MM) & 2.163 & 41 & $7.71\times10^{-9}$ & Yes \\
+ & LSMR & 3.135 & 25 & $2.47\times10^{-8}$ & Yes \\
+ & LSQR & 3.169 & 23 & $2.73\times10^{-8}$ & Yes \\
+ & CGLS & 4.628 & 25 & $1.12\times10^{-8}$ & Yes \\
+ & CRLS & 4.660 & 25 & $1.03\times10^{-8}$ & Yes \\
+ & Cholesky & 19.614 & 27 & $7.72\times10^{-9}$ & Yes \\
+\bottomrule
+\end{tabular}
+\end{table}

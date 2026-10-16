@@ -41,3 +41,9 @@ __pycache__/
 /R/SpectralMM_*.tar.gz
 
 /benchmark/Manifest.toml
+
+# Local benchmark inputs, build products, and new timing runs.
+/benchmark/data/
+/benchmark/build/
+/benchmark/runs/
+/benchmark/settings.local.json

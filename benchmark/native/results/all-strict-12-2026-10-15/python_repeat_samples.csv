@@ -1,0 +1,701 @@
+language,case,method,sample,batch,time_ms
+Python,gaussian_dense_p1000,LSMR,1,6,9.062826333333328
+Python,gaussian_dense_p1000,Spectral-MM (PCG),1,3,14.000277666666634
+Python,gaussian_dense_p1000,LSQR,1,6,9.441541666666664
+Python,gaussian_dense_p1000,CGLS,1,6,9.210257
+Python,gaussian_dense_p1000,CRLS,1,6,8.755902833333346
+Python,gaussian_dense_p1000,Spectral-MM (MM),1,2,30.52097900000006
+Python,gaussian_dense_p1000,CG,1,6,9.029562500000013
+Python,gaussian_dense_p1000,CRLS,2,6,8.80961799999998
+Python,gaussian_dense_p1000,Spectral-MM (PCG),2,3,13.884916666666655
+Python,gaussian_dense_p1000,LSQR,2,6,9.13693050000001
+Python,gaussian_dense_p1000,LSMR,2,6,8.779270833333333
+Python,gaussian_dense_p1000,Spectral-MM (MM),2,2,30.594228999999974
+Python,gaussian_dense_p1000,CGLS,2,6,9.042340333333362
+Python,gaussian_dense_p1000,CG,2,6,8.972388833333364
+Python,gaussian_dense_p1000,Spectral-MM (PCG),3,3,13.89581966666668
+Python,gaussian_dense_p1000,CRLS,3,6,8.672520833333364
+Python,gaussian_dense_p1000,Spectral-MM (MM),3,2,30.44356250000002
+Python,gaussian_dense_p1000,CG,3,6,8.965979166666676
+Python,gaussian_dense_p1000,LSQR,3,6,9.017895833333345
+Python,gaussian_dense_p1000,CGLS,3,6,9.052583333333365
+Python,gaussian_dense_p1000,LSMR,3,6,8.798194499999967
+Python,gaussian_dense_p1000,LSMR,4,6,8.699694499999966
+Python,gaussian_dense_p1000,Spectral-MM (MM),4,2,30.402604499999875
+Python,gaussian_dense_p1000,CG,4,6,8.974132000000004
+Python,gaussian_dense_p1000,CRLS,4,6,8.742708333333349
+Python,gaussian_dense_p1000,LSQR,4,6,8.95004866666671
+Python,gaussian_dense_p1000,Spectral-MM (PCG),4,3,13.8536806666667
+Python,gaussian_dense_p1000,CGLS,4,6,9.104548666666693
+Python,gaussian_dense_p1000,CRLS,5,6,8.7485901666667
+Python,gaussian_dense_p1000,LSQR,5,6,8.976861166666664
+Python,gaussian_dense_p1000,CGLS,5,6,9.043465333333334
+Python,gaussian_dense_p1000,LSMR,5,6,8.79605550000003
+Python,gaussian_dense_p1000,Spectral-MM (PCG),5,3,13.862027666666629
+Python,gaussian_dense_p1000,CG,5,6,8.91189583333333
+Python,gaussian_dense_p1000,Spectral-MM (MM),5,2,30.143875000000044
+Python,gaussian_sparse_p1000,LSMR,1,24,2.169430541666665
+Python,gaussian_sparse_p1000,Spectral-MM (PCG),1,10,5.290070899999977
+Python,gaussian_sparse_p1000,LSQR,1,24,2.1623437499999993
+Python,gaussian_sparse_p1000,CGLS,1,24,2.1095833333333314
+Python,gaussian_sparse_p1000,CRLS,1,24,2.066685750000001
+Python,gaussian_sparse_p1000,Spectral-MM (MM),1,8,6.636760374999994
+Python,gaussian_sparse_p1000,CG,1,24,2.0769097083333334
+Python,gaussian_sparse_p1000,CRLS,2,24,2.0695382083333325
+Python,gaussian_sparse_p1000,Spectral-MM (PCG),2,10,5.318287500000007
+Python,gaussian_sparse_p1000,LSQR,2,24,2.144694416666667
+Python,gaussian_sparse_p1000,LSMR,2,24,2.1857656250000024
+Python,gaussian_sparse_p1000,Spectral-MM (MM),2,8,6.746062499999983
+Python,gaussian_sparse_p1000,CGLS,2,24,2.119689250000001
+Python,gaussian_sparse_p1000,CG,2,24,2.0689010416666633
+Python,gaussian_sparse_p1000,Spectral-MM (PCG),3,10,5.355970799999987
+Python,gaussian_sparse_p1000,CRLS,3,24,2.0873836666666645
+Python,gaussian_sparse_p1000,Spectral-MM (MM),3,8,6.615489625000026
+Python,gaussian_sparse_p1000,CG,3,24,2.051050333333341
+Python,gaussian_sparse_p1000,LSQR,3,24,2.1541059166666674
+Python,gaussian_sparse_p1000,CGLS,3,24,2.174994791666681
+Python,gaussian_sparse_p1000,LSMR,3,24,2.2508576250000094
+Python,gaussian_sparse_p1000,LSMR,4,24,2.203373249999992
+Python,gaussian_sparse_p1000,Spectral-MM (MM),4,8,6.715473874999988
+Python,gaussian_sparse_p1000,CG,4,24,2.096222208333313
+Python,gaussian_sparse_p1000,CRLS,4,24,2.066315999999994
+Python,gaussian_sparse_p1000,LSQR,4,24,2.1426389166666615
+Python,gaussian_sparse_p1000,Spectral-MM (PCG),4,10,5.307158300000037
+Python,gaussian_sparse_p1000,CGLS,4,24,2.1273628333333314
+Python,gaussian_sparse_p1000,CRLS,5,24,2.105631916666647
+Python,gaussian_sparse_p1000,LSQR,5,24,2.1458298333333348
+Python,gaussian_sparse_p1000,CGLS,5,24,2.111690999999971
+Python,gaussian_sparse_p1000,LSMR,5,24,2.165565958333356
+Python,gaussian_sparse_p1000,Spectral-MM (PCG),5,10,5.431849999999994
+Python,gaussian_sparse_p1000,CG,5,24,2.046968749999989
+Python,gaussian_sparse_p1000,Spectral-MM (MM),5,8,6.577223999999937
+Python,bernoulli_dense_p1000,LSMR,1,1,148.64549999999977
+Python,bernoulli_dense_p1000,Spectral-MM (PCG),1,1,64.21158299999962
+Python,bernoulli_dense_p1000,LSQR,1,1,153.00154200000014
+Python,bernoulli_dense_p1000,CGLS,1,1,153.9194160000008
+Python,bernoulli_dense_p1000,CRLS,1,1,160.0719590000006
+Python,bernoulli_dense_p1000,Spectral-MM (MM),1,1,156.56849999999966
+Python,bernoulli_dense_p1000,CG,1,1,166.4125830000005
+Python,bernoulli_dense_p1000,CRLS,2,1,165.31112499999966
+Python,bernoulli_dense_p1000,Spectral-MM (PCG),2,1,65.87083299999996
+Python,bernoulli_dense_p1000,LSQR,2,1,157.1894159999996
+Python,bernoulli_dense_p1000,LSMR,2,1,159.54870799999998
+Python,bernoulli_dense_p1000,Spectral-MM (MM),2,1,159.50000000000043
+Python,bernoulli_dense_p1000,CGLS,2,1,154.55345899999972
+Python,bernoulli_dense_p1000,CG,2,1,158.44991699999954
+Python,bernoulli_dense_p1000,Spectral-MM (PCG),3,1,65.94183300000012
+Python,bernoulli_dense_p1000,CRLS,3,1,157.43366700000027
+Python,bernoulli_dense_p1000,Spectral-MM (MM),3,1,154.801666
+Python,bernoulli_dense_p1000,CG,3,1,159.0068329999994
+Python,bernoulli_dense_p1000,LSQR,3,1,152.56387500000022
+Python,bernoulli_dense_p1000,CGLS,3,1,154.35137500000096
+Python,bernoulli_dense_p1000,LSMR,3,1,151.77908300000098
+Python,bernoulli_dense_p1000,LSMR,4,1,151.82633400000077
+Python,bernoulli_dense_p1000,Spectral-MM (MM),4,1,154.1036249999994
+Python,bernoulli_dense_p1000,CG,4,1,159.93533299999996
+Python,bernoulli_dense_p1000,CRLS,4,1,155.44274999999885
+Python,bernoulli_dense_p1000,LSQR,4,1,153.6881250000004
+Python,bernoulli_dense_p1000,Spectral-MM (PCG),4,1,65.51308399999911
+Python,bernoulli_dense_p1000,CGLS,4,1,154.90954200000039
+Python,bernoulli_dense_p1000,CRLS,5,1,149.0104580000011
+Python,bernoulli_dense_p1000,LSQR,5,1,155.03829099999854
+Python,bernoulli_dense_p1000,CGLS,5,1,155.09458300000034
+Python,bernoulli_dense_p1000,LSMR,5,1,151.71070799999953
+Python,bernoulli_dense_p1000,Spectral-MM (PCG),5,1,64.78416600000081
+Python,bernoulli_dense_p1000,CG,5,1,159.7953329999999
+Python,bernoulli_dense_p1000,Spectral-MM (MM),5,1,155.4414590000004
+Python,bernoulli_sparse_p1000,LSMR,1,1,93.97399999999934
+Python,bernoulli_sparse_p1000,Spectral-MM (PCG),1,1,52.64695900000049
+Python,bernoulli_sparse_p1000,LSQR,1,1,94.12999999999982
+Python,bernoulli_sparse_p1000,CGLS,1,1,91.7560420000001
+Python,bernoulli_sparse_p1000,CRLS,1,1,91.67754100000103
+Python,bernoulli_sparse_p1000,Spectral-MM (MM),1,1,121.78016599999886
+Python,bernoulli_sparse_p1000,CG,1,1,91.22812500000066
+Python,bernoulli_sparse_p1000,CRLS,2,1,91.80087500000056
+Python,bernoulli_sparse_p1000,Spectral-MM (PCG),2,1,52.145165999998966
+Python,bernoulli_sparse_p1000,LSQR,2,1,94.39166700000001
+Python,bernoulli_sparse_p1000,LSMR,2,1,94.23441699999913
+Python,bernoulli_sparse_p1000,Spectral-MM (MM),2,1,121.383625
+Python,bernoulli_sparse_p1000,CGLS,2,1,91.28691699999969
+Python,bernoulli_sparse_p1000,CG,2,1,91.39350000000057
+Python,bernoulli_sparse_p1000,Spectral-MM (PCG),3,1,51.882040999998935
+Python,bernoulli_sparse_p1000,CRLS,3,1,90.71816700000035
+Python,bernoulli_sparse_p1000,Spectral-MM (MM),3,1,122.21350000000086
+Python,bernoulli_sparse_p1000,CG,3,1,90.70458399999914
+Python,bernoulli_sparse_p1000,LSQR,3,1,93.80645800000131
+Python,bernoulli_sparse_p1000,CGLS,3,1,91.43516600000012
+Python,bernoulli_sparse_p1000,LSMR,3,1,93.59925000000047
+Python,bernoulli_sparse_p1000,LSMR,4,1,93.63991699999907
+Python,bernoulli_sparse_p1000,Spectral-MM (MM),4,1,121.06987499999988
+Python,bernoulli_sparse_p1000,CG,4,1,93.28487500000016
+Python,bernoulli_sparse_p1000,CRLS,4,1,93.45254200000142
+Python,bernoulli_sparse_p1000,LSQR,4,1,94.5955000000005
+Python,bernoulli_sparse_p1000,Spectral-MM (PCG),4,1,52.375375000000446
+Python,bernoulli_sparse_p1000,CGLS,4,1,91.48779100000048
+Python,bernoulli_sparse_p1000,CRLS,5,1,91.3125000000008
+Python,bernoulli_sparse_p1000,LSQR,5,1,93.51170799999942
+Python,bernoulli_sparse_p1000,CGLS,5,1,91.53158400000017
+Python,bernoulli_sparse_p1000,LSMR,5,1,93.43366700000111
+Python,bernoulli_sparse_p1000,Spectral-MM (PCG),5,1,52.526416000000964
+Python,bernoulli_sparse_p1000,CG,5,1,91.5252089999985
+Python,bernoulli_sparse_p1000,Spectral-MM (MM),5,1,122.03720900000015
+Python,probit_dense_p1000,LSMR,1,1,157.11799999999874
+Python,probit_dense_p1000,Spectral-MM (PCG),1,1,65.80612499999994
+Python,probit_dense_p1000,LSQR,1,1,161.7197499999996
+Python,probit_dense_p1000,CGLS,1,1,164.23745900000063
+Python,probit_dense_p1000,CRLS,1,1,161.40425000000036
+Python,probit_dense_p1000,Spectral-MM (MM),1,1,127.68150000000134
+Python,probit_dense_p1000,CG,1,1,163.09550000000073
+Python,probit_dense_p1000,CRLS,2,1,160.57979200000005
+Python,probit_dense_p1000,Spectral-MM (PCG),2,1,65.69266700000043
+Python,probit_dense_p1000,LSQR,2,1,161.15500000000083
+Python,probit_dense_p1000,LSMR,2,1,159.47295899999858
+Python,probit_dense_p1000,Spectral-MM (MM),2,1,126.03324999999899
+Python,probit_dense_p1000,CGLS,2,1,165.81462499999944
+Python,probit_dense_p1000,CG,2,1,168.08500000000137
+Python,probit_dense_p1000,Spectral-MM (PCG),3,1,66.51933300000223
+Python,probit_dense_p1000,CRLS,3,1,158.7827500000003
+Python,probit_dense_p1000,Spectral-MM (MM),3,1,125.46979200000052
+Python,probit_dense_p1000,CG,3,1,169.73924999999923
+Python,probit_dense_p1000,LSQR,3,1,160.91062499999964
+Python,probit_dense_p1000,CGLS,3,1,162.38008300000217
+Python,probit_dense_p1000,LSMR,3,1,155.3317079999985
+Python,probit_dense_p1000,LSMR,4,1,157.96266600000308
+Python,probit_dense_p1000,Spectral-MM (MM),4,1,125.05004200000158
+Python,probit_dense_p1000,CG,4,1,164.99908300000143
+Python,probit_dense_p1000,CRLS,4,1,164.61900000000185
+Python,probit_dense_p1000,LSQR,4,1,159.44466599999885
+Python,probit_dense_p1000,Spectral-MM (PCG),4,1,65.37158399999754
+Python,probit_dense_p1000,CGLS,4,1,160.23770799999681
+Python,probit_dense_p1000,CRLS,5,1,162.68133300000187
+Python,probit_dense_p1000,LSQR,5,1,160.05858300000142
+Python,probit_dense_p1000,CGLS,5,1,162.03262500000193
+Python,probit_dense_p1000,LSMR,5,1,158.40541599999725
+Python,probit_dense_p1000,Spectral-MM (PCG),5,1,66.05591599999983
+Python,probit_dense_p1000,CG,5,1,165.75612500000148
+Python,probit_dense_p1000,Spectral-MM (MM),5,1,125.65633400000209
+Python,probit_sparse_p1000,LSMR,1,1,97.86845800000066
+Python,probit_sparse_p1000,Spectral-MM (PCG),1,1,99.28929100000161
+Python,probit_sparse_p1000,LSQR,1,1,90.65524999999752
+Python,probit_sparse_p1000,CGLS,1,1,88.38962500000136
+Python,probit_sparse_p1000,CRLS,1,1,91.24974999999935
+Python,probit_sparse_p1000,Spectral-MM (MM),1,1,79.05741700000135
+Python,probit_sparse_p1000,CG,1,1,84.89020899999744
+Python,probit_sparse_p1000,CRLS,2,1,91.0293330000016
+Python,probit_sparse_p1000,Spectral-MM (PCG),2,1,97.0162909999992
+Python,probit_sparse_p1000,LSQR,2,1,88.4193749999973
+Python,probit_sparse_p1000,LSMR,2,1,95.83650000000077
+Python,probit_sparse_p1000,Spectral-MM (MM),2,1,79.26300000000097
+Python,probit_sparse_p1000,CGLS,2,1,86.4974580000002
+Python,probit_sparse_p1000,CG,2,1,84.96154099999842
+Python,probit_sparse_p1000,Spectral-MM (PCG),3,1,96.86070799999769
+Python,probit_sparse_p1000,CRLS,3,1,90.4134170000006
+Python,probit_sparse_p1000,Spectral-MM (MM),3,1,78.8188329999997
+Python,probit_sparse_p1000,CG,3,1,84.53020800000033
+Python,probit_sparse_p1000,LSQR,3,1,88.1489170000016
+Python,probit_sparse_p1000,CGLS,3,1,86.0390829999993
+Python,probit_sparse_p1000,LSMR,3,1,94.38595900000024
+Python,probit_sparse_p1000,LSMR,4,1,95.10354100000029
+Python,probit_sparse_p1000,Spectral-MM (MM),4,1,79.37170900000012
+Python,probit_sparse_p1000,CG,4,1,85.5123330000005
+Python,probit_sparse_p1000,CRLS,4,1,90.32641599999991
+Python,probit_sparse_p1000,LSQR,4,1,88.17975000000189
+Python,probit_sparse_p1000,Spectral-MM (PCG),4,1,97.60987499999985
+Python,probit_sparse_p1000,CGLS,4,1,86.80845800000014
+Python,probit_sparse_p1000,CRLS,5,1,90.78070800000049
+Python,probit_sparse_p1000,LSQR,5,1,88.60850000000298
+Python,probit_sparse_p1000,CGLS,5,1,86.91225000000102
+Python,probit_sparse_p1000,LSMR,5,1,95.39604200000085
+Python,probit_sparse_p1000,Spectral-MM (PCG),5,1,97.41391600000071
+Python,probit_sparse_p1000,CG,5,1,85.46400000000176
+Python,probit_sparse_p1000,Spectral-MM (MM),5,1,79.94237499999812
+Python,poisson_dense_p1000,LSMR,1,2,34.6852085000009
+Python,poisson_dense_p1000,Spectral-MM (PCG),1,2,30.635832999999835
+Python,poisson_dense_p1000,LSQR,1,2,37.33677099999966
+Python,poisson_dense_p1000,CGLS,1,2,37.86010399999995
+Python,poisson_dense_p1000,CRLS,1,2,35.618437500000155
+Python,poisson_dense_p1000,Spectral-MM (MM),1,1,95.59304200000085
+Python,poisson_dense_p1000,CG,1,2,38.13764600000091
+Python,poisson_dense_p1000,CRLS,2,2,35.177270999998456
+Python,poisson_dense_p1000,Spectral-MM (PCG),2,2,30.379625000000132
+Python,poisson_dense_p1000,LSQR,2,2,37.102124999998765
+Python,poisson_dense_p1000,LSMR,2,2,34.2987920000013
+Python,poisson_dense_p1000,Spectral-MM (MM),2,1,95.64316699999864
+Python,poisson_dense_p1000,CGLS,2,2,37.594187499999876
+Python,poisson_dense_p1000,CG,2,2,37.90568750000034
+Python,poisson_dense_p1000,Spectral-MM (PCG),3,2,30.31672900000082
+Python,poisson_dense_p1000,CRLS,3,2,34.902332999999786
+Python,poisson_dense_p1000,Spectral-MM (MM),3,1,95.20829200000236
+Python,poisson_dense_p1000,CG,3,2,36.9961459999999
+Python,poisson_dense_p1000,LSQR,3,2,36.7015834999993
+Python,poisson_dense_p1000,CGLS,3,2,37.651062500000165
+Python,poisson_dense_p1000,LSMR,3,2,34.64002099999952
+Python,poisson_dense_p1000,LSMR,4,2,34.584083000000376
+Python,poisson_dense_p1000,Spectral-MM (MM),4,1,95.17620799999804
+Python,poisson_dense_p1000,CG,4,2,37.475707999998775
+Python,poisson_dense_p1000,CRLS,4,2,35.25760449999993
+Python,poisson_dense_p1000,LSQR,4,2,37.5039165000004
+Python,poisson_dense_p1000,Spectral-MM (PCG),4,2,30.4158955000009
+Python,poisson_dense_p1000,CGLS,4,2,38.072062499999504
+Python,poisson_dense_p1000,CRLS,5,2,34.54956250000052
+Python,poisson_dense_p1000,LSQR,5,2,37.399917000000116
+Python,poisson_dense_p1000,CGLS,5,2,38.18937499999997
+Python,poisson_dense_p1000,LSMR,5,2,34.55222900000088
+Python,poisson_dense_p1000,Spectral-MM (PCG),5,2,30.32066649999976
+Python,poisson_dense_p1000,CG,5,2,37.837354500000586
+Python,poisson_dense_p1000,Spectral-MM (MM),5,1,96.48045800000205
+Python,poisson_sparse_p1000,LSMR,1,10,5.451566600000035
+Python,poisson_sparse_p1000,Spectral-MM (PCG),1,7,7.515779714285742
+Python,poisson_sparse_p1000,LSQR,1,9,5.570092555555245
+Python,poisson_sparse_p1000,CGLS,1,10,5.5271999999998656
+Python,poisson_sparse_p1000,CRLS,1,10,5.1845666999998485
+Python,poisson_sparse_p1000,Spectral-MM (MM),1,5,11.91424180000027
+Python,poisson_sparse_p1000,CG,1,10,5.361987500000254
+Python,poisson_sparse_p1000,CRLS,2,10,5.199154199999967
+Python,poisson_sparse_p1000,Spectral-MM (PCG),2,7,7.472392857142803
+Python,poisson_sparse_p1000,LSQR,2,9,5.623652777778037
+Python,poisson_sparse_p1000,LSMR,2,10,5.460666700000161
+Python,poisson_sparse_p1000,Spectral-MM (MM),2,5,11.815825000000046
+Python,poisson_sparse_p1000,CGLS,2,10,5.453704199999976
+Python,poisson_sparse_p1000,CG,2,10,5.326408399999849
+Python,poisson_sparse_p1000,Spectral-MM (PCG),3,7,7.507428571428879
+Python,poisson_sparse_p1000,CRLS,3,10,5.165754199999739
+Python,poisson_sparse_p1000,Spectral-MM (MM),3,5,11.841333399999598
+Python,poisson_sparse_p1000,CG,3,10,5.306258300000266
+Python,poisson_sparse_p1000,LSQR,3,9,5.567379666666501
+Python,poisson_sparse_p1000,CGLS,3,10,5.451237500000161
+Python,poisson_sparse_p1000,LSMR,3,10,5.410795899999954
+Python,poisson_sparse_p1000,LSMR,4,10,5.405583299999961
+Python,poisson_sparse_p1000,Spectral-MM (MM),4,5,11.89517500000008
+Python,poisson_sparse_p1000,CG,4,10,5.332187500000174
+Python,poisson_sparse_p1000,CRLS,4,10,5.194629200000023
+Python,poisson_sparse_p1000,LSQR,4,9,5.553717666666655
+Python,poisson_sparse_p1000,Spectral-MM (PCG),4,7,7.470232142856962
+Python,poisson_sparse_p1000,CGLS,4,10,5.422733400000013
+Python,poisson_sparse_p1000,CRLS,5,10,5.16175830000023
+Python,poisson_sparse_p1000,LSQR,5,9,5.552689777777589
+Python,poisson_sparse_p1000,CGLS,5,10,5.488683300000119
+Python,poisson_sparse_p1000,LSMR,5,10,5.414833300000055
+Python,poisson_sparse_p1000,Spectral-MM (PCG),5,7,7.433708428571606
+Python,poisson_sparse_p1000,CG,5,10,5.299429200000105
+Python,poisson_sparse_p1000,Spectral-MM (MM),5,5,11.88650839999994
+Python,gamma_dense_p1000,LSMR,1,1,184.44533299999932
+Python,gamma_dense_p1000,Spectral-MM (PCG),1,2,30.520458499999847
+Python,gamma_dense_p1000,LSQR,1,1,186.258500000001
+Python,gamma_dense_p1000,CGLS,1,1,182.25479200000194
+Python,gamma_dense_p1000,CRLS,1,1,180.70595800000078
+Python,gamma_dense_p1000,Spectral-MM (MM),1,2,49.05672950000017
+Python,gamma_dense_p1000,CG,1,1,199.5310830000001
+Python,gamma_dense_p1000,CRLS,2,1,185.12741700000035
+Python,gamma_dense_p1000,Spectral-MM (PCG),2,2,30.84318750000037
+Python,gamma_dense_p1000,LSQR,2,1,184.4467920000028
+Python,gamma_dense_p1000,LSMR,2,1,185.086124999998
+Python,gamma_dense_p1000,Spectral-MM (MM),2,2,49.11770849999897
+Python,gamma_dense_p1000,CGLS,2,1,183.99391699999512
+Python,gamma_dense_p1000,CG,2,1,195.97862499999508
+Python,gamma_dense_p1000,Spectral-MM (PCG),3,2,30.455083000003214
+Python,gamma_dense_p1000,CRLS,3,1,181.07016700000145
+Python,gamma_dense_p1000,Spectral-MM (MM),3,2,48.59177100000167
+Python,gamma_dense_p1000,CG,3,1,196.09070799999984
+Python,gamma_dense_p1000,LSQR,3,1,183.1467499999988
+Python,gamma_dense_p1000,CGLS,3,1,183.3588339999963
+Python,gamma_dense_p1000,LSMR,3,1,184.74562499999791
+Python,gamma_dense_p1000,LSMR,4,1,184.72824999999915
+Python,gamma_dense_p1000,Spectral-MM (MM),4,2,48.49543749999796
+Python,gamma_dense_p1000,CG,4,1,196.98666699999734
+Python,gamma_dense_p1000,CRLS,4,1,182.6455409999994
+Python,gamma_dense_p1000,LSQR,4,1,184.53687499999916
+Python,gamma_dense_p1000,Spectral-MM (PCG),4,2,30.20131250000091
+Python,gamma_dense_p1000,CGLS,4,1,184.0034579999994
+Python,gamma_dense_p1000,CRLS,5,1,181.13191599999823
+Python,gamma_dense_p1000,LSQR,5,1,183.47912499999808
+Python,gamma_dense_p1000,CGLS,5,1,184.9765839999975
+Python,gamma_dense_p1000,LSMR,5,1,185.47554199999894
+Python,gamma_dense_p1000,Spectral-MM (PCG),5,2,30.5701875000004
+Python,gamma_dense_p1000,CG,5,1,197.71095799999472
+Python,gamma_dense_p1000,Spectral-MM (MM),5,2,48.146146000000556
+Python,gamma_sparse_p1000,LSMR,1,2,36.46274999999832
+Python,gamma_sparse_p1000,Spectral-MM (PCG),1,3,19.037388999999887
+Python,gamma_sparse_p1000,LSQR,1,2,38.496708500002086
+Python,gamma_sparse_p1000,CGLS,1,2,36.987312500002645
+Python,gamma_sparse_p1000,CRLS,1,2,33.39779150000055
+Python,gamma_sparse_p1000,Spectral-MM (MM),1,2,33.919853999996974
+Python,gamma_sparse_p1000,CG,1,2,34.890958500000124
+Python,gamma_sparse_p1000,CRLS,2,2,33.547228999999845
+Python,gamma_sparse_p1000,Spectral-MM (PCG),2,3,18.12306933333237
+Python,gamma_sparse_p1000,LSQR,2,2,37.68620800000022
+Python,gamma_sparse_p1000,LSMR,2,2,36.39118749999781
+Python,gamma_sparse_p1000,Spectral-MM (MM),2,2,34.82770800000168
+Python,gamma_sparse_p1000,CGLS,2,2,36.85383350000038
+Python,gamma_sparse_p1000,CG,2,2,35.836437500002205
+Python,gamma_sparse_p1000,Spectral-MM (PCG),3,3,18.261847333334913
+Python,gamma_sparse_p1000,CRLS,3,2,34.23268749999764
+Python,gamma_sparse_p1000,Spectral-MM (MM),3,2,34.81193749999889
+Python,gamma_sparse_p1000,CG,3,2,35.54491699999929
+Python,gamma_sparse_p1000,LSQR,3,2,37.19222950000045
+Python,gamma_sparse_p1000,CGLS,3,2,36.972250000001594
+Python,gamma_sparse_p1000,LSMR,3,2,35.641541500002205
+Python,gamma_sparse_p1000,LSMR,4,2,35.360874999998515
+Python,gamma_sparse_p1000,Spectral-MM (MM),4,2,33.895187500000645
+Python,gamma_sparse_p1000,CG,4,2,35.42099999999948
+Python,gamma_sparse_p1000,CRLS,4,2,33.64893750000064
+Python,gamma_sparse_p1000,LSQR,4,2,37.776687499999184
+Python,gamma_sparse_p1000,Spectral-MM (PCG),4,3,18.087110999999823
+Python,gamma_sparse_p1000,CGLS,4,2,36.983937499996955
+Python,gamma_sparse_p1000,CRLS,5,2,33.74160399999937
+Python,gamma_sparse_p1000,LSQR,5,2,37.48029149999965
+Python,gamma_sparse_p1000,CGLS,5,2,37.720041500001855
+Python,gamma_sparse_p1000,LSMR,5,2,35.6879790000022
+Python,gamma_sparse_p1000,Spectral-MM (PCG),5,3,18.025041666668074
+Python,gamma_sparse_p1000,CG,5,2,35.431166500000444
+Python,gamma_sparse_p1000,Spectral-MM (MM),5,2,33.76620799999941
+Python,negative_binomial_dense_p1000,LSMR,1,1,121.94620799999711
+Python,negative_binomial_dense_p1000,Spectral-MM (PCG),1,2,26.13850000000184
+Python,negative_binomial_dense_p1000,LSQR,1,1,123.45733400000114
+Python,negative_binomial_dense_p1000,CGLS,1,1,127.88175000000024
+Python,negative_binomial_dense_p1000,CRLS,1,1,118.4658329999948
+Python,negative_binomial_dense_p1000,Spectral-MM (MM),1,1,64.83775000000236
+Python,negative_binomial_dense_p1000,CG,1,1,120.52862499999861
+Python,negative_binomial_dense_p1000,CRLS,2,1,120.73166700000115
+Python,negative_binomial_dense_p1000,Spectral-MM (PCG),2,2,26.293562500001144
+Python,negative_binomial_dense_p1000,LSQR,2,1,129.58237499999825
+Python,negative_binomial_dense_p1000,LSMR,2,1,125.02604099999814
+Python,negative_binomial_dense_p1000,Spectral-MM (MM),2,1,66.51462499999639
+Python,negative_binomial_dense_p1000,CGLS,2,1,130.86937500000317
+Python,negative_binomial_dense_p1000,CG,2,1,125.3612920000009
+Python,negative_binomial_dense_p1000,Spectral-MM (PCG),3,2,26.942999999999273
+Python,negative_binomial_dense_p1000,CRLS,3,1,120.86395900000468
+Python,negative_binomial_dense_p1000,Spectral-MM (MM),3,1,66.52541700000114
+Python,negative_binomial_dense_p1000,CG,3,1,125.77945799999668
+Python,negative_binomial_dense_p1000,LSQR,3,1,128.04704200000572
+Python,negative_binomial_dense_p1000,CGLS,3,1,129.53391700000338
+Python,negative_binomial_dense_p1000,LSMR,3,1,138.61404099999675
+Python,negative_binomial_dense_p1000,LSMR,4,1,130.47500000000412
+Python,negative_binomial_dense_p1000,Spectral-MM (MM),4,1,67.96420799999936
+Python,negative_binomial_dense_p1000,CG,4,1,128.8059170000011
+Python,negative_binomial_dense_p1000,CRLS,4,1,123.23858300000268
+Python,negative_binomial_dense_p1000,LSQR,4,1,141.2776669999971
+Python,negative_binomial_dense_p1000,Spectral-MM (PCG),4,2,27.167062500002004
+Python,negative_binomial_dense_p1000,CGLS,4,1,129.42329199999847
+Python,negative_binomial_dense_p1000,CRLS,5,1,123.00070799999929
+Python,negative_binomial_dense_p1000,LSQR,5,1,128.35966700000512
+Python,negative_binomial_dense_p1000,CGLS,5,1,129.8969999999997
+Python,negative_binomial_dense_p1000,LSMR,5,1,124.6514999999988
+Python,negative_binomial_dense_p1000,Spectral-MM (PCG),5,2,26.705228999997388
+Python,negative_binomial_dense_p1000,CG,5,1,128.6964580000003
+Python,negative_binomial_dense_p1000,Spectral-MM (MM),5,1,67.36304200000376
+Python,negative_binomial_sparse_p1000,LSMR,1,4,16.488000000000724
+Python,negative_binomial_sparse_p1000,Spectral-MM (PCG),1,5,9.814141600000426
+Python,negative_binomial_sparse_p1000,LSQR,1,3,17.406861000000145
+Python,negative_binomial_sparse_p1000,CGLS,1,3,16.820305333332897
+Python,negative_binomial_sparse_p1000,CRLS,1,4,15.65663525000005
+Python,negative_binomial_sparse_p1000,Spectral-MM (MM),1,4,15.673333500000552
+Python,negative_binomial_sparse_p1000,CG,1,3,16.136583333332528
+Python,negative_binomial_sparse_p1000,CRLS,2,4,15.609802000000172
+Python,negative_binomial_sparse_p1000,Spectral-MM (PCG),2,5,9.775983400000143
+Python,negative_binomial_sparse_p1000,LSQR,2,3,17.089458333333123
+Python,negative_binomial_sparse_p1000,LSMR,2,4,16.78855225000042
+Python,negative_binomial_sparse_p1000,Spectral-MM (MM),2,4,15.802145749999497
+Python,negative_binomial_sparse_p1000,CGLS,2,3,16.73086100000158
+Python,negative_binomial_sparse_p1000,CG,2,3,16.172777666665656
+Python,negative_binomial_sparse_p1000,Spectral-MM (PCG),3,5,9.86135819999987
+Python,negative_binomial_sparse_p1000,CRLS,3,4,15.560385249999698
+Python,negative_binomial_sparse_p1000,Spectral-MM (MM),3,4,15.776791749999575
+Python,negative_binomial_sparse_p1000,CG,3,3,16.202819333334634
+Python,negative_binomial_sparse_p1000,LSQR,3,3,17.49425000000097
+Python,negative_binomial_sparse_p1000,CGLS,3,3,16.9986806666671
+Python,negative_binomial_sparse_p1000,LSMR,3,4,16.311499999998702
+Python,negative_binomial_sparse_p1000,LSMR,4,4,16.231593749999718
+Python,negative_binomial_sparse_p1000,Spectral-MM (MM),4,4,15.957135249999865
+Python,negative_binomial_sparse_p1000,CG,4,3,17.179638666668495
+Python,negative_binomial_sparse_p1000,CRLS,4,4,16.269739749999346
+Python,negative_binomial_sparse_p1000,LSQR,4,3,17.27505566666565
+Python,negative_binomial_sparse_p1000,Spectral-MM (PCG),4,5,10.041733399999941
+Python,negative_binomial_sparse_p1000,CGLS,4,3,16.677069666667894
+Python,negative_binomial_sparse_p1000,CRLS,5,4,15.803437499998907
+Python,negative_binomial_sparse_p1000,LSQR,5,3,17.761985999998824
+Python,negative_binomial_sparse_p1000,CGLS,5,3,17.140708333333993
+Python,negative_binomial_sparse_p1000,LSMR,5,4,16.521510500000502
+Python,negative_binomial_sparse_p1000,Spectral-MM (PCG),5,5,10.054358200000024
+Python,negative_binomial_sparse_p1000,CG,5,3,16.234013666666176
+Python,negative_binomial_sparse_p1000,Spectral-MM (MM),5,4,15.674187500000158
+Python,smooth_quantile_dense_p1000,LSMR,1,1,290.849417000004
+Python,smooth_quantile_dense_p1000,Spectral-MM (PCG),1,1,67.61749999999722
+Python,smooth_quantile_dense_p1000,LSQR,1,1,287.9013339999972
+Python,smooth_quantile_dense_p1000,CGLS,1,1,292.1272079999966
+Python,smooth_quantile_dense_p1000,CRLS,1,1,261.59266700000217
+Python,smooth_quantile_dense_p1000,Spectral-MM (MM),1,1,301.4820839999999
+Python,smooth_quantile_dense_p1000,CG,1,1,389.37854099999925
+Python,smooth_quantile_dense_p1000,CRLS,2,1,264.19270800000305
+Python,smooth_quantile_dense_p1000,Spectral-MM (PCG),2,1,67.07208299999934
+Python,smooth_quantile_dense_p1000,LSQR,2,1,287.10737499999794
+Python,smooth_quantile_dense_p1000,LSMR,2,1,291.4865840000047
+Python,smooth_quantile_dense_p1000,Spectral-MM (MM),2,1,307.7950419999951
+Python,smooth_quantile_dense_p1000,CGLS,2,1,291.4278330000002
+Python,smooth_quantile_dense_p1000,CG,2,1,383.85337500000105
+Python,smooth_quantile_dense_p1000,Spectral-MM (PCG),3,1,67.11500000000115
+Python,smooth_quantile_dense_p1000,CRLS,3,1,258.73391600000417
+Python,smooth_quantile_dense_p1000,Spectral-MM (MM),3,1,302.15816699999465
+Python,smooth_quantile_dense_p1000,CG,3,1,381.19295799999975
+Python,smooth_quantile_dense_p1000,LSQR,3,1,285.272875000004
+Python,smooth_quantile_dense_p1000,CGLS,3,1,286.70524999999714
+Python,smooth_quantile_dense_p1000,LSMR,3,1,282.0567500000024
+Python,smooth_quantile_dense_p1000,LSMR,4,1,284.451875000002
+Python,smooth_quantile_dense_p1000,Spectral-MM (MM),4,1,301.3934169999999
+Python,smooth_quantile_dense_p1000,CG,4,1,385.4130830000031
+Python,smooth_quantile_dense_p1000,CRLS,4,1,258.93129199999976
+Python,smooth_quantile_dense_p1000,LSQR,4,1,288.95124999999666
+Python,smooth_quantile_dense_p1000,Spectral-MM (PCG),4,1,67.26445900000044
+Python,smooth_quantile_dense_p1000,CGLS,4,1,290.65537500000005
+Python,smooth_quantile_dense_p1000,CRLS,5,1,258.22100000000603
+Python,smooth_quantile_dense_p1000,LSQR,5,1,284.2840839999994
+Python,smooth_quantile_dense_p1000,CGLS,5,1,287.99791699999844
+Python,smooth_quantile_dense_p1000,LSMR,5,1,281.0396669999946
+Python,smooth_quantile_dense_p1000,Spectral-MM (PCG),5,1,67.01574999999593
+Python,smooth_quantile_dense_p1000,CG,5,1,382.3099170000006
+Python,smooth_quantile_dense_p1000,Spectral-MM (MM),5,1,297.8922080000004
+Python,smooth_quantile_sparse_p1000,LSMR,1,1,72.69104099999879
+Python,smooth_quantile_sparse_p1000,Spectral-MM (PCG),1,3,20.71652766666669
+Python,smooth_quantile_sparse_p1000,LSQR,1,1,81.74120799999685
+Python,smooth_quantile_sparse_p1000,CGLS,1,1,78.4455419999972
+Python,smooth_quantile_sparse_p1000,CRLS,1,1,72.17699999999638
+Python,smooth_quantile_sparse_p1000,Spectral-MM (MM),1,1,174.62633299999908
+Python,smooth_quantile_sparse_p1000,CG,1,1,79.821625000001
+Python,smooth_quantile_sparse_p1000,CRLS,2,1,72.13562500000137
+Python,smooth_quantile_sparse_p1000,Spectral-MM (PCG),2,3,20.762263999998254
+Python,smooth_quantile_sparse_p1000,LSQR,2,1,80.64445799999476
+Python,smooth_quantile_sparse_p1000,LSMR,2,1,71.44949999999994
+Python,smooth_quantile_sparse_p1000,Spectral-MM (MM),2,1,173.14112499999368
+Python,smooth_quantile_sparse_p1000,CGLS,2,1,78.0802499999993
+Python,smooth_quantile_sparse_p1000,CG,2,1,77.84720899999797
+Python,smooth_quantile_sparse_p1000,Spectral-MM (PCG),3,3,20.413555333334443
+Python,smooth_quantile_sparse_p1000,CRLS,3,1,70.95595900000262
+Python,smooth_quantile_sparse_p1000,Spectral-MM (MM),3,1,173.33641700000157
+Python,smooth_quantile_sparse_p1000,CG,3,1,79.19829100000442
+Python,smooth_quantile_sparse_p1000,LSQR,3,1,84.78504200000003
+Python,smooth_quantile_sparse_p1000,CGLS,3,1,81.78454200000118
+Python,smooth_quantile_sparse_p1000,LSMR,3,1,72.73533299999713
+Python,smooth_quantile_sparse_p1000,LSMR,4,1,70.96858299999553
+Python,smooth_quantile_sparse_p1000,Spectral-MM (MM),4,1,172.48100000000477
+Python,smooth_quantile_sparse_p1000,CG,4,1,78.27574999999598
+Python,smooth_quantile_sparse_p1000,CRLS,4,1,71.05029200000246
+Python,smooth_quantile_sparse_p1000,LSQR,4,1,80.46079200000378
+Python,smooth_quantile_sparse_p1000,Spectral-MM (PCG),4,3,20.51233333333376
+Python,smooth_quantile_sparse_p1000,CGLS,4,1,77.81362500000455
+Python,smooth_quantile_sparse_p1000,CRLS,5,1,70.65829100000087
+Python,smooth_quantile_sparse_p1000,LSQR,5,1,79.33554200000259
+Python,smooth_quantile_sparse_p1000,CGLS,5,1,77.71933299999745
+Python,smooth_quantile_sparse_p1000,LSMR,5,1,72.42704200000105
+Python,smooth_quantile_sparse_p1000,Spectral-MM (PCG),5,3,20.451708333332874
+Python,smooth_quantile_sparse_p1000,CG,5,1,78.01591599999824
+Python,smooth_quantile_sparse_p1000,Spectral-MM (MM),5,1,172.63075000000327
+Python,expectile_dense_p1000,LSMR,1,3,21.510972000001516
+Python,expectile_dense_p1000,Spectral-MM (PCG),1,3,17.820125000000075
+Python,expectile_dense_p1000,LSQR,1,3,22.676749999999874
+Python,expectile_dense_p1000,CGLS,1,3,22.70187500000039
+Python,expectile_dense_p1000,CRLS,1,3,21.304444333331674
+Python,expectile_dense_p1000,Spectral-MM (MM),1,2,34.366958499997935
+Python,expectile_dense_p1000,CG,1,3,22.628653000000536
+Python,expectile_dense_p1000,CRLS,2,3,21.294736333333713
+Python,expectile_dense_p1000,Spectral-MM (PCG),2,3,17.989291666665963
+Python,expectile_dense_p1000,LSQR,2,3,22.678222333333053
+Python,expectile_dense_p1000,LSMR,2,3,21.061000000000735
+Python,expectile_dense_p1000,Spectral-MM (MM),2,2,34.5786249999982
+Python,expectile_dense_p1000,CGLS,2,3,22.57447199999992
+Python,expectile_dense_p1000,CG,2,3,22.673527666666377
+Python,expectile_dense_p1000,Spectral-MM (PCG),3,3,18.009888999998225
+Python,expectile_dense_p1000,CRLS,3,3,21.17119466666632
+Python,expectile_dense_p1000,Spectral-MM (MM),3,2,34.8042289999988
+Python,expectile_dense_p1000,CG,3,3,22.50941666666743
+Python,expectile_dense_p1000,LSQR,3,3,22.59541666666583
+Python,expectile_dense_p1000,CGLS,3,3,22.675277666666698
+Python,expectile_dense_p1000,LSMR,3,3,21.17081933333272
+Python,expectile_dense_p1000,LSMR,4,3,21.33595833333146
+Python,expectile_dense_p1000,Spectral-MM (MM),4,2,34.7758330000012
+Python,expectile_dense_p1000,CG,4,3,22.322791666667285
+Python,expectile_dense_p1000,CRLS,4,3,21.21601366666681
+Python,expectile_dense_p1000,LSQR,4,3,22.478680666665696
+Python,expectile_dense_p1000,Spectral-MM (PCG),4,3,18.000153000000314
+Python,expectile_dense_p1000,CGLS,4,3,22.69441666666694
+Python,expectile_dense_p1000,CRLS,5,3,21.35608333333276
+Python,expectile_dense_p1000,LSQR,5,3,22.621527999999575
+Python,expectile_dense_p1000,CGLS,5,3,22.52395833333291
+Python,expectile_dense_p1000,LSMR,5,3,21.31574999999941
+Python,expectile_dense_p1000,Spectral-MM (PCG),5,3,17.912222333331822
+Python,expectile_dense_p1000,CG,5,3,22.683361333333114
+Python,expectile_dense_p1000,Spectral-MM (MM),5,2,34.84831249999942
+Python,expectile_sparse_p1000,LSMR,1,10,5.275983299999609
+Python,expectile_sparse_p1000,Spectral-MM (PCG),1,8,6.024828124999715
+Python,expectile_sparse_p1000,LSQR,1,9,5.430620333333833
+Python,expectile_sparse_p1000,CGLS,1,10,5.333508400000397
+Python,expectile_sparse_p1000,CRLS,1,10,5.032520900000037
+Python,expectile_sparse_p1000,Spectral-MM (MM),1,5,9.075558399999295
+Python,expectile_sparse_p1000,CG,1,10,5.239070900000087
+Python,expectile_sparse_p1000,CRLS,2,10,5.0388333000000785
+Python,expectile_sparse_p1000,Spectral-MM (PCG),2,8,6.0379896249997955
+Python,expectile_sparse_p1000,LSQR,2,9,5.476426000000521
+Python,expectile_sparse_p1000,LSMR,2,10,5.297833299999866
+Python,expectile_sparse_p1000,Spectral-MM (MM),2,5,9.122208199998738
+Python,expectile_sparse_p1000,CGLS,2,10,5.33962499999987
+Python,expectile_sparse_p1000,CG,2,10,5.2184916000001635
+Python,expectile_sparse_p1000,Spectral-MM (PCG),3,8,6.035921875000128
+Python,expectile_sparse_p1000,CRLS,3,10,5.041383300000035
+Python,expectile_sparse_p1000,Spectral-MM (MM),3,5,9.178841800000725
+Python,expectile_sparse_p1000,CG,3,10,5.255766700000208
+Python,expectile_sparse_p1000,LSQR,3,9,5.4880231111111595
+Python,expectile_sparse_p1000,CGLS,3,10,5.382550000000208
+Python,expectile_sparse_p1000,LSMR,3,10,5.293816700000065
+Python,expectile_sparse_p1000,LSMR,4,10,5.634500000000031
+Python,expectile_sparse_p1000,Spectral-MM (MM),4,5,10.216199999999276
+Python,expectile_sparse_p1000,CG,4,10,5.78530830000048
+Python,expectile_sparse_p1000,CRLS,4,10,5.0856166999999175
+Python,expectile_sparse_p1000,LSQR,4,9,5.50476844444445
+Python,expectile_sparse_p1000,Spectral-MM (PCG),4,8,6.074161499999953
+Python,expectile_sparse_p1000,CGLS,4,10,5.342108299999637
+Python,expectile_sparse_p1000,CRLS,5,10,5.088912499999765
+Python,expectile_sparse_p1000,LSQR,5,9,5.487699000000469
+Python,expectile_sparse_p1000,CGLS,5,10,5.381904100000412
+Python,expectile_sparse_p1000,LSMR,5,10,5.30801669999974
+Python,expectile_sparse_p1000,Spectral-MM (PCG),5,8,6.046119875000144
+Python,expectile_sparse_p1000,CG,5,10,5.216162499999655
+Python,expectile_sparse_p1000,Spectral-MM (MM),5,5,9.133933400001126
+Python,pseudo_huber_dense_p1000,LSMR,1,2,44.73114600000372
+Python,pseudo_huber_dense_p1000,Spectral-MM (PCG),1,3,20.70094466666698
+Python,pseudo_huber_dense_p1000,LSQR,1,2,47.688583499997605
+Python,pseudo_huber_dense_p1000,CGLS,1,2,48.017416499995136
+Python,pseudo_huber_dense_p1000,CRLS,1,2,44.27833349999588
+Python,pseudo_huber_dense_p1000,Spectral-MM (MM),1,2,42.65189550000059
+Python,pseudo_huber_dense_p1000,CG,1,2,48.184791500005986
+Python,pseudo_huber_dense_p1000,CRLS,2,2,44.80733300000139
+Python,pseudo_huber_dense_p1000,Spectral-MM (PCG),2,3,20.60772233333334
+Python,pseudo_huber_dense_p1000,LSQR,2,2,47.99314550000133
+Python,pseudo_huber_dense_p1000,LSMR,2,2,45.04387499999751
+Python,pseudo_huber_dense_p1000,Spectral-MM (MM),2,2,42.62064600000315
+Python,pseudo_huber_dense_p1000,CGLS,2,2,48.18254150000456
+Python,pseudo_huber_dense_p1000,CG,2,2,47.99599999999771
+Python,pseudo_huber_dense_p1000,Spectral-MM (PCG),3,3,20.772236333333655
+Python,pseudo_huber_dense_p1000,CRLS,3,2,44.30239599999908
+Python,pseudo_huber_dense_p1000,Spectral-MM (MM),3,2,43.04781249999934
+Python,pseudo_huber_dense_p1000,CG,3,2,47.92833350000336
+Python,pseudo_huber_dense_p1000,LSQR,3,2,47.88949999999659
+Python,pseudo_huber_dense_p1000,CGLS,3,2,48.80518750000107
+Python,pseudo_huber_dense_p1000,LSMR,3,2,44.15816699999908
+Python,pseudo_huber_dense_p1000,LSMR,4,2,44.42116650000116
+Python,pseudo_huber_dense_p1000,Spectral-MM (MM),4,2,42.90997900000093
+Python,pseudo_huber_dense_p1000,CG,4,2,48.06154149999742
+Python,pseudo_huber_dense_p1000,CRLS,4,2,44.318916500003525
+Python,pseudo_huber_dense_p1000,LSQR,4,2,48.057000000000016
+Python,pseudo_huber_dense_p1000,Spectral-MM (PCG),4,3,20.618111333334355
+Python,pseudo_huber_dense_p1000,CGLS,4,2,48.18497899999841
+Python,pseudo_huber_dense_p1000,CRLS,5,2,44.64116700000176
+Python,pseudo_huber_dense_p1000,LSQR,5,2,48.11497949999932
+Python,pseudo_huber_dense_p1000,CGLS,5,2,48.524249999999824
+Python,pseudo_huber_dense_p1000,LSMR,5,2,45.166145999999685
+Python,pseudo_huber_dense_p1000,Spectral-MM (PCG),5,3,20.76330566666229
+Python,pseudo_huber_dense_p1000,CG,5,2,48.912541500001794
+Python,pseudo_huber_dense_p1000,Spectral-MM (MM),5,2,43.10704200000259
+Python,pseudo_huber_sparse_p1000,LSMR,1,5,12.37140839999995
+Python,pseudo_huber_sparse_p1000,Spectral-MM (PCG),1,7,7.539464285713393
+Python,pseudo_huber_sparse_p1000,LSQR,1,4,12.937812499998813
+Python,pseudo_huber_sparse_p1000,CGLS,1,4,12.64564574999838
+Python,pseudo_huber_sparse_p1000,CRLS,1,5,11.798475000000508
+Python,pseudo_huber_sparse_p1000,Spectral-MM (MM),1,5,12.100158399999827
+Python,pseudo_huber_sparse_p1000,CG,1,5,12.265108399998326
+Python,pseudo_huber_sparse_p1000,CRLS,2,5,11.796433199998546
+Python,pseudo_huber_sparse_p1000,Spectral-MM (PCG),2,7,7.516321428572122
+Python,pseudo_huber_sparse_p1000,LSQR,2,4,12.761885499998016
+Python,pseudo_huber_sparse_p1000,LSMR,2,5,12.267491600002245
+Python,pseudo_huber_sparse_p1000,Spectral-MM (MM),2,5,12.09456679999903
+Python,pseudo_huber_sparse_p1000,CGLS,2,4,12.475041750001026
+Python,pseudo_huber_sparse_p1000,CG,2,5,12.293400000001498
+Python,pseudo_huber_sparse_p1000,Spectral-MM (PCG),3,7,7.56422028571332
+Python,pseudo_huber_sparse_p1000,CRLS,3,5,11.734841800000595
+Python,pseudo_huber_sparse_p1000,Spectral-MM (MM),3,5,12.20615840000221
+Python,pseudo_huber_sparse_p1000,CG,3,5,12.256066800000553
+Python,pseudo_huber_sparse_p1000,LSQR,3,4,12.833270750000736
+Python,pseudo_huber_sparse_p1000,CGLS,3,4,12.518374999999082
+Python,pseudo_huber_sparse_p1000,LSMR,3,5,12.363775000000032
+Python,pseudo_huber_sparse_p1000,LSMR,4,5,12.364908200001423
+Python,pseudo_huber_sparse_p1000,Spectral-MM (MM),4,5,12.176575000000867
+Python,pseudo_huber_sparse_p1000,CG,4,5,12.348191800001018
+Python,pseudo_huber_sparse_p1000,CRLS,4,5,11.785941600001593
+Python,pseudo_huber_sparse_p1000,LSQR,4,4,12.885687499998966
+Python,pseudo_huber_sparse_p1000,Spectral-MM (PCG),4,7,7.574940428570796
+Python,pseudo_huber_sparse_p1000,CGLS,4,4,12.550447999998937
+Python,pseudo_huber_sparse_p1000,CRLS,5,5,11.744175000001178
+Python,pseudo_huber_sparse_p1000,LSQR,5,4,12.818656250001226
+Python,pseudo_huber_sparse_p1000,CGLS,5,4,12.651604000001981
+Python,pseudo_huber_sparse_p1000,LSMR,5,5,12.348199999999565
+Python,pseudo_huber_sparse_p1000,Spectral-MM (PCG),5,7,7.564351142856855
+Python,pseudo_huber_sparse_p1000,CG,5,5,12.19960000000242
+Python,pseudo_huber_sparse_p1000,Spectral-MM (MM),5,5,12.16319179999914
+Python,student_t_dense_p1000,LSMR,1,1,91.1138750000049
+Python,student_t_dense_p1000,Spectral-MM (PCG),1,2,25.84687499999916
+Python,student_t_dense_p1000,LSQR,1,1,94.73962500000255
+Python,student_t_dense_p1000,CGLS,1,1,95.68250000000944
+Python,student_t_dense_p1000,CRLS,1,1,91.42383300000745
+Python,student_t_dense_p1000,Spectral-MM (MM),1,1,50.47258300000124
+Python,student_t_dense_p1000,CG,1,1,94.64295899999797
+Python,student_t_dense_p1000,CRLS,2,1,90.62025000000062
+Python,student_t_dense_p1000,Spectral-MM (PCG),2,2,25.862833499999738
+Python,student_t_dense_p1000,LSQR,2,1,94.0626250000065
+Python,student_t_dense_p1000,LSMR,2,1,91.72216700000035
+Python,student_t_dense_p1000,Spectral-MM (MM),2,1,50.31400000000019
+Python,student_t_dense_p1000,CGLS,2,1,94.79120800000373
+Python,student_t_dense_p1000,CG,2,1,94.00495900000294
+Python,student_t_dense_p1000,Spectral-MM (PCG),3,2,25.626354499998172
+Python,student_t_dense_p1000,CRLS,3,1,90.85125000000005
+Python,student_t_dense_p1000,Spectral-MM (MM),3,1,50.34362499999645
+Python,student_t_dense_p1000,CG,3,1,94.28837499999076
+Python,student_t_dense_p1000,LSQR,3,1,94.75399999999468
+Python,student_t_dense_p1000,CGLS,3,1,95.79341699999588
+Python,student_t_dense_p1000,LSMR,3,1,91.95229199998778
+Python,student_t_dense_p1000,LSMR,4,1,91.10462499999983
+Python,student_t_dense_p1000,Spectral-MM (MM),4,1,50.02504200000146
+Python,student_t_dense_p1000,CG,4,1,94.6616669999969
+Python,student_t_dense_p1000,CRLS,4,1,92.07825000000014
+Python,student_t_dense_p1000,LSQR,4,1,94.88895899998795
+Python,student_t_dense_p1000,Spectral-MM (PCG),4,2,25.64083350000601
+Python,student_t_dense_p1000,CGLS,4,1,95.00445800000534
+Python,student_t_dense_p1000,CRLS,5,1,90.61204200000361
+Python,student_t_dense_p1000,LSQR,5,1,95.28820900000312
+Python,student_t_dense_p1000,CGLS,5,1,94.85024999999325
+Python,student_t_dense_p1000,LSMR,5,1,93.23216599999284
+Python,student_t_dense_p1000,Spectral-MM (PCG),5,2,25.717958000001317
+Python,student_t_dense_p1000,CG,5,1,95.29358300000013
+Python,student_t_dense_p1000,Spectral-MM (MM),5,1,50.174416000004385
+Python,student_t_sparse_p1000,LSMR,1,3,23.489138666666538
+Python,student_t_sparse_p1000,Spectral-MM (PCG),1,5,9.70296659999974
+Python,student_t_sparse_p1000,LSQR,1,3,24.18927800000385
+Python,student_t_sparse_p1000,CGLS,1,3,23.708249999998543
+Python,student_t_sparse_p1000,CRLS,1,3,22.364958333331703
+Python,student_t_sparse_p1000,Spectral-MM (MM),1,4,13.814072999998928
+Python,student_t_sparse_p1000,CG,1,3,22.99275000000023
+Python,student_t_sparse_p1000,CRLS,2,3,22.315805333334993
+Python,student_t_sparse_p1000,Spectral-MM (PCG),2,5,9.655200000000264
+Python,student_t_sparse_p1000,LSQR,2,3,24.17225000000182
+Python,student_t_sparse_p1000,LSMR,2,3,23.428208333333107
+Python,student_t_sparse_p1000,Spectral-MM (MM),2,4,13.936614500000388
+Python,student_t_sparse_p1000,CGLS,2,3,23.79623600000021
+Python,student_t_sparse_p1000,CG,2,3,22.9484583333317
+Python,student_t_sparse_p1000,Spectral-MM (PCG),3,5,9.691474999999627
+Python,student_t_sparse_p1000,CRLS,3,3,22.136569333336336
+Python,student_t_sparse_p1000,Spectral-MM (MM),3,4,13.792197749999957
+Python,student_t_sparse_p1000,CG,3,3,22.808236000003035
+Python,student_t_sparse_p1000,LSQR,3,3,24.009194333335888
+Python,student_t_sparse_p1000,CGLS,3,3,23.65937499999878
+Python,student_t_sparse_p1000,LSMR,3,3,23.497513999998887
+Python,student_t_sparse_p1000,LSMR,4,3,23.330486000001354
+Python,student_t_sparse_p1000,Spectral-MM (MM),4,4,13.844250000001779
+Python,student_t_sparse_p1000,CG,4,3,22.807680666664016
+Python,student_t_sparse_p1000,CRLS,4,3,22.143902666665365
+Python,student_t_sparse_p1000,LSQR,4,3,24.064860999999382
+Python,student_t_sparse_p1000,Spectral-MM (PCG),4,5,9.664641599999868
+Python,student_t_sparse_p1000,CGLS,4,3,23.503416666666038
+Python,student_t_sparse_p1000,CRLS,5,3,22.282902666669695
+Python,student_t_sparse_p1000,LSQR,5,3,24.198527666669634
+Python,student_t_sparse_p1000,CGLS,5,3,23.55340266666417
+Python,student_t_sparse_p1000,LSMR,5,3,23.499402666663133
+Python,student_t_sparse_p1000,Spectral-MM (PCG),5,5,9.779233399999043
+Python,student_t_sparse_p1000,CG,5,3,22.983166666667405
+Python,student_t_sparse_p1000,Spectral-MM (MM),5,4,13.826218749997565
