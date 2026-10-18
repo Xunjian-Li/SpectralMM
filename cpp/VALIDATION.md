@@ -11,7 +11,7 @@ projected-correction reuse. No timing superiority over Julia is assumed.
 - Historical intermediate audit scripts, snapshots and logs were removed.
   Development test scripts were also removed in the final cleanup.
 - Final performance data, including failures and per-sample timings, are in
-  `../benchmark/native/results/family-performance/`.
+  `../benchmark/python_r/results/family-performance/`.
 
 ## Family extension — 2026-09-29
 
@@ -187,7 +187,7 @@ Sixteen dense/CSC fits across all eight solvers were compared with the previous
 wrapper: coefficient vectors, diagnostics, covariance matrices and full traces
 were unchanged (NaN diagnostic placeholders compared with isequal). Repeated
 calls used one cached handle. The temporary validation script was not retained.
-See `benchmark/native/results/julia-wrapper-timing.md` for timings and limitations.
+See `benchmark/python_r/results/julia-wrapper-timing.md` for timings and limitations.
 
 ## Small-data examples
 
@@ -208,7 +208,7 @@ trace equality and input immutability. Julia passed 32 comparisons covering
 dense/CSC/Float32/view inputs across all eight solvers. Constant-column warnings,
 R integer conversion and Python library-cache/error-recovery checks passed.
 The final serial timing and Julia allocation measurements are retained in
-`benchmark/native/results/wrapper-optimizations.md`. Julia allocation decreased
+`benchmark/python_r/results/wrapper-optimizations.md`. Julia allocation decreased
 substantially, but its timing benefit was not consistent; no universal speedup
 is claimed. Temporary verification scripts remain outside the repository.
 
@@ -224,7 +224,7 @@ Fresh R and Julia processes each passed sixteen dense/CSC calls across all eight
 solvers using the new binary; R inference and both final traces were checked.
 Both English LaTeX guides compiled after updating their build instructions.
 Timings and exact scope are retained in
-`benchmark/native/results/blas-comparison.md` and its CSV companion.
+`benchmark/python_r/results/blas-comparison.md` and its CSV companion.
 
 ## Standard R package
 
@@ -306,6 +306,6 @@ The 448 backend comparisons now have no unavailable-inference exceptions at the
 unchanged thresholds. All 322 retained regression assertions, 224 Python fits
 and 224 installed R fits passed. Detailed causes, independent reference checks,
 limitations and before/after results are in
-benchmark/native/results/numerical-correctness-audit.md. Publication packaging
+benchmark/python_r/results/numerical-correctness-audit.md. Publication packaging
 and performance optimization remain separate work; old output archives are
 explicitly marked as pre-fix snapshots.

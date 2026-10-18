@@ -158,7 +158,7 @@ This is not a complete port of the Julia package:
 
 - Python/R expose all 14 family types and offer CG, CGLS, CRLS, LSQR
   LSMR, spectral MM and Cholesky through a shared native outer solver; see
-  [the benchmark guide](../benchmark/native/README.md). The Julia C++ interface supports the same fourteen families and standard accessors. Formula input is supported with both Julia backends.
+  [the benchmark guide](../benchmark/python_r/README.md). The Julia C++ interface supports the same fourteen families and standard accessors. Formula input is supported with both Julia backends.
 - Correction directly performs Rayleigh–Ritz in the retained subspace. Julia
   first applies a square QR rotation within that same subspace. The resulting
   Ritz subspace is mathematically equivalent, but floating-point paths differ.
@@ -200,7 +200,7 @@ The retained validation summary is in [VALIDATION.md](VALIDATION.md).
 
 The [LaTeX quick-start guide](../docs/usage_and_benchmark.tex) covers building,
 Python/R examples, all model parameters, and reproducible benchmark commands.
-See [the final performance report](../benchmark/native/results/family-performance/report.md)
+See [the final performance report](../benchmark/python_r/results/family-performance/report.md)
 for measured results. Temporary optimization experiments and their snapshots
 have been removed; the final source and recorded validation results are retained.
 

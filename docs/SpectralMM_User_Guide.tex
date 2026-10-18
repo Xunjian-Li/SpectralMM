@@ -631,17 +631,15 @@ julia --project=julia -e 'using Pkg; Pkg.instantiate()'
 BENCH_OUT=build/family-benchmark
 
 julia --compiled-modules=existing --project=julia \
-  benchmark/native/family_performance.jl 1000 "$BENCH_OUT"
+  benchmark/python_r/family_performance.jl 1000 "$BENCH_OUT"
 
-python3 benchmark/native/family_performance.py \
+python3 benchmark/python_r/family_performance.py \
   --size 1000 --output "$BENCH_OUT" --language both
 
-python3 benchmark/native/repeat_family_native.py \
+python3 benchmark/python_r/repeat_family_native.py \
   --output "$BENCH_OUT" --language both
 
-python3 benchmark/native/report_family_performance.py \
-  --output "$BENCH_OUT"
-python3 benchmark/native/export_latex.py \
+python3 benchmark/python_r/export_latex.py \
   --results "$BENCH_OUT"
 \end{lstlisting}
 The Julia step generates inputs and times the original Spectral-MM solver.
@@ -683,7 +681,7 @@ $\delta=1$ for pseudo-Huber, and $(\nu,\sigma)=(4,1)$ for Student-$t$.
 
 \subsection{Reading and exporting results}
 The retained report is
-\path{benchmark/native/results/family-performance/report.md}.
+\path{benchmark/python_r/results/family-performance/report.md}.
 CSV files preserve the first-run and repeat summaries, individual timing samples,
 and convergence diagnostics; configuration and environment records accompany them.
 The main native tables use the interleaved repeat. GLM and Julia timings come

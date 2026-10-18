@@ -1,0 +1,3 @@
+> **Historical record.** Commands and paths below describe the original run and may be obsolete. For current experiments, follow the [benchmark guide](../../../../README.md). Measurements and provenance files are retained unchanged.
+
+Upload performance_tables.tex to Overleaf as a standalone main document. It contains all eight tables without external inputs. Alternatively, use individual table fragments with booktabs, longtable and amsmath. Native rows use repeat timings; GLM rows use initial timings. Converged is the common gradient criterion, not the solver flag. Thread settings request 12 threads; Python and R use different BLAS providers. No Julia baseline is mixed into this run.

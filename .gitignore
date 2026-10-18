@@ -1,8 +1,8 @@
 /build/
 __pycache__/
 *.pyc
-/benchmark/native/results/data/
-/benchmark/native/results/family-performance/data/
+/benchmark/python_r/results/data/
+/benchmark/python_r/results/family-performance/data/
 
 .DS_Store
 .ipynb_checkpoints/
@@ -40,7 +40,7 @@ __pycache__/
 /R/*.Rcheck/
 /R/SpectralMM_*.tar.gz
 
-/benchmark/Manifest.toml
+/benchmark/julia/Manifest.toml
 
 # Local benchmark inputs, build products, and new timing runs.
 /benchmark/data/

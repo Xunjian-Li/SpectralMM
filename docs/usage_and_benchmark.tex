@@ -54,12 +54,12 @@ Path & Purpose \\
 \path{python/} & NumPy/SciPy interface \\
 \path{R/} & Standard R package and bundled shared core \\
 \path{julia/src/cpp_backend.jl} & Julia wrapper for the shared C++ core \\
-\path{benchmark/native/} & Data generation, timing and report scripts \\
+\path{benchmark/python_r/} & Data generation, timing and report scripts \\
 \path{build/native/} & Local native build, reproducible from source \\
 \bottomrule
 \end{tabular}
 
-Final results are in \path{benchmark/native/results/family-performance/}.
+Final results are in \path{benchmark/python_r/results/family-performance/}.
 The \path{report.md} file summarizes findings; CSV files retain per-method results
 and individual timings. Configuration and environment records are also retained.
 The \path{latex/} directory contains \path{python_tables.tex} and \path{R_tables.tex},
@@ -69,8 +69,8 @@ each with four tables covering GLM/non-GLM and dense/sparse cases.
 
 Temporary optimization experiments, snapshots and regenerable binary inputs were
 removed. Regenerate inputs before rerunning the benchmark (Section~\ref{sec:benchmark}).
-The original Julia results in \path{benchmark/scaling_results.csv} and
-\path{benchmark/scaling_sparse_results.csv} are also retained.
+The original Julia results in \path{benchmark/julia/results/scaling_results.csv} and
+\path{benchmark/julia/results/scaling_sparse_results.csv} are also retained.
 
 \section{Dependencies and C++ build}
 Building requires a C++17 compiler, CMake and Eigen 3.4 headers. Replace the Eigen
@@ -252,7 +252,7 @@ julia --project=julia -e 'using Pkg; Pkg.instantiate()'
 BENCH_OUT=build/family-benchmark
 
 julia --compiled-modules=existing --project=julia \
-  benchmark/native/family_performance.jl 1000 "$BENCH_OUT"
+  benchmark/python_r/family_performance.jl 1000 "$BENCH_OUT"
 \end{lstlisting}
 
 This generates shared data and initial values using the original Julia benchmark
@@ -261,7 +261,7 @@ feature count before adding the intercept; sample size is twice that count.
 Run the six native solvers and applicable GLM comparators:
 
 \begin{lstlisting}[language=bash]
-python3 benchmark/native/family_performance.py \
+python3 benchmark/python_r/family_performance.py \
   --size 1000 --output "$BENCH_OUT" --language both
 \end{lstlisting}
 
@@ -271,16 +271,14 @@ Gamma cases can take a long time. Repeat native timings in shuffled order to
 reduce execution-order bias:
 
 \begin{lstlisting}[language=bash]
-python3 benchmark/native/repeat_family_native.py \
+python3 benchmark/python_r/repeat_family_native.py \
   --output "$BENCH_OUT" --language both
 \end{lstlisting}
 
 Generate the Markdown report and LaTeX tables:
 
 \begin{lstlisting}[language=bash]
-python3 benchmark/native/report_family_performance.py \
-  --output "$BENCH_OUT"
-python3 benchmark/native/export_latex.py \
+python3 benchmark/python_r/export_latex.py \
   --results "$BENCH_OUT"
 
 cd "$BENCH_OUT/latex"
